@@ -1,22 +1,25 @@
-CoAP.NET - A CoAP framework in C#
-=================================
+# CoAP.NET - A CoAP framework in C#
 
-[![Build Status](https://api.travis-ci.org/smeshlink/CoAP.NET.png)](https://travis-ci.org/smeshlink/CoAP.NET)
+[![Build Status](https://api.travis-ci.org/jimsch/CoAP-CSharp.png)](https://travis-ci.org/jimsch/CoAP-CSharp)
 
 The Constrained Application Protocol (CoAP) (https://datatracker.ietf.org/doc/draft-ietf-core-coap/)
 is a RESTful web transfer protocol for resource-constrained networks and nodes.
 CoAP.NET is an implementation in C# providing CoAP-based services to .NET applications. 
 Reviews and suggestions would be appreciated.
 
-Content
--------
+## Copyright
+
+Copyright (c) 2011-2015, Longxiang He <longxianghe@gmail.com>,
+SmeshLink Technology Co.
+
+## Content
+
 - [Quick Start](#quick-start)
 - [Build](#build)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
 
-Quick Start
------------
+## Quick Start
 
 CoAP sessions are considered as request-response pair.
 
@@ -121,62 +124,25 @@ respones a plain string in code "2.05 Content".
 
 See [CoAP Example Server](CoAP.Server) for more.
 
-Build
------
 
-A few compile symbols are introduced to build for different drafts of
-CoAP:
-
-- COAP03  -- [draft-ietf-core-coap-03](http://tools.ietf.org/html/draft-ietf-core-coap-03)
-- COAP08  -- [draft-ietf-core-coap-08](http://tools.ietf.org/html/draft-ietf-core-coap-08)
-- COAP12  -- [draft-ietf-core-coap-12](http://tools.ietf.org/html/draft-ietf-core-coap-12)
-- COAP13  -- [draft-ietf-core-coap-13](http://tools.ietf.org/html/draft-ietf-core-coap-13)
-- COAP18  -- [draft-ietf-core-coap-18](http://tools.ietf.org/html/draft-ietf-core-coap-18)
-- COAPALL -- all supported drafts above
-
-By default (with no symbol defined), CoAP.NET will be compiled with
-the latest version of CoAP protocol. To enable drafts, define one or
-more of those compile symbols.
-
-With drafts enabled, an interface <code>ISpec</code> will be introduced,
-representing draft specification. Define COAPXX to enable draft XX,
-or COAPALL to enable all supported drafts. All enabled drafts will be
-available in class [**Spec**](CoAP.NET/Spec.cs):
-
-```csharp
-  public static class Spec
-  {
-    public static readonly ISpec Draft03;
-    public static readonly ISpec Draft08;
-    public static readonly ISpec Draft12;
-    public static readonly ISpec Draft13;
-    public static readonly ISpec Draft18;
-  }
-```
-
-With none of the symbols defined, only the latest version of draft
-will be compiled as the class [**Spec**](CoAP.NET/Spec.cs),
-with static members instead of various drafts:
-
-```csharp
-  public static class Spec
-  {
-    public static readonly String Name = "draft-ietf-core-coap-18";
-    public static readonly Int32 DefaultPort = 5683;
-    public static IMessageEncoder NewMessageEncoder();
-    public static IMessageDecoder NewMessageDecoder(Byte[] data);
-    public static Byte[] Encode(Message msg);
-    public static Message Decode(Byte[] bytes);
-  }
-```
-
-License
--------
+## License
 
 See [LICENSE](LICENSE) for more info.
 
-Acknowledgements
-----------------
+## Acknowledgements
+
+This is a copy o the CoAP.NET project hosted at (https://http://coap.codeplex.com/).
+As this project does not seem to be maintained anymore, and I am doing active updates to it, I have made a local copy that things are going to move forward on.
+
+Current projects are:
+
+- OSCoAP[https://datatracker.ietf.org/doc/draft-ietf-core-object-security/] - Add an implemenation of message based security
+- EDHOC[https://datatracker.ietf.org/doc/draft-selander-ace-cose-ecdhe/] - Ephemeral Diffie-Hellman over COSE - a key establishment protocol
+- DTLS - Support DTLS for transport
+- TLS/TCP[https://datatracker.ietf.org/doc/draft-ietf-core-coap-tcp-tls/] - Support TCP and TLS over TCP for transport
+- Resource Directory[https://datatracker.ietf.org/doc/draft-ietf-core-resource-directory/] - Resource directory resources
+- PubSub[https://datatracker.ietf.org/doc/draft-ietf-core-coap-pubsub/] - Publish-Subscribe Broker
+- AAA[https://datatracker.ietf.org/doc/draft-ietf-ace-oauth-authz/] - Authentication and authoriztion protocol work
 
 CoAP.NET is based on [**Californium**](https://github.com/mkovatsc/Californium),
 a CoAP framework in Java by Matthias Kovatsch, Dominique Im Obersteg,
