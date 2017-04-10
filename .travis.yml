@@ -3,10 +3,9 @@
 
 language: csharp
 
-matrix:
- include:
-  -CoAP.NET.2010.sln
-  -CoAP.NET40.2010.sln
+env:
+  SLN=CoAP.NET.2010.sln
+  SLN=CoAP.NET40.2010.sln
 
 install:
 #  - nuget restore CoAP.NET.2010.sln

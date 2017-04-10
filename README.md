@@ -10,10 +10,10 @@ Reviews and suggestions would be appreciated.
 
 Content
 -------
-- [Quick Start] (#quick-start)
-- [Build] (#build)
-- [License] (#license)
-- [Acknowledgements] (#acknowledgements)
+- [Quick Start](#quick-start)
+- [Build](#build)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
 
 Quick Start
 -----------
@@ -22,8 +22,8 @@ CoAP sessions are considered as request-response pair.
 
 ### CoAP Client
 
-Access remote CoAP resources by issuing a **[Request] (CoAP.NET/Request.cs)**
-and receive its **[Response] (CoAP.NET/Request.cs)**(s).
+Access remote CoAP resources by issuing a **[Request](CoAP.NET/Request.cs)**
+and receive its **[Response](CoAP.NET/Request.cs)**(s).
 
 ```csharp
   // new a GET request
@@ -59,12 +59,12 @@ the event <code>request.Respond</code> before executing.
   IEnumerable<WebLink> links = LinkFormat.Parse(response.PayloadString);
   ```
 
-See [CoAP Example Client] (CoAP.Client) for more.
+See [CoAP Example Client](CoAP.Client) for more.
 
 ### CoAP Server
 
 A new CoAP server can be easily built with help of the class
-[**CoapServer**] (CoAP.NET/Server/CoapServer.cs)
+[**CoapServer**](CoAP.NET/Server/CoapServer.cs)
 
 ```csharp
   static void Main(String[] args)
@@ -79,12 +79,12 @@ A new CoAP server can be easily built with help of the class
   }
 ```
 
-See [CoAP Example Server] (CoAP.Server) for more.
+See [CoAP Example Server](CoAP.Server) for more.
 
 ### CoAP Resource
 
 CoAP resources are classes that can be accessed by a URI via CoAP.
-In CoAP.NET, a resource is defined as a subclass of [**Resource**] (CoAP.NET/Server/Resources/Resource.cs).
+In CoAP.NET, a resource is defined as a subclass of [**Resource**](CoAP.NET/Server/Resources/Resource.cs).
 By overriding methods <code>DoGet</code>, <code>DoPost</code>,
 <code>DoPut</code> or <code>DoDelete</code>, one resource accepts
 GET, POST, PUT or DELETE requests.
@@ -119,7 +119,7 @@ respones a plain string in code "2.05 Content".
   }
 ```
 
-See [CoAP Example Server] (CoAP.Server) for more.
+See [CoAP Example Server](CoAP.Server) for more.
 
 Build
 -----
@@ -127,11 +127,11 @@ Build
 A few compile symbols are introduced to build for different drafts of
 CoAP:
 
-- COAP03  -- [draft-ietf-core-coap-03] (http://tools.ietf.org/html/draft-ietf-core-coap-03)
-- COAP08  -- [draft-ietf-core-coap-08] (http://tools.ietf.org/html/draft-ietf-core-coap-08)
-- COAP12  -- [draft-ietf-core-coap-12] (http://tools.ietf.org/html/draft-ietf-core-coap-12)
-- COAP13  -- [draft-ietf-core-coap-13] (http://tools.ietf.org/html/draft-ietf-core-coap-13)
-- COAP18  -- [draft-ietf-core-coap-18] (http://tools.ietf.org/html/draft-ietf-core-coap-18)
+- COAP03  -- [draft-ietf-core-coap-03](http://tools.ietf.org/html/draft-ietf-core-coap-03)
+- COAP08  -- [draft-ietf-core-coap-08](http://tools.ietf.org/html/draft-ietf-core-coap-08)
+- COAP12  -- [draft-ietf-core-coap-12](http://tools.ietf.org/html/draft-ietf-core-coap-12)
+- COAP13  -- [draft-ietf-core-coap-13](http://tools.ietf.org/html/draft-ietf-core-coap-13)
+- COAP18  -- [draft-ietf-core-coap-18](http://tools.ietf.org/html/draft-ietf-core-coap-18)
 - COAPALL -- all supported drafts above
 
 By default (with no symbol defined), CoAP.NET will be compiled with
@@ -141,7 +141,7 @@ more of those compile symbols.
 With drafts enabled, an interface <code>ISpec</code> will be introduced,
 representing draft specification. Define COAPXX to enable draft XX,
 or COAPALL to enable all supported drafts. All enabled drafts will be
-available in class [**Spec**] (CoAP.NET/Spec.cs):
+available in class [**Spec**](CoAP.NET/Spec.cs):
 
 ```csharp
   public static class Spec
@@ -155,7 +155,7 @@ available in class [**Spec**] (CoAP.NET/Spec.cs):
 ```
 
 With none of the symbols defined, only the latest version of draft
-will be compiled as the class [**Spec**] (CoAP.NET/Spec.cs),
+will be compiled as the class [**Spec**](CoAP.NET/Spec.cs),
 with static members instead of various drafts:
 
 ```csharp
@@ -173,12 +173,12 @@ with static members instead of various drafts:
 License
 -------
 
-See [LICENSE] (LICENSE) for more info.
+See [LICENSE](LICENSE) for more info.
 
 Acknowledgements
 ----------------
 
-CoAP.NET is based on [**Californium**] (https://github.com/mkovatsc/Californium),
+CoAP.NET is based on [**Californium**](https://github.com/mkovatsc/Californium),
 a CoAP framework in Java by Matthias Kovatsch, Dominique Im Obersteg,
 and Daniel Pauli, ETH Zurich. See <http://people.inf.ethz.ch/mkovatsc/californium.php>.
 Thanks to the authors and their great job.
