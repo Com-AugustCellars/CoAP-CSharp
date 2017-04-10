@@ -2,6 +2,9 @@
 # see travis-ci.org for details
 
 language: csharp
+solution:
+ - CoAP.NET.2010.sln
+ - CoAP.NET40.2010.sln
 
 install:
   - nuget restore CoAP.NET.2010.sln
