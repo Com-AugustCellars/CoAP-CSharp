@@ -4,8 +4,8 @@
 language: csharp
 
 env:
-  -SLN=CoAP.NET.2010.sln
-  -SLN=CoAP.NET40.2010.sln
+  - SLN=CoAP.NET.2010.sln
+  - SLN=CoAP.NET40.2010.sln
 
 install:
 #  - nuget restore CoAP.NET.2010.sln
