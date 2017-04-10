@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>CoAP</id>
+        <version>1.1.0</version>
+        <title>CoAP.NET</title>
+        <authors>Longshine</authors>
+        <owners>Longshine</owners>
+        <licenseUrl>https://github.com/smeshlink/CoAP.NET/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/smeshlink/CoAP.NET</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>CoAP.NET is an implementation in C# providing CoAP-based services to .NET applications.</description>
+        <summary>.NET implementation of the Constrained Application Protocol (CoAP)</summary>
+        <releaseNotes>* 1.1.0
+  - Rename obsoleted events and properties in CoAP Message
+  - Mark as CLSCompliant
+  - Add clean-up mechanism for blockwise transfer state
+  - Add filter when notifying observers
+  - Add send and receive events to IEndPoint
+  - Add support for cancelling reject messages
+  - Add support for cancelling blockwise transfer
+  - Add support for blockwise transfers with NON
+  - Update lazy initializing lock in a request to avoid locks if possible
+  - Update collection classes for .NET 2.0
+  - Fix potential stack overflow in underlying UDP channel
+  - Fix Message ID conflict
+  - Fix incomplete cleanup when reregister a observation
+  - Fix race condition when cancelling retransmission
+  - Fix for parentless resources
+  - Fix RTT for blockwise transfers
+  - Fix success range for code constants
+* 1.0.0
+  - Add support for RFC7252!
+  - Redefine compile symbols
+  - Rename events and properties in CoAP Message
+  - Allow random block request
+  - Separate CoAP.Proxy namespace
+  - Update Common.Logging to v3.0.0
+  - Fix incorrect link format serialization
+  - Fix null reference in CoAPClient.Discover()
+  - Fix a lot of others
+* 0.18
+  - Add support for CoAP-18
+  - Add new layers and stack structure
+  - Add new server and client APIs
+  - Add datagram channels for data transmission
+  - Add full configuration
+  - Improve UDP transmission with SocketAsyncEventArgs for .NET 4+
+  - Improve threading with TPL for .NET 4+
+  - Improve logging with Common.Logging
+  - Fix lots of bugs
+* 0.13.4
+  - Fix potential breaks in UDP transmission
+  - Diff assembly title with draft version
+* 0.13.3
+  - Add request.SequenceTimeout to override overall timeout in
+  TokenLayer
+  - Fix incorrect match of tokens in TokenManager
+* 0.13.2
+  - Add ICommunicator to represent communicators
+  - Add ICoapConfig to pass initial variables (refs #8)
+  - Add HTTP/CoAP proxy (experimental)
+  - Add build for .NET 4.0
+  - Dispatch requests with thread pool in LocalEndPoint
+  - Only timeout requests if SequenceTimeout is greater than 0 in TokenLayer
+  - Move resources to separate namespace Resources, and add a TimerResource for timed observable resources.
+* 0.13.1
+  - Add timeout and max retransimit to each message
+  - Enable log levels
+  - Fix null reference to next block in TransferLayer
+* 0.13
+  - Update to CoAP-13
+  - Support drafts switching
+* 0.08
+  - Update to CoAP-08
+  - Support both IPv6/IPv4</releaseNotes>
+        <tags>6LoWPAN blockwise CoAP observe RFC7252</tags>
+        <frameworkAssemblies>
+            <frameworkAssembly assemblyName="System" targetFramework="" />
+        </frameworkAssemblies>
+    </metadata>
+    <files>
+        <file src="binary\1.1.0\NET20\CoAP.NET.dll" target="lib\net20\CoAP.NET.dll" />
+        <file src="binary\1.1.0\NET20\CoAP.NET.pdb" target="lib\net20\CoAP.NET.pdb" />
+        <file src="binary\1.1.0\NET20\CoAP.NET.XML" target="lib\net20\CoAP.NET.XML" />
+        <file src="binary\1.1.0\NET40\CoAP.NET.dll" target="lib\net40\CoAP.NET.dll" />
+        <file src="binary\1.1.0\NET40\CoAP.NET.pdb" target="lib\net40\CoAP.NET.pdb" />
+        <file src="binary\1.1.0\NET40\CoAP.NET.XML" target="lib\net40\CoAP.NET.XML" />
+        <file src="LICENSE" target="LICENSE" />
+    </files>
+</package>

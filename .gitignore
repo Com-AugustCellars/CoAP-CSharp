@@ -1,47 +1,21 @@
-# Windows image file caches
-Thumbs.db
-ehthumbs.db
+# Build Folders (you can keep bin if you'd like, to store dlls and pdbs)
+[Bb]in/
+[Oo]bj/
+.svn
+Apps
 
-# Folder config file
-Desktop.ini
+# DNX project file with a complete list of resolved dependencies
+project.lock.json
 
-# Recycle Bin used on file shares
-$RECYCLE.BIN/
+# User-specific files
+*.suo
+*.user
+*.sln.docstates
 
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
 
-# Windows shortcuts
-*.lnk
-
-# =========================
-# Operating System Files
-# =========================
-
-# OSX
-# =========================
-
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Thumbnails
-._*
-
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
+# NuGet Packages Directory
+packages/
+*.nupkg
