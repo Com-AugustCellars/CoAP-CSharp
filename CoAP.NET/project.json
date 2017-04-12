@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "Com.AugustCellars.COSE": "0.1.0",
-    "Common.Logging": "3.3.1"
+    "Common.Logging": "3.3.1",
+    "PeterO.Cbor": "2.4.2"
   },
   "compileExclude": [
     "Channel/UDPChannel.NET20.cs",
