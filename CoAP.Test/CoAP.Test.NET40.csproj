@@ -63,13 +63,17 @@
     <Compile Include="StartStopTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CoAP.NET\CoAP.NET40.csproj">
-      <Project>{45DB1E45-4831-4E4A-BB1E-AE92EEA182E3}</Project>
-      <Name>CoAP.NET40</Name>
-    </ProjectReference>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ProjectReference Include="..\CoAP.Example\CoAP.Client\CoAP.Client.NET40.csproj">
+      <Project>{30223ff5-4dcb-45b8-9b06-61eb9fbf9fa8}</Project>
+      <Name>CoAP.Client.NET40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CoAP.NET\CoAP.NET40.csproj">
+      <Project>{45db1e45-4831-4e4a-bb1e-ae92eea182e3}</Project>
+      <Name>CoAP.NET40</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
