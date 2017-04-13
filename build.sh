@@ -8,4 +8,4 @@ ls packages/Com.AugustCellars.COSE.0.1.0/lib
 ls packages/Com.AugustCellars.COSE.0.1.0/lib/portable-net40+s15+win+wpa81+wp8
 
 
-# xbuild $SLN /p:Configuation=Release
+xbuild $SLN /p:Configuation=Release
