@@ -45,19 +45,19 @@
     <Reference Include="Common.Logging.Core">
       <HintPath>lib\NET20\Common.Logging.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Com.Augustcellars.Cose">
-      <HintPath>packages\Com.AugustCellars.Com.0.1.0\lib\COSE.dll</HintPath>
+    <Reference Include="Com.Augustcellars.COSE">
+      <HintPath>..\packages\Com.AugustCellars.Com.COSE.0.1.0\lib\portable-net40+sl50+win+wpa81+wp80\COSE.dll</HintPath>
     </Reference>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
-      <HintPath>packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
+      <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="CBOR, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\PeterO.Cbor.2.4.2\lib\portable-net40+sl50+win+wpa81+wp80\CBOR.dll</HintPath>
+      <HintPath>..\packages\PeterO.Cbor.2.4.2\lib\portable-net40+sl50+win+wpa81+wp80\CBOR.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Numbers, Version=0.2.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\PeterO.Numbers.0.2.2\lib\portable-net40+sl50+win+wpa81+wp80\Numbers.dll</HintPath>
+      <HintPath>..\packages\PeterO.Numbers.0.2.2\lib\portable-net40+sl50+win+wpa81+wp80\Numbers.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
