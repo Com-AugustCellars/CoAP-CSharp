@@ -115,6 +115,11 @@
     <Compile Include="Observe\ReregisterEventArgs.cs" />
     <Compile Include="Option.cs" />
     <Compile Include="OptionType.cs" />
+    <Compile Include="OSCOAP\OscoapLayer.cs" />
+    <Compile Include="OSCOAP\OscoapOption.cs" />
+    <Compile Include="OSCOAP\SecureBlockwiseLayer.cs" />
+    <Compile Include="OSCOAP\SecurityContext.cs" />
+    <Compile Include="OSCOAP\SecurityContextSet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Request.cs" />
     <Compile Include="Response.cs" />
