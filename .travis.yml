@@ -8,9 +8,7 @@ env:
   - SLN=CoAP.NET40.2010.sln
 
 install:
-#  - nuget restore CoAP.NET.2010.sln
-#  - nuget restore CoAP.NET40.2010.sln
-#  - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner
+   - nuget install NUnit.Runners -Version 3.5.0 -OutputDirectory testrunner
 
 script:
   - ./build.sh
