@@ -1,6 +1,7 @@
 # Build Folders (you can keep bin if you'd like, to store dlls and pdbs)
 [Bb]in/
 [Oo]bj/
+lib
 .svn
 Apps
 
@@ -19,3 +20,8 @@ project.lock.json
 # NuGet Packages Directory
 packages/
 *.nupkg
+
+# Emacs turds
+*#
+*~
+*.bak

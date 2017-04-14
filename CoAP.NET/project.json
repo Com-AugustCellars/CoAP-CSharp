@@ -14,7 +14,8 @@
       "frameworkAssemblies": {
         "System.ServiceModel": ""
       }
-    }
+    },
+      "net45": {}
   },
   "dependencies": {
     "Com.AugustCellars.COSE": "0.1.0",
