@@ -10,10 +10,10 @@
  */
 
 using System;
-using CoAP.Log;
-using CoAP.Net;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP.Proxy
+namespace Com.AugustCellars.CoAP.Proxy
 {
     public class ProxyHttpServer
     {

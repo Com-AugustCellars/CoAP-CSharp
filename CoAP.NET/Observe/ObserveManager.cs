@@ -12,7 +12,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace CoAP.Observe
+namespace Com.AugustCellars.CoAP.Observe
 {
     /// <summary>
     /// The observe manager holds a mapping of endpoint addresses to

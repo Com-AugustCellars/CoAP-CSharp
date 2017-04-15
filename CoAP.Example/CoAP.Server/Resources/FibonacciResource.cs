@@ -1,7 +1,7 @@
 ﻿using System;
-using CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Server.Resources;
 
-namespace CoAP.Examples.Resources
+namespace Com.AugustCellars.CoAP.Examples.Resources
 {
     /// <summary>
     /// This resource computes the Fibonacci numbers and therefore needs

@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Log
+namespace Com.AugustCellars.CoAP.Log
 {
     /// <summary>
     /// Logger that writes logs to a <see cref="System.IO.TextWriter"/>.

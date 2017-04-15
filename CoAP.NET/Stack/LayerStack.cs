@@ -9,9 +9,9 @@
  * Please see README for more information.
  */
 
-using CoAP.Net;
+using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP.Stack
+namespace Com.AugustCellars.CoAP.Stack
 {
     /// <summary>
     /// Stack of layers.

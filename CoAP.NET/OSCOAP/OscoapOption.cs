@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-using CoAP;
+using Com.AugustCellars.CoAP;
 
-namespace CoAP.OSCOAP
+namespace Com.AugustCellars.CoAP.OSCOAP
 {
 #if INCLUDE_OSCOAP
     public class OscoapOption : Option

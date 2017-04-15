@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// Represents an event of a message.

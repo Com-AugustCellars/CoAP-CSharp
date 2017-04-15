@@ -12,7 +12,7 @@
 using System;
 using System.Threading;
 
-namespace CoAP.Server.Resources
+namespace Com.AugustCellars.CoAP.Server.Resources
 {
     /// <summary>
     /// Represents a periodic resource based on a timer.

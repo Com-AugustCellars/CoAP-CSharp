@@ -12,7 +12,7 @@
 
 using System;
 
-namespace CoAP.Log
+namespace Com.AugustCellars.CoAP.Log
 {
     /// <summary>
     /// A <see cref="ILogManager"/> which always returns the unique instance of

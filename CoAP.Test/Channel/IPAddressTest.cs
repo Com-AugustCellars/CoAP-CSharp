@@ -9,7 +9,7 @@ using TestMethod = NUnit.Framework.TestAttribute;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
 
-namespace CoAP.Channel
+namespace Com.AugustCellars.CoAP.Channel
 {
     [TestClass]
     public class IPAddressTest

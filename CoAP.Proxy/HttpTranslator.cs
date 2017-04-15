@@ -15,10 +15,10 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
-using CoAP.Http;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Http;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP.Proxy
+namespace Com.AugustCellars.CoAP.Proxy
 {
     public static class HttpTranslator
     {

@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Util
+namespace Com.AugustCellars.CoAP.Util
 {
     static class ThrowHelper
     {

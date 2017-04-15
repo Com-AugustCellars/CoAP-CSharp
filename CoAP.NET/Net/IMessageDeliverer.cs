@@ -9,7 +9,7 @@
  * Please see README for more information.
  */
 
-namespace CoAP.Net
+namespace Com.AugustCellars.CoAP.Net
 {
     /// <summary>
     /// Provides methods for delivering inbound CoAP messages to an appropriate processor.

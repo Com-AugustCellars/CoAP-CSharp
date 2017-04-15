@@ -10,9 +10,9 @@
  */
 
 using System;
-using CoAP.Log;
+using Com.AugustCellars.CoAP.Log;
 
-namespace CoAP.Deduplication
+namespace Com.AugustCellars.CoAP.Deduplication
 {
     static class DeduplicatorFactory
     {

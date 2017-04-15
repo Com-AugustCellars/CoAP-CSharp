@@ -12,9 +12,9 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// This class describes the options of the CoAP messages.

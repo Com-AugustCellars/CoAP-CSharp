@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Http
+namespace Com.AugustCellars.CoAP.Http
 {
     interface IServiceProvider
     {

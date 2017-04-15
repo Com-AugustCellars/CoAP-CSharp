@@ -11,11 +11,11 @@
 
 using System;
 using System.Collections.Generic;
-using CoAP.Net;
-using CoAP.Observe;
-using CoAP.Threading;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Observe;
+using Com.AugustCellars.CoAP.Threading;
 
-namespace CoAP.Server.Resources
+namespace Com.AugustCellars.CoAP.Server.Resources
 {
     public interface IResource
     {

@@ -8,7 +8,7 @@
     <ProjectGuid>{45DB1E45-4831-4E4A-BB1E-AE92EEA182E3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CoAP</RootNamespace>
+    <RootNamespace>Com.AugustCellars.CoAP</RootNamespace>
     <AssemblyName>CoAP.NET</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Codec
+namespace Com.AugustCellars.CoAP.Codec
 {
     /// <summary>
     /// Provides methods to serialize outgoing messages to byte arrays.

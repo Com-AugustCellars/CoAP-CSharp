@@ -11,9 +11,9 @@
 
 using System;
 using System.IO;
-using CoAP.Log;
+using Com.AugustCellars.CoAP.Log;
 
-namespace CoAP.Codec
+namespace Com.AugustCellars.CoAP.Codec
 {
     /// <summary>
     /// This class describes the functionality to write raw network-ordered datagrams on bit-level.

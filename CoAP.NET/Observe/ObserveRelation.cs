@@ -10,14 +10,14 @@
  */
 
 using System;
-using CoAP.Log;
-using CoAP.Net;
-using CoAP.Server.Resources;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Util;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace CoAP.Observe
+namespace Com.AugustCellars.CoAP.Observe
 {
     /// <summary>
     /// Represents a relation between a client endpoint and a resource on this server.

@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Collections.Concurrent;
 
-namespace CoAP.Util
+namespace Com.AugustCellars.CoAP.Util
 {
     /// <summary>
     /// Utility methods.

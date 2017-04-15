@@ -9,7 +9,7 @@
  * Please see README for more information.
  */
 
-namespace CoAP.Proxy
+namespace Com.AugustCellars.CoAP.Proxy
 {
     public interface ICacheResource
     {

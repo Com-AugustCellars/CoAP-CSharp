@@ -11,11 +11,11 @@
 
 using System;
 using System.Collections.Generic;
-using CoAP.Log;
-using CoAP.Net;
-using CoAP.Observe;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Observe;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// Provides convenient methods for accessing CoAP resources.

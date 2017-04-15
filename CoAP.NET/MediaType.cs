@@ -13,7 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// This class describes the CoAP Media Type Registry as defined in

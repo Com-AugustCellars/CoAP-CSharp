@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Timers;
 
-using CoAP.Stack;
-using CoAP.Log;
-using CoAP.Net;
+using Com.AugustCellars.CoAP.Stack;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP.OSCOAP
+namespace Com.AugustCellars.CoAP.OSCOAP
 {
 #if INCLUDE_OSCOAP
     public class SecureBlockwiseLayer : AbstractLayer

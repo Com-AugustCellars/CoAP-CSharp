@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Threading
+namespace Com.AugustCellars.CoAP.Threading
 {
     /// <summary>
     /// This <see cref="IExecutor"/> will execute tasks immediately in the calling thread.

@@ -10,10 +10,10 @@
  */
 
 using System;
-using CoAP.Log;
-using CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Server.Resources;
 
-namespace CoAP.Proxy.Resources
+namespace Com.AugustCellars.CoAP.Proxy.Resources
 {
     public class ProxyCoapClientResource : ForwardingResource
     {

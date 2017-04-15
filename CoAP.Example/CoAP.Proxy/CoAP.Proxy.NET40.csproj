@@ -8,7 +8,7 @@
     <ProjectGuid>{96DBCEFE-CE81-4592-9101-9A3659BEC488}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CoAP.Examples</RootNamespace>
+    <RootNamespace>Com.AugustCellars.CoAP.Examples</RootNamespace>
     <AssemblyName>CoAPProxy</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

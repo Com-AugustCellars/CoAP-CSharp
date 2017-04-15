@@ -17,7 +17,7 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Http;
 using System.Runtime.Remoting.Messaging;
 
-namespace CoAP.Http
+namespace Com.AugustCellars.CoAP.Http
 {
     class WebServer
     {

@@ -11,9 +11,9 @@
 
 using System;
 using System.Collections.Generic;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP.Observe
+namespace Com.AugustCellars.CoAP.Observe
 {
     /// <summary>
     /// Represents an observing endpoint. It holds all observe relations

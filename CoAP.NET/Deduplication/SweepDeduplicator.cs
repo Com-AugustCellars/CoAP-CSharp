@@ -13,10 +13,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Timers;
-using CoAP.Log;
-using CoAP.Net;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP.Deduplication
+namespace Com.AugustCellars.CoAP.Deduplication
 {
     class SweepDeduplicator : IDeduplicator
     {

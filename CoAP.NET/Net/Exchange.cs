@@ -11,14 +11,14 @@
 
 using System;
 using System.Collections.Concurrent;
-using CoAP.Observe;
-using CoAP.Stack;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Observe;
+using Com.AugustCellars.CoAP.Stack;
+using Com.AugustCellars.CoAP.Util;
 #if INCLUDE_OSCOAP
-using CoAP.OSCOAP;
+using Com.AugustCellars.CoAP.OSCOAP;
 #endif
 
-namespace CoAP.Net
+namespace Com.AugustCellars.CoAP.Net
 {
     /// <summary>
     /// Represents the complete state of an exchange of one request

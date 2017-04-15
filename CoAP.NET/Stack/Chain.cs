@@ -13,7 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace CoAP.Stack
+namespace Com.AugustCellars.CoAP.Stack
 {
     /// <summary>
     /// Represents a chain of filters.

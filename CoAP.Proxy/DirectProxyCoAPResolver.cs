@@ -9,10 +9,10 @@
  * Please see README for more information.
  */
 
-using CoAP.Net;
-using CoAP.Proxy.Resources;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Proxy.Resources;
 
-namespace CoAP.Proxy
+namespace Com.AugustCellars.CoAP.Proxy
 {
     public class DirectProxyCoAPResolver : IProxyCoAPResolver
     {

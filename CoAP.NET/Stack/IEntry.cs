@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Stack
+namespace Com.AugustCellars.CoAP.Stack
 {
     /// <summary>
     /// Represents a name-filter pair that an <see cref="IChain&lt;TFilter, TNextFilter&gt;"/> contains.

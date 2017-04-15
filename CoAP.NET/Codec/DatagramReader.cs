@@ -12,7 +12,7 @@
 using System;
 using System.IO;
 
-namespace CoAP.Codec
+namespace Com.AugustCellars.CoAP.Codec
 {
     /// <summary>
     /// This class describes the functionality to read raw network-ordered datagrams on bit-level.

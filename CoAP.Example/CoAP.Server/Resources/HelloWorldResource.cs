@@ -1,7 +1,7 @@
 ﻿using System;
-using CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Server.Resources;
 
-namespace CoAP.Examples.Resources
+namespace Com.AugustCellars.CoAP.Examples.Resources
 {
     /// <summary>
     /// This resource responds with a kind "hello world" to GET requests.

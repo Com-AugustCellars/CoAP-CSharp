@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Observe
+namespace Com.AugustCellars.CoAP.Observe
 {
     /// <summary>
     /// Represents an event when a observing request is reregistering.

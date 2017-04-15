@@ -10,9 +10,9 @@
  */
 
 using System;
-using CoAP.Proxy;
+using Com.AugustCellars.CoAP.Proxy;
 
-namespace CoAP.Util
+namespace Com.AugustCellars.CoAP.Util
 {
     static class ThrowHelper
     {

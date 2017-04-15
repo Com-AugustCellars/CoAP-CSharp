@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// This class describes the block options of the CoAP messages

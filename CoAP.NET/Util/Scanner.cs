@@ -12,7 +12,7 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace CoAP.Util
+namespace Com.AugustCellars.CoAP.Util
 {
     class Scanner
     {

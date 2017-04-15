@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// Represents an empty CoAP message. An empty message has either

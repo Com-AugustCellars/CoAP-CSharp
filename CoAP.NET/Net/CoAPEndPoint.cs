@@ -10,13 +10,13 @@
  */
 
 using System;
-using CoAP.Channel;
-using CoAP.Codec;
-using CoAP.Log;
-using CoAP.Stack;
-using CoAP.Threading;
+using Com.AugustCellars.CoAP.Channel;
+using Com.AugustCellars.CoAP.Codec;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Stack;
+using Com.AugustCellars.CoAP.Threading;
 
-namespace CoAP.Net
+namespace Com.AugustCellars.CoAP.Net
 {
     /// <summary>
     /// EndPoint encapsulates the stack that executes the CoAP protocol.

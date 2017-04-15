@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Proxy
+namespace Com.AugustCellars.CoAP.Proxy
 {
     [Serializable]
     public class TranslationException : Exception

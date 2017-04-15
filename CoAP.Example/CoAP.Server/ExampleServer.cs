@@ -1,8 +1,8 @@
 ﻿using System;
-using CoAP.Examples.Resources;
-using CoAP.Server;
+using Com.AugustCellars.CoAP.Examples.Resources;
+using Com.AugustCellars.CoAP.Server;
 
-namespace CoAP.Examples
+namespace Com.AugustCellars.CoAP.Examples
 {
     public class ExampleServer
     {

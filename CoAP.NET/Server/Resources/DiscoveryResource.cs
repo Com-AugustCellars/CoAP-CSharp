@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Server.Resources
+namespace Com.AugustCellars.CoAP.Server.Resources
 {
     /// <summary>
     /// Represents the CoAP .well-known/core resource.

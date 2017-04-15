@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Log
+namespace Com.AugustCellars.CoAP.Log
 {
     /// <summary>
     /// Provides methods to log messages.

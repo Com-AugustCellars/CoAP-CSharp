@@ -12,12 +12,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using CoAP.Deduplication;
-using CoAP.Log;
-using CoAP.Observe;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Deduplication;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Observe;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP.Net
+namespace Com.AugustCellars.CoAP.Net
 {
     class Matcher : IMatcher, IDisposable
     {

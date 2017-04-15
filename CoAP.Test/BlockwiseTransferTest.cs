@@ -12,10 +12,10 @@ using TestCleanup = NUnit.Framework.TearDownAttribute;
 #else
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
-using CoAP.Server;
-using CoAP.Net;
+using Com.AugustCellars.CoAP.Server;
+using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     [TestClass]
     public class BlockwiseTransferTest

@@ -10,9 +10,9 @@
  */
 
 using System;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP.Net
+namespace Com.AugustCellars.CoAP.Net
 {
     public class ClientMessageDeliverer : IMessageDeliverer
     {

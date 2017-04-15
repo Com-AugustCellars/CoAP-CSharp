@@ -10,9 +10,9 @@
  */
 
 using System;
-using CoAP.Net;
+using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP.Stack
+namespace Com.AugustCellars.CoAP.Stack
 {
     /// <summary>
     /// Doesn't do much yet except for setting a simple token. Notice that empty

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Util;
 
 #if DNX451
 using Common.Logging;
 using Common.Logging.Configuration;
 
-namespace CoAP.Client.DNX
+namespace Com.AugustCellars.CoAP.Client.DNX
 {
 	// DNX entry point
 	public class Program
@@ -23,7 +23,7 @@ namespace CoAP.Client.DNX
 }
 #endif
 
-namespace CoAP.Examples
+namespace Com.AugustCellars.CoAP.Examples
 {
 
 	// .NET 2, .NET 4 entry point

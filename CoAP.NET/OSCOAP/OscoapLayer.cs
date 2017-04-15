@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Text;
 
-using CoAP.Log;
-using CoAP.Net;
-using CoAP.Stack;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.COSE;
 using PeterO.Cbor;
 
-namespace CoAP.OSCOAP
+namespace Com.AugustCellars.CoAP.OSCOAP
 {
 #if INCLUDE_OSCOAP
     public class OscoapLayer : AbstractLayer

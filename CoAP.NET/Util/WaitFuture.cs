@@ -12,7 +12,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CoAP.Util
+namespace Com.AugustCellars.CoAP.Util
 {
     /// <summary>
     /// Provides methods to wait for a response of a request.
