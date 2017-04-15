@@ -4,9 +4,10 @@
 language: csharp
 
 env:
-  - SLN=CoAP.NET20.2010.sln
   - SLN=CoAP.NET40.2010.sln
+    TARGET=NET40
   - SLN=CoAP.NET45.sln
+    TARGET=NET45
 
 install:
    - nuget install NUnit.Runners -Version 3.5.0 -OutputDirectory testrunner
