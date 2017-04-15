@@ -10,9 +10,9 @@ env:
   - SLN=CoAP.NET45.sln
     TARGET=NET45
     VERSION=Release
-  - SLN=CoAP.NET45.sln
-    TARGET=NET45
-    VERSION=Debug
+#  - SLN=CoAP.NET45.sln
+#    TARGET=NET45
+#    VERSION=Debug
 
 install:
    - nuget install NUnit.Runners -Version 3.5.0 -OutputDirectory testrunner
