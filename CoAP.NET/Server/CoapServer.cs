@@ -215,11 +215,8 @@ namespace CoAP.Server
 
             protected override void DoGet(CoapExchange exchange)
             {
-#if COAPALL || COAP03 || COAP08 || COAP12 || COAP13 || COAP18 || RFC7252
-                exchange.Respond("Ni Hao from CoAP.NET " + _server._config.Spec.Name);
-#else
+
                 exchange.Respond("Ni Hao from CoAP.NET " + Spec.Name);
-#endif
             }
         }
     }
