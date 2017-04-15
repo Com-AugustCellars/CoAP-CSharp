@@ -3,6 +3,6 @@ set -ev
 
 nuget restore $SLN
 
-xbuild /p:Configuration="Release" $SLN
+xbuild /p:Configuration=$Version $SLN
 
-mono ./testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./CoAP.Test/bin/Release/$TARGET/CoAP.Test.dll
+mono ./testrunner/NUnit.ConsoleRunner.3.5.0/tools/nunit3-console.exe ./CoAP.Test/bin/$Version/$TARGET/CoAP.Test.dll
