@@ -75,7 +75,7 @@ namespace CoAP.OSCOAP
                     exchange.OscoapContext = ctx;
                 }
 
-                Codec.IMessageEncoder me = Spec.Default.NewMessageEncoder();
+                Codec.IMessageEncoder me = Spec.NewMessageEncoder();
                 Request encryptedRequest = new Request(CoAP.Method.GET);
 
                 if (request.Payload != null) {
@@ -298,7 +298,7 @@ namespace CoAP.OSCOAP
                     Array.Copy(fixedHeader, newRequestData, fixedHeader.Length);
                     Array.Copy(payload, 0, newRequestData, fixedHeader.Length, payload.Length);
 
-                    CoAP.Codec.IMessageDecoder me = CoAP.Spec.Default.NewMessageDecoder(newRequestData);
+                    CoAP.Codec.IMessageDecoder me = CoAP.Spec.NewMessageDecoder(newRequestData);
                     CoAP.Request newRequest = me.DecodeRequest();
 
                     //  Update headers is a pain
@@ -343,7 +343,7 @@ namespace CoAP.OSCOAP
             if (exchange.OscoapContext != null) {
                 OSCOAP.SecurityContext ctx = exchange.OscoapContext;
 
-                Codec.IMessageEncoder me = Spec.Default.NewMessageEncoder();
+                Codec.IMessageEncoder me = Spec.NewMessageEncoder();
                 Response encryptedResponse = new Response((CoAP.StatusCode)response.Code);
 
                 bool hasPayload = false;
@@ -538,7 +538,7 @@ namespace CoAP.OSCOAP
                 Array.Copy(fixedHeader, rgb, fixedHeader.Length);
                 Array.Copy(payload, 0, rgb, fixedHeader.Length, payload.Length);
                 rgb[1] = 0x45;
-                Codec.IMessageDecoder me = CoAP.Spec.Default.NewMessageDecoder(rgb);
+                Codec.IMessageDecoder me = CoAP.Spec.NewMessageDecoder(rgb);
                 Response decryptedReq = me.DecodeResponse();
 
                 response.Payload = decryptedReq.Payload;

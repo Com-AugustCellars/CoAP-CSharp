@@ -13,64 +13,8 @@ namespace CoAP.Codec
     [TestClass]
     public class MessageTest
     {
-#if COAPALL
-        [TestMethod]
-        public void TestDraft03()
-        {
-            TestMessage(CoAP.Spec.Draft03);
-            TestMessageWithOptions(CoAP.Spec.Draft03);
-            TestMessageWithExtendedOption(CoAP.Spec.Draft03);
-            //TestRequestParsing(CoAP.Spec.Draft03);
-            //TestResponseParsing(CoAP.Spec.Draft03);
-        }
-
-        [TestMethod]
-        public void TestDraft08()
-        {
-            TestMessage(CoAP.Spec.Draft08);
-            TestMessageWithOptions(CoAP.Spec.Draft08);
-            TestMessageWithExtendedOption(CoAP.Spec.Draft08);
-            //TestRequestParsing(CoAP.Spec.Draft08);
-            //TestResponseParsing(CoAP.Spec.Draft08);
-        }
-
-        [TestMethod]
-        public void TestDraft12()
-        {
-            TestMessage(CoAP.Spec.Draft12);
-            TestMessageWithOptions(CoAP.Spec.Draft12);
-            TestMessageWithExtendedOption(CoAP.Spec.Draft12);
-            TestRequestParsing(CoAP.Spec.Draft12);
-            TestResponseParsing(CoAP.Spec.Draft12);
-        }
-
-        [TestMethod]
-        public void TestDraft13()
-        {
-            TestMessage(CoAP.Spec.Draft13);
-            TestMessageWithOptions(CoAP.Spec.Draft13);
-            TestMessageWithExtendedOption(CoAP.Spec.Draft13);
-            TestRequestParsing(CoAP.Spec.Draft13);
-            TestResponseParsing(CoAP.Spec.Draft13);
-        }
-
-        [TestMethod]
-        public void TestDraft18()
-        {
-            TestMessage(CoAP.Spec.Draft18);
-            TestMessageWithOptions(CoAP.Spec.Draft18);
-            TestMessageWithExtendedOption(CoAP.Spec.Draft18);
-            TestRequestParsing(CoAP.Spec.Draft18);
-            TestResponseParsing(CoAP.Spec.Draft18);
-        }
-#endif
-
-#if COAPALL
-        public void TestMessage(ISpec Spec)
-#else
         [TestMethod]
         public void TestMessage()
-#endif
         {
             Message msg = new Request(Method.GET, true);
 
@@ -87,12 +31,8 @@ namespace CoAP.Codec
             Assert.IsTrue(msg.Payload.SequenceEqual(convMsg.Payload));
         }
 
-#if COAPALL
-        public void TestMessageWithOptions(ISpec Spec)
-#else
         [TestMethod]
         public void TestMessageWithOptions()
-#endif
         {
             Message msg = new Request(Method.GET, true);
 
@@ -112,12 +52,8 @@ namespace CoAP.Codec
             Assert.IsTrue(msg.Payload.SequenceEqual(convMsg.Payload));
         }
 
-#if COAPALL
-        public void TestMessageWithExtendedOption(ISpec Spec)
-#else
         [TestMethod]
         public void TestMessageWithExtendedOption()
-#endif
         {
             Message msg = new Request(Method.GET, true);
 
@@ -141,12 +77,8 @@ namespace CoAP.Codec
             Assert.AreEqual(extendOpt.StringValue, "extend option");
         }
 
-#if COAPALL
-        public void TestRequestParsing(ISpec Spec)
-#else
         [TestMethod]
         public void TestRequestParsing()
-#endif
         {
             Request request = new Request(Method.POST, false);
             request.ID = 7;
@@ -166,12 +98,8 @@ namespace CoAP.Codec
             Assert.IsTrue(request.GetOptions().SequenceEqual(result.GetOptions()));
         }
 
-#if COAPALL
-        public void TestResponseParsing(ISpec Spec)
-#else
         [TestMethod]
         public void TestResponseParsing()
-#endif
         {
             Response response = new Response(StatusCode.Content);
             response.Type = MessageType.NON;
