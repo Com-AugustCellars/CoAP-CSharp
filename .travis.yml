@@ -6,7 +6,7 @@ language: csharp
 env:
   - SLN=CoAP.NET40.2010.sln
     TARGET=NET40
-    VESION=Release
+    VERSION=Release
   - SLN=CoAP.NET45.sln
     TARGET=NET45
     VERSION=Release
