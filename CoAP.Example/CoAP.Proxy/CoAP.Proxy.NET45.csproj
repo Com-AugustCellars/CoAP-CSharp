@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CoAP.Examples</RootNamespace>
     <AssemblyName>CoAPProxy</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\NET40\</OutputPath>
+    <OutputPath>bin\Debug\NET45\</OutputPath>
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -26,7 +26,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\NET40\</OutputPath>
+    <OutputPath>bin\Release\NET45\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -39,13 +39,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\CoAP.NET\CoAP.NET40.csproj">
+    <ProjectReference Include="..\..\CoAP.NET\CoAP.NET45.csproj">
       <Project>{45DB1E45-4831-4E4A-BB1E-AE92EEA182E3}</Project>
-      <Name>CoAP.NET40</Name>
+      <Name>CoAP.NET45</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\CoAP.Proxy\CoAP.Proxy.NET40.csproj">
+    <ProjectReference Include="..\..\CoAP.Proxy\CoAP.Proxy.NET45.csproj">
       <Project>{B8D6E88E-890B-4220-B994-C5EC7B19D282}</Project>
-      <Name>CoAP.Proxy.NET40</Name>
+      <Name>CoAP.Proxy.NET45</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

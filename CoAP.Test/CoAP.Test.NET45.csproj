@@ -11,7 +11,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CoAP</RootNamespace>
     <AssemblyName>CoAP.Test</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
   </PropertyGroup>
@@ -19,24 +19,25 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\NET40\</OutputPath>
+    <OutputPath>bin\Debug\NET45\</OutputPath>
     <DefineConstants Condition=" '$(VisualStudioVersion)' == '' ">TRACE;DEBUG;COAPALL</DefineConstants>
     <DefineConstants Condition=" '$(VisualStudioVersion)' != '' ">TRACE;DEBUG;NETFX_CORE,COAPALL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DefineConstants>TRACE;DEBUG;COAPALL</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\NET40\</OutputPath>
+    <OutputPath>bin\Release\NET45\</OutputPath>
     <DefineConstants>TRACE;COAPALL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Condition=" '$(VisualStudioVersion)' != '' " Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
-    <Reference Include="nunit.framework">
-      <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
+    <Reference Include="nunit.framework, Version=3.5.0.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.5.0\lib\net45\nunit.framework.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
   </ItemGroup>
@@ -66,13 +67,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CoAP.Example\CoAP.Client\CoAP.Client.NET40.csproj">
+    <ProjectReference Include="..\CoAP.Example\CoAP.Client\CoAP.Client.NET45.csproj">
       <Project>{30223ff5-4dcb-45b8-9b06-61eb9fbf9fa8}</Project>
-      <Name>CoAP.Client.NET40</Name>
+      <Name>CoAP.Client.NET45</Name>
     </ProjectReference>
-    <ProjectReference Include="..\CoAP.NET\CoAP.NET40.csproj">
+    <ProjectReference Include="..\CoAP.NET\CoAP.NET45.csproj">
       <Project>{45db1e45-4831-4e4a-bb1e-ae92eea182e3}</Project>
-      <Name>CoAP.NET40</Name>
+      <Name>CoAP.NET45</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

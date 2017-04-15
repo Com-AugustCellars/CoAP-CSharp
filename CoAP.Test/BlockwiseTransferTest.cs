@@ -50,8 +50,8 @@ namespace CoAP
         [TestCleanup]
         public void ShutdownServer()
         {
-            _server.Dispose();
-            _clientEndpoint.Dispose();
+            if (_server != null) _server.Dispose();
+            if (_clientEndpoint != null) _clientEndpoint.Dispose();
         }
 
         [TestMethod]

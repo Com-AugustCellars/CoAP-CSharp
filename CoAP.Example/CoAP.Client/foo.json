@@ -1,23 +1,26 @@
-{
+﻿{
   "version": "1.0.0-*",
   "description": "CoAP.Client.DNX Console Application",
-  "authors": [ "sgnezdov" ],
-  "tags": [ "" ],
+  "authors": [
+    "sgnezdov"
+  ],
+  "tags": [
+    ""
+  ],
   "projectUrl": "",
   "licenseUrl": "",
-
-  "dependencies": {
-    "CoAP.NET": "1.0.0-*"
-  },
-
+  "dependencies": {},
   "commands": {
     "CoAP.Client.DNX": "run"
   },
-
   "frameworks": {
-    "dnx451": {
-      "dependencies": {
+    "net40": {
+      "frameworkAssemblies": {
+        "System.ServiceModel": ""
       }
     }
+  },
+  "runtimes": {
+    "win": {}
   }
 }
