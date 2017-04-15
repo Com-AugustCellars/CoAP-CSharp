@@ -50,6 +50,8 @@ namespace CoAP
         [TestMethod]
         public void TestSynchronousCall()
         {
+            _notifications = 0;
+
             Uri uri = new Uri("coap://localhost:" + _serverPort + "/" + TARGET);
             CoapClient client = new CoapClient(uri);
 
@@ -123,6 +125,8 @@ namespace CoAP
         [TestMethod]
         public void TestAsynchronousCall()
         {
+            _notifications = 0;
+
             Uri uri = new Uri("coap://localhost:" + _serverPort + "/" + TARGET);
             CoapClient client = new CoapClient(uri);
             client.Error += (o, e) => Fail(e.Reason);
