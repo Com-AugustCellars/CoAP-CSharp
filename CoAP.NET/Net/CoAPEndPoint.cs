@@ -25,6 +25,10 @@ namespace Com.AugustCellars.CoAP.Net
     {
         static readonly ILogger log = LogManager.GetLogger(typeof(CoAPEndPoint));
 
+        public delegate IMessageEncoder FindMessageEncoder();
+
+        public delegate IMessageDecoder FindMessageDecoder(byte[] data);
+
         readonly ICoapConfig _config;
         readonly IChannel _channel;
         readonly CoapStack _coapStack;
@@ -33,6 +37,9 @@ namespace Com.AugustCellars.CoAP.Net
         private Int32 _running;
         private System.Net.EndPoint _localEP;
         private IExecutor _executor;
+
+        private FindMessageEncoder _messageEncoder;
+        private FindMessageDecoder _messageDecoder;
 
         /// <inheritdoc/>
         public event EventHandler<MessageEventArgs<Request>> SendingRequest;
@@ -139,6 +146,17 @@ namespace Com.AugustCellars.CoAP.Net
             }
         }
 
+        public FindMessageDecoder MessageDecoder
+        {
+            set { _messageDecoder = value; }
+            get { return _messageDecoder;  }
+        }
+
+        public FindMessageEncoder MessageEncoder {
+            set { _messageEncoder = value; }
+            get { return _messageEncoder; }
+        }
+
         /// <inheritdoc/>
         public IOutbox Outbox
         {
@@ -149,6 +167,14 @@ namespace Com.AugustCellars.CoAP.Net
         public Boolean Running
         {
             get { return _running > 0; }
+        }
+
+        /// <summary>
+        /// Return the stack used by this end point
+        /// </summary>
+        public CoapStack Stack
+        {
+            get { return _coapStack; }
         }
 
         /// <inheritdoc/>
@@ -232,7 +258,7 @@ namespace Com.AugustCellars.CoAP.Net
 
         private void ReceiveData(DataReceivedEventArgs e)
         {
-            IMessageDecoder decoder = Spec.NewMessageDecoder(e.Data);
+            IMessageDecoder decoder = _messageDecoder(e.Data); // Spec.NewMessageDecoder(e.Data);
             if (decoder.IsRequest)
             {
                 Request request;
@@ -348,9 +374,8 @@ namespace Com.AugustCellars.CoAP.Net
         private Byte[] Serialize(EmptyMessage message)
         {
             Byte[] bytes = message.Bytes;
-            if (bytes == null)
-            {
-                bytes = Spec.NewMessageEncoder().Encode(message);
+            if (bytes == null) {
+                bytes = _messageEncoder().Encode(message);  //  Spec.NewMessageEncoder().Encode(message);
                 message.Bytes = bytes;
             }
             return bytes;
@@ -359,9 +384,8 @@ namespace Com.AugustCellars.CoAP.Net
         private Byte[] Serialize(Request request)
         {
             Byte[] bytes = request.Bytes;
-            if (bytes == null)
-            {
-                bytes = Spec.NewMessageEncoder().Encode(request);
+            if (bytes == null) {
+                bytes = _messageEncoder().Encode(request); //  Spec.NewMessageEncoder().Encode(request);
                 request.Bytes = bytes;
             }
             return bytes;
@@ -372,7 +396,7 @@ namespace Com.AugustCellars.CoAP.Net
             Byte[] bytes = response.Bytes;
             if (bytes == null)
             {
-                bytes = Spec.NewMessageEncoder().Encode(response);
+                bytes = _messageEncoder().Encode(response); // Spec.NewMessageEncoder().Encode(response);
                 response.Bytes = bytes;
             }
             return bytes;

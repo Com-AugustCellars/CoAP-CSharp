@@ -91,5 +91,14 @@ namespace Com.AugustCellars.CoAP
         /// The highest value of a response code.
         /// </summary>
         public const Int32 ResponseCodeUpperBound = 191;
+
+        /// <summary>
+        /// The lowest value of a signal code.
+        /// </summary>
+        public const Int32 SignalCodeLowerBound = 224;
+        /// <summary>
+        /// The highest value of a signal code.
+        /// </summary>
+        public const Int32 SignalCodeUpperBound = 255;
     }
 }

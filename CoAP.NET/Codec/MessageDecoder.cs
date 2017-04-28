@@ -93,6 +93,16 @@ namespace Com.AugustCellars.CoAP.Codec
         }
 
         /// <inheritdoc/>
+        public Boolean IsSignal
+        {
+            get
+            {
+                return m_code >= CoapConstants.SignalCodeLowerBound &&
+                       m_code <= CoapConstants.SignalCodeUpperBound;
+            }
+        }
+
+        /// <inheritdoc/>
         public Int32 Version
         {
             get { return m_version; }

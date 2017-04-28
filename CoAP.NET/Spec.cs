@@ -88,7 +88,7 @@ namespace Com.AugustCellars.CoAP
                 throw ThrowHelper.Argument("nibble", "Unsupported option delta " + nibble);
         }
 
-        class MessageEncoder18 : MessageEncoder
+        public class MessageEncoder18 : MessageEncoder
         {
             protected override void Serialize(DatagramWriter writer, Message msg, Int32 code)
             {
@@ -160,7 +160,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        class MessageDecoder18 : MessageDecoder
+        public class MessageDecoder18 : MessageDecoder
         {
             public MessageDecoder18(Byte[] data)
                 : base(data)

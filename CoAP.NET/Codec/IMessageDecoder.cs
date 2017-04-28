@@ -39,6 +39,10 @@ namespace Com.AugustCellars.CoAP.Codec
         /// </summary>
         Boolean IsEmpty { get; }
         /// <summary>
+        /// Checks if the decoding message is a signal
+        /// </summary>
+        Boolean IsSignal { get; }
+        /// <summary>
         /// Gets the version of the decoding message.
         /// </summary>
         Int32 Version { get; }
