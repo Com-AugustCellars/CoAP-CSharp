@@ -38,8 +38,8 @@ namespace Com.AugustCellars.CoAP.Net
         private System.Net.EndPoint _localEP;
         private IExecutor _executor;
 
-        private FindMessageEncoder _messageEncoder;
-        private FindMessageDecoder _messageDecoder;
+        private FindMessageEncoder _messageEncoder = Spec.NewMessageEncoder;
+        private FindMessageDecoder _messageDecoder = Spec.NewMessageDecoder;
 
         /// <inheritdoc/>
         public event EventHandler<MessageEventArgs<Request>> SendingRequest;
