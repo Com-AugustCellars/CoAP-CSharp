@@ -14,16 +14,16 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 #if INCLUDE_OSCOAP
     public class OscoapLayer : AbstractLayer
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(OscoapLayer));
-        static byte[] fixedHeader = new byte[] { 0x40, 0x01, 0xff, 0xff };
+        static readonly ILogger _Log = LogManager.GetLogger(typeof(OscoapLayer));
+        static readonly byte[] _FixedHeader = new byte[] { 0x40, 0x01, 0xff, 0xff };
         Boolean _replayWindow = true;
         readonly ConcurrentDictionary<Exchange.KeyUri, BlockHolder> _ongoingExchanges = new ConcurrentDictionary<Exchange.KeyUri, BlockHolder>();
 
         class BlockHolder
         {
-            BlockwiseStatus _requestStatus;
-            BlockwiseStatus _responseStatus;
-            Response _response;
+            readonly BlockwiseStatus _requestStatus;
+            readonly BlockwiseStatus _responseStatus;
+            readonly Response _response;
 
             public BlockHolder(Exchange exchange)
             {
@@ -46,14 +46,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// </summary>
         public OscoapLayer(ICoapConfig config)
         {
-            /*
-            _maxMessageSize = config.MaxMessageSize;
-            _defaultBlockSize = config.DefaultBlockSize;
-            _blockTimeout = config.BlockwiseStatusLifetime;
-            */
             _replayWindow = config.OSCOAP_ReplayWindow;
-            if (log.IsInfoEnabled)
-                log.Info("OscoapLayer - replay=" + _replayWindow.ToString());  // Print out config if any
+            if (_Log.IsInfoEnabled) {
+                _Log.Info("OscoapLayer - replay=" + _replayWindow.ToString()); // Print out config if any
+            }
 
             config.PropertyChanged += ConfigChanged;
         }
@@ -69,7 +65,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             if ((request.OscoapContext != null) || (exchange.OscoapContext != null)) {
                 bool hasPayload = false;
 
-                OSCOAP.SecurityContext ctx = exchange.OscoapContext;
+                SecurityContext ctx = exchange.OscoapContext;
                 if (request.OscoapContext != null) {
                     ctx = request.OscoapContext;
                     exchange.OscoapContext = ctx;
@@ -85,9 +81,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 MoveRequestHeaders(request, encryptedRequest);
 
-                if (log.IsInfoEnabled) {
-                    log.Info("New inner response message");
-                    log.Info(encryptedRequest.ToString());
+                if (_Log.IsInfoEnabled) {
+                    _Log.Info("New inner response message");
+                    _Log.Info(encryptedRequest.ToString());
                 }
 
                 ctx.Sender.IncrementSequenceNumber();
@@ -116,12 +112,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     case 1: aad[0] = CBORObject.FromObject(2); break; // Change version #
                     case 2: aad[1] = CBORObject.FromObject(request.Code + 1); break; // Change request code
                     case 3: aad[2] = CBORObject.FromObject(ctx.Sender.Algorithm.AsInt32() + 1); break; // Change algorithm number
-
                 }
 #endif
 
-                if (log.IsInfoEnabled) {
-                    log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
+                if (_Log.IsInfoEnabled) {
+                    _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
                 }
 
                 enc.SetExternalData(aad.EncodeToBytes());
@@ -143,18 +138,16 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 byte[] encBody;
 #if OSCOAP_COMPRESS
                 encBody = DoCompression(enc);
-
-
 #else
                 encBody= enc.EncodeToBytes();
 #endif
 
                 if (hasPayload) {
                     request.Payload = encBody;
-                    request.AddOption(new OSCOAP.OscoapOption());
+                    request.AddOption(new OscoapOption());
                 }
                 else {
-                    OSCOAP.OscoapOption o = new OSCOAP.OscoapOption();
+                    OscoapOption o = new OscoapOption();
                     o.Set(encBody);
                     request.AddOption(o);
                 }
@@ -171,9 +164,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         public override void ReceiveRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
-            Response response;
-
             if (request.HasOption(OptionType.Oscoap)) {
+                Response response;
                 try {
                     CoAP.Option op = request.GetFirstOption(OptionType.Oscoap);
                     request.RemoveOptions(OptionType.Oscoap);
@@ -191,9 +183,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                     msg = Uncompress(raw);
                     if (msg == null) {
-                        response = new Response((StatusCode)0x70);
-                        response.PayloadString = "Unable to decompress";
-                        exchange.SendResponse(response);
+                        if (request.Type == MessageType.CON) {
+                            response = new Response(StatusCode.BadRequest);
+                            response.PayloadString = "Unable to decompress";
+                            exchange.SendResponse(response);
+                        }
                         return;  // Ignore messages that have no known security context.
                     }
 
@@ -246,8 +240,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                     foreach (SecurityContext context in contexts) {
                         if (_replayWindow && context.Recipient.ReplayWindow.HitTest(seqNo)) {
-                            if (log.IsInfoEnabled) {
-                                log.Info(String.Format("Hit test on {0} failed", seqNo));
+                            if (_Log.IsInfoEnabled) {
+                                _Log.Info(String.Format("Hit test on {0} failed", seqNo));
                             }
                             responseString = "Hit test - duplicate";
                             continue;
@@ -255,10 +249,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                         aad[3] = context.Recipient.Algorithm;
 
-                        if (log.IsInfoEnabled) {
-                            log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
-                            log.Info("IV = " + BitConverter.ToString(context.Recipient.GetIV(partialIV).GetByteString()));
-                            log.Info("Key = " + BitConverter.ToString(context.Recipient.Key));
+                        if (_Log.IsInfoEnabled) {
+                            _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
+                            _Log.Info("IV = " + BitConverter.ToString(context.Recipient.GetIV(partialIV).GetByteString()));
+                            _Log.Info("Key = " + BitConverter.ToString(context.Recipient.Key));
                         }
                         
 
@@ -273,7 +267,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                             context.Recipient.ReplayWindow.SetHit(seqNo);
                         }
                         catch (Exception e) {
-                            if (log.IsInfoEnabled) log.Info("--- " + e.ToString());
+                            if (_Log.IsInfoEnabled) _Log.Info("--- " + e.ToString());
                             responseString = "Decryption Failure";
                             ctx = null;
                         }
@@ -284,9 +278,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     }
 
                     if (ctx == null) {
-                        response = new Response((StatusCode)0x70);
-                        response.PayloadString = responseString;
-                        exchange.SendResponse(response);
+                        if (request.Type == MessageType.CON) {
+                            response = new Response((StatusCode) 0x70) {
+                                PayloadString = responseString
+                            };
+                            exchange.SendResponse(response);
+                        }
                         return;
                     }
 
@@ -294,9 +291,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     request.OscoapContext = ctx;
                     exchange.OscoapSequenceNumber = partialIV;
 
-                    byte[] newRequestData = new byte[payload.Length + fixedHeader.Length];
-                    Array.Copy(fixedHeader, newRequestData, fixedHeader.Length);
-                    Array.Copy(payload, 0, newRequestData, fixedHeader.Length, payload.Length);
+                    byte[] newRequestData = new byte[payload.Length + _FixedHeader.Length];
+                    Array.Copy(_FixedHeader, newRequestData, _FixedHeader.Length);
+                    Array.Copy(payload, 0, newRequestData, _FixedHeader.Length, payload.Length);
 
                     CoAP.Codec.IMessageDecoder me = CoAP.Spec.NewMessageDecoder(newRequestData);
                     CoAP.Request newRequest = me.DecodeRequest();
@@ -305,7 +302,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                     RestoreOptions(request, newRequest);
 
-                    if (log.IsInfoEnabled) {
+                    if (_Log.IsInfoEnabled) {
                        // log.Info(String.Format("Secure message post = " + Util.Utils.ToString(request)));
                     }
 
@@ -324,12 +321,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     request.Payload = newRequest.Payload;
                 }
                 catch (Exception e) {
-                    log.Error("OSCOAP Layer: reject message because " + e.ToString());
+                    _Log.Error("OSCOAP Layer: reject message because " + e.ToString());
                     exchange.OscoapContext = null;
 
-                    response = new Response((StatusCode)0x70);
-                    response.Payload = UTF8Encoding.UTF8.GetBytes( "Error is " + e.Message);
-                    exchange.SendResponse(response);
+                    if (request.Type == MessageType.CON) {
+                        response = new Response((StatusCode) 0x70);
+                        response.Payload = Encoding.UTF8.GetBytes("Error is " + e.Message);
+                        exchange.SendResponse(response);
+                    }
                     //  Ignore messages that we cannot decrypt.
                     return;
                 }
@@ -354,9 +353,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 MoveResponseHeaders(response, encryptedResponse);
 
-                if (log.IsInfoEnabled) {
-                    log.Info("New inner response message");
-                    log.Info(encryptedResponse.ToString());
+                if (_Log.IsInfoEnabled) {
+                    _Log.Info("New inner response message");
+                    _Log.Info(encryptedResponse.ToString());
                 }
 
                 //  Build AAD
@@ -436,15 +435,15 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         //  Remember ongoing blockwise GET requests
                         BlockHolder blockInfo = new BlockHolder(exchange);
                         if (Util.Utils.Put(_ongoingExchanges, keyUri, blockInfo) == null) {
-                            if (log.IsInfoEnabled) log.Info("Ongoing Block2 started late, storing " + keyUri + " for " + request);
+                            if (_Log.IsInfoEnabled) _Log.Info("Ongoing Block2 started late, storing " + keyUri + " for " + request);
 
                         }
                         else {
-                            if (log.IsInfoEnabled) log.Info("Ongoing Block2 continued, storing " + keyUri + " for " + request);
+                            if (_Log.IsInfoEnabled) _Log.Info("Ongoing Block2 continued, storing " + keyUri + " for " + request);
                         }
                     }
                     else {
-                        if (log.IsInfoEnabled) log.Info("Ongoing Block2 completed, cleaning up " + keyUri + " for " + request);
+                        if (_Log.IsInfoEnabled) _Log.Info("Ongoing Block2 completed, cleaning up " + keyUri + " for " + request);
                         BlockHolder exc;
                         _ongoingExchanges.TryRemove(keyUri, out exc);
                     }
@@ -526,17 +525,17 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 msg.SetExternalData(aad.EncodeToBytes());
 
-                if (log.IsInfoEnabled) {
-                    log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
+                if (_Log.IsInfoEnabled) {
+                    _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
                 }
 
                 byte[] payload = msg.Decrypt(ctx.Recipient.Key);
 
                 ctx.Recipient.ReplayWindow.SetHit(seqNo);
 
-                byte[] rgb = new byte[payload.Length + fixedHeader.Length];
-                Array.Copy(fixedHeader, rgb, fixedHeader.Length);
-                Array.Copy(payload, 0, rgb, fixedHeader.Length, payload.Length);
+                byte[] rgb = new byte[payload.Length + _FixedHeader.Length];
+                Array.Copy(_FixedHeader, rgb, _FixedHeader.Length);
+                Array.Copy(payload, 0, rgb, _FixedHeader.Length, payload.Length);
                 rgb[1] = 0x45;
                 Codec.IMessageDecoder me = CoAP.Spec.NewMessageDecoder(rgb);
                 Response decryptedReq = me.DecodeResponse();
@@ -548,10 +547,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             base.ReceiveResponse(nextLayer, exchange, response);
         }
 
-        void MoveRequestHeaders(Request unprotected, Request encrypted)
+        private static void MoveRequestHeaders(Request unprotected, Request encrypted)
         {
             List<Option> deleteMe = new List<Option>();
-            int port;
 
             //
             //  Rules for dealing with Proxy-URI are as follows:
@@ -563,6 +561,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             //  Deal with Proxy-Uri
             if (unprotected.ProxyUri != null) {
+                int port;
                 String strUri = "";
                 if (!unprotected.ProxyUri.IsAbsoluteUri) throw new Exception("Must be an absolute URI");
                 if (unprotected.ProxyUri.Fragment != null) throw new Exception("Fragments not allowed in ProxyUri");
@@ -585,12 +584,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
                 strUri += "//" + unprotected.ProxyUri.Host;
 
-
-                String strPort = "";
                 if ((unprotected.ProxyUri.Port != 0) && (unprotected.ProxyUri.Port != port)) {
                     encrypted.UriPort = unprotected.ProxyUri.Port;
-                    strPort = ":" + port.ToString();
-                    strUri += strPort;
+                    strUri += ":" + port.ToString();
                 }
 
                 string p = unprotected.ProxyUri.AbsolutePath;
@@ -630,7 +626,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             unprotected.URI = null;
         }
 
-        void MoveResponseHeaders(Response unprotected, Response encrypted)
+        private static void MoveResponseHeaders(Response unprotected, Response encrypted)
         {
             List<Option> deleteMe = new List<Option>();
 
@@ -662,7 +658,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             foreach (Option op in toDelete) unprotected.RemoveOptions(op.Type);
         }
 
-        void RestoreOptions(Message response, Message decryptedReq)
+        private static void RestoreOptions(Message response, Message decryptedReq)
         {
 
             foreach (Option op in response.GetOptions()) {
@@ -694,32 +690,50 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
         }
 
-        byte[] DoCompression(Encrypt0Message msg)
+        private static byte[] DoCompression(Encrypt0Message msg)
         {
             CBORObject body;
             byte[] encBody;
 
             body = msg.EncodeToCBORObject();
 
-            // 10000abc 01000def -> 00abcdef
-            // abc is going to be 2 or 3 - count of items in the array
-            // def is part of the partial IV field
-            // Fake a CBOR array and then screw it up big time
-            //  [ partial IV, ?kid, encrypted content (w/o cbor headers) ]
-            byte[] iv = msg.FindAttribute(HeaderKeys.PartialIV).GetByteString();
-            byte[] kid = new byte[0];
-            CBORObject kidO = msg.FindAttribute(HeaderKeys.KeyId);
-            if (kidO != null) kid = kidO.EncodeToBytes();
-            byte[] foo = body[2].GetByteString();
+            // Start with 0abc deee
+            //  a, b, c and d are presence flags
+            //  eee is the length of the iv field.
 
-            encBody = new byte[iv.Length + 1 + kid.Length + foo.Length];
-            if (kid != null) encBody[0] = (byte)(0x18 | (iv.Length));
-            else encBody[0] = (byte)(0x10 | (iv[0] & 0x7));
-            Array.Copy(iv, 0, encBody, 1, iv.Length);
+            int cbSize = 1;
+
+            //
+            byte[] iv = msg.FindAttribute(HeaderKeys.PartialIV).GetByteString();
+            cbSize += iv.Length;
+            byte head = (byte) iv.Length;
+
+            //
+
+            CBORObject kid = msg.FindAttribute(HeaderKeys.KeyId);
             if (kid != null) {
-                Array.Copy(kid, 0, encBody, iv.Length+1, kid.Length);
+                cbSize += (1 + kid.GetByteString().Length);
+                head |= 0x08;
             }
-            Array.Copy(foo, 0, encBody, iv.Length +1 + kid.Length, foo.Length);
+
+            //  Additional items to flag
+
+            encBody = new byte[cbSize + body.GetByteString().Length];
+            encBody[0] = head;
+            cbSize = 1;
+            if (iv.Length > 0) {
+                Array.Copy(iv, 0, encBody, cbSize, iv.Length);
+                cbSize += iv.Length;
+            }
+
+            if (kid != null) {
+                if (kid.GetByteString().Length > 255) throw new Exception("KID too large");
+                encBody[cbSize] = (byte) kid.GetByteString().Length;
+                Array.Copy(kid.GetByteString(), 0, encBody, cbSize+1, kid.GetByteString().Length);
+                cbSize += kid.GetByteString().Length + 1;
+            }
+
+            Array.Copy(body.GetByteString(), 0, encBody, cbSize, body.GetByteString().Length);
 
             Console.WriteLine("Protected Attributes = " + BitConverter.ToString(body[0].GetByteString()));
 
@@ -728,32 +742,21 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         Encrypt0Message Uncompress(byte[] raw)
         {
-            bool fHasKid = true;
             CBORObject map = CBORObject.NewMap();
 
             //  Decode the wierd body
-            //  First byte is of the form 00aabbbb where aa is the number of items and bbbb is the bottom of the IV size.
-            if ((raw[0] & 0xf8) == 0x18) {
-                fHasKid = true;
-            }
-            else if ((raw[0] & 0xf8) == 0x10) {
-                fHasKid = false;
-            }
-            else { 
-                return null;
-            }
+            //  First byte is of the form 0abcdeee where abcd are flags and eee is the the IV size.
+            if (0 != (raw[0] & 0x80)) return null;  // This is not legal
+            if (0 != (raw[0] & 0x70)) return null;  // These are not currently supported.
 
             byte[] ivX = new byte[raw[0] & 0x7];
-            if (ivX.Length > 22) return null;            // We don't currently support this case.
             int iX = 1;
             Array.Copy(raw, iX, ivX, 0, ivX.Length);
             map.Add(HeaderKeys.PartialIV, ivX);
 
-
             iX += ivX.Length;
-            if (fHasKid) {
-                byte[] kidX = new byte[raw[ivX.Length + 1] & 0xf];
-                if (kidX.Length > 22) return null;           // We dont' currently support this case.
+            if (0 != (raw[0] & 0x08)) {
+                byte[] kidX = new byte[raw[ivX.Length]];
                 Array.Copy(raw, iX + 1, kidX, 0, kidX.Length);
                 iX += (kidX.Length + 1);
                 map.Add(HeaderKeys.KeyId, kidX);
