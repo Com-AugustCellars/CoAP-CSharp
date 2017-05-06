@@ -8,6 +8,7 @@ using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.COSE;
 using PeterO.Cbor;
+// ReSharper disable All
 
 namespace Com.AugustCellars.CoAP.OSCOAP
 {
@@ -72,7 +73,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
 
                 Codec.IMessageEncoder me = Spec.NewMessageEncoder();
-                Request encryptedRequest = new Request(CoAP.Method.GET);
+                Request encryptedRequest = new Request(Method.GET);
 
                 if (request.Payload != null) {
                     hasPayload = true;
@@ -94,9 +95,6 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 byte[] msg2 = new byte[msg.Length - (4 + tokenSize)];
                 Array.Copy(msg, 4 + tokenSize, msg2, 0, msg2.Length);
                 enc.SetContent(msg2);
-
-                // Build the partial URI
-                string partialURI = request.URI.AbsoluteUri; // M00BUG?
 
                 // Build AAD
                 CBORObject aad = CBORObject.NewArray();
@@ -167,7 +165,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             if (request.HasOption(OptionType.Oscoap)) {
                 Response response;
                 try {
-                    CoAP.Option op = request.GetFirstOption(OptionType.Oscoap);
+                    Option op = request.GetFirstOption(OptionType.Oscoap);
                     request.RemoveOptions(OptionType.Oscoap);
 
                     Encrypt0Message msg;
@@ -208,7 +206,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     }
                     else {
                         CBORObject kid = msg.FindAttribute(HeaderKeys.KeyId);
-                        contexts = OSCOAP.SecurityContextSet.AllContexts.FindByKid(kid.GetByteString());
+                        contexts = SecurityContextSet.AllContexts.FindByKid(kid.GetByteString());
                         if (contexts.Count == 0) {
                             response = new Response((StatusCode) 0x70);
                             response.PayloadString = "No Context Found - 1";
@@ -295,8 +293,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     Array.Copy(_FixedHeader, newRequestData, _FixedHeader.Length);
                     Array.Copy(payload, 0, newRequestData, _FixedHeader.Length, payload.Length);
 
-                    CoAP.Codec.IMessageDecoder me = CoAP.Spec.NewMessageDecoder(newRequestData);
-                    CoAP.Request newRequest = me.DecodeRequest();
+                    Codec.IMessageDecoder me = Spec.NewMessageDecoder(newRequestData);
+                    Request newRequest = me.DecodeRequest();
 
                     //  Update headers is a pain
 
@@ -310,7 +308,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                     if (request.HasOption(OptionType.Block2)) {
                         Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, null, request.Source);
-                        BlockHolder block = null;
+                        BlockHolder block;
                         _ongoingExchanges.TryGetValue(keyUri, out block);
 
                         if (block != null) {
@@ -340,10 +338,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public override void SendResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
             if (exchange.OscoapContext != null) {
-                OSCOAP.SecurityContext ctx = exchange.OscoapContext;
+                SecurityContext ctx = exchange.OscoapContext;
 
                 Codec.IMessageEncoder me = Spec.NewMessageEncoder();
-                Response encryptedResponse = new Response((CoAP.StatusCode)response.Code);
+                Response encryptedResponse = new Response((StatusCode)response.Code);
 
                 bool hasPayload = false;
                 if (response.Payload != null) {
@@ -415,10 +413,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 if (hasPayload) {
                     response.Payload = finalBody;
-                    response.AddOption(new OSCOAP.OscoapOption());
+                    response.AddOption(new OscoapOption());
                 }
                 else {
-                    OSCOAP.OscoapOption o = new OSCOAP.OscoapOption();
+                    OscoapOption o = new OscoapOption();
                     o.Set(finalBody);
                     response.AddOption(o);
                 }
@@ -458,7 +456,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         {
             if (response.HasOption(OptionType.Oscoap)) {
                 Encrypt0Message msg;
-                OSCOAP.SecurityContext ctx;
+                SecurityContext ctx;
                 Option op = response.GetFirstOption(OptionType.Oscoap);
 
                  if (exchange.OscoapContext == null) {
@@ -478,15 +476,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     if (msg == null) return;
                 }
                 else {
-                    CBORObject protectedMap = CBORObject.NewMap();
-                    // protectedMap.Add(HeaderKeys.PartialIV, CBORObject.FromObject( ctx.Sender.PartialIV));
-
                     CBORObject msgX = CBORObject.NewArray();
                     msgX.Add(new byte[0] /*protectedMap.EncodeToBytes()*/);
                     msgX.Add(CBORObject.NewMap());
                     msgX.Add(raw);
 
-                    msg = (Encrypt0Message)Com.AugustCellars.COSE.Message.DecodeFromBytes(msgX.EncodeToBytes(), Tags.Encrypt0);
+                    msg = (Encrypt0Message)COSE.Message.DecodeFromBytes(msgX.EncodeToBytes(), Tags.Encrypt0);
                     msg.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV), Attributes.DO_NOT_SEND);
                 }
 #else
@@ -537,7 +532,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 Array.Copy(_FixedHeader, rgb, _FixedHeader.Length);
                 Array.Copy(payload, 0, rgb, _FixedHeader.Length, payload.Length);
                 rgb[1] = 0x45;
-                Codec.IMessageDecoder me = CoAP.Spec.NewMessageDecoder(rgb);
+                Codec.IMessageDecoder me = Spec.NewMessageDecoder(rgb);
                 Response decryptedReq = me.DecodeResponse();
 
                 response.Payload = decryptedReq.Payload;
@@ -549,8 +544,6 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         private static void MoveRequestHeaders(Request unprotected, Request encrypted)
         {
-            List<Option> deleteMe = new List<Option>();
-
             //
             //  Rules for dealing with Proxy-URI are as follows:
             //
@@ -562,7 +555,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             //  Deal with Proxy-Uri
             if (unprotected.ProxyUri != null) {
                 int port;
-                String strUri = "";
+                String strUri;
                 if (!unprotected.ProxyUri.IsAbsoluteUri) throw new Exception("Must be an absolute URI");
                 if (unprotected.ProxyUri.Fragment != null) throw new Exception("Fragments not allowed in ProxyUri");
                 switch (unprotected.ProxyUri.Scheme) {
@@ -771,7 +764,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             msgX.Add(map);
             msgX.Add(encBody);
 
-           Encrypt0Message msg = (Encrypt0Message)Com.AugustCellars.COSE.Message.DecodeFromBytes(msgX.EncodeToBytes(), Tags.Encrypt0);
+           Encrypt0Message msg = (Encrypt0Message)COSE.Message.DecodeFromBytes(msgX.EncodeToBytes(), Tags.Encrypt0);
 
             return msg;
 
