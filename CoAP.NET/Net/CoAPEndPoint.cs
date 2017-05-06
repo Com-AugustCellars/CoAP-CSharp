@@ -37,6 +37,7 @@ namespace Com.AugustCellars.CoAP.Net
         private Int32 _running;
         private System.Net.EndPoint _localEP;
         private IExecutor _executor;
+        protected String _endpointSchema;
 
         private FindMessageEncoder _messageEncoder = Spec.NewMessageEncoder;
         private FindMessageDecoder _messageDecoder = Spec.NewMessageDecoder;
@@ -110,6 +111,7 @@ namespace Com.AugustCellars.CoAP.Net
             _matcher = new Matcher(config);
             _coapStack = new CoapStack(config);
             _channel.DataReceived += ReceiveData;
+            _endpointSchema = "coaps";
         }
 
         /// <inheritdoc/>
@@ -236,6 +238,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public void SendRequest(Request request)
         {
+            if (request.URI.Scheme != _endpointSchema) throw new Exception("Schema is incorrect for the end point");
             _executor.Start(() => _coapStack.SendRequest(request));
         }
 
