@@ -53,6 +53,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
 
             config.PropertyChanged += ConfigChanged;
+
+           // _replayWindow = false;
         }
 
         void ConfigChanged(Object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -131,6 +133,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 enc.AddAttribute(HeaderKeys.Algorithm, ctx.Sender.Algorithm, Attributes.DO_NOT_SEND);
                 enc.AddAttribute(HeaderKeys.KeyId, CBORObject.FromObject(ctx.Sender.Id), /*Attributes.PROTECTED*/ Attributes.DO_NOT_SEND);
 
+                if (_Log.IsInfoEnabled) {
+                    _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
+                    _Log.Info("IV = " + BitConverter.ToString(ctx.Sender.GetIV(ctx.Sender.PartialIV).GetByteString()));
+                    _Log.Info("Key = " + BitConverter.ToString(ctx.Sender.Key));
+                }
+
                 enc.Encrypt(ctx.Sender.Key);
 
                 byte[] encBody;
@@ -156,6 +164,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
 #endif
 
+
+
             }
             base.SendRequest(nextLayer, exchange, request);
         }
@@ -170,6 +180,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                     Encrypt0Message msg;
 
+                    if (_Log.IsInfoEnabled) {
+                        _Log.Info("Incoming Request: " + Util.Utils.ToString(request));
+                    }
+
 #if OSCOAP_COMPRESS
                     byte[] raw;
                     if (op.RawValue.Length== 0) {
@@ -182,7 +196,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     msg = Uncompress(raw);
                     if (msg == null) {
                         if (request.Type == MessageType.CON) {
-                            response = new Response(StatusCode.BadRequest);
+                            response = new Response(StatusCode.BadOption);
                             response.PayloadString = "Unable to decompress";
                             exchange.SendResponse(response);
                         }
@@ -208,7 +222,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         CBORObject kid = msg.FindAttribute(HeaderKeys.KeyId);
                         contexts = SecurityContextSet.AllContexts.FindByKid(kid.GetByteString());
                         if (contexts.Count == 0) {
-                            response = new Response((StatusCode) 0x70);
+                            response = new Response(StatusCode.Unauthorized);
                             response.PayloadString = "No Context Found - 1";
                             exchange.SendResponse(response);
                             return;  // Ignore messages that have no known security context.
@@ -277,7 +291,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                     if (ctx == null) {
                         if (request.Type == MessageType.CON) {
-                            response = new Response((StatusCode) 0x70) {
+                            response = new Response(StatusCode.BadRequest) {
                                 PayloadString = responseString
                             };
                             exchange.SendResponse(response);
@@ -323,7 +337,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     exchange.OscoapContext = null;
 
                     if (request.Type == MessageType.CON) {
-                        response = new Response((StatusCode) 0x70);
+                        response = new Response(StatusCode.Unauthorized);
                         response.Payload = Encoding.UTF8.GetBytes("Error is " + e.Message);
                         exchange.SendResponse(response);
                     }
@@ -400,6 +414,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 byte[] finalBody;
 #if OSCOAP_COMPRESS
+#if false
+
                 if (response.HasOption(OptionType.Observe)) {
                     finalBody = DoCompression(enc);
                 }
@@ -407,6 +423,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     CBORObject msgX = enc.EncodeToCBORObject();
                     finalBody = msgX[2].GetByteString();
                 }
+#else
+                finalBody = DoCompression(enc);
+#endif
 #else
                 finalBody = enc.EncodeToBytes();
 #endif
@@ -470,18 +489,16 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 else raw = response.Payload;
 
                 bool fHasObserve = response.HasOption(OptionType.Observe);
-            
+
                 if (fHasObserve) {
                     msg = Uncompress(raw);
                     if (msg == null) return;
                 }
                 else {
-                    CBORObject msgX = CBORObject.NewArray();
-                    msgX.Add(new byte[0] /*protectedMap.EncodeToBytes()*/);
-                    msgX.Add(CBORObject.NewMap());
-                    msgX.Add(raw);
+                    msg = Uncompress(raw);
+                    if (msg == null)
+                        return;
 
-                    msg = (Encrypt0Message)COSE.Message.DecodeFromBytes(msgX.EncodeToBytes(), Tags.Encrypt0);
                     msg.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV), Attributes.DO_NOT_SEND);
                 }
 #else
@@ -685,10 +702,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         private static byte[] DoCompression(Encrypt0Message msg)
         {
-            CBORObject body;
+            CBORObject encMsg = msg.EncodeToCBORObject();
+            byte[] body;
             byte[] encBody;
 
-            body = msg.EncodeToCBORObject();
+            body = encMsg[2].GetByteString();
+            
 
             // Start with 0abc deee
             //  a, b, c and d are presence flags
@@ -697,7 +716,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             int cbSize = 1;
 
             //
-            byte[] iv = msg.FindAttribute(HeaderKeys.PartialIV).GetByteString();
+
+            CBORObject partialIV = msg.FindAttribute(HeaderKeys.PartialIV);
+            byte[] iv = new byte[0];
+            if (partialIV != null) {
+                iv = partialIV.GetByteString();
+            }
             cbSize += iv.Length;
             byte head = (byte) iv.Length;
 
@@ -711,7 +735,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             //  Additional items to flag
 
-            encBody = new byte[cbSize + body.GetByteString().Length];
+            encBody = new byte[cbSize + body.Length];
             encBody[0] = head;
             cbSize = 1;
             if (iv.Length > 0) {
@@ -726,9 +750,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 cbSize += kid.GetByteString().Length + 1;
             }
 
-            Array.Copy(body.GetByteString(), 0, encBody, cbSize, body.GetByteString().Length);
+            Array.Copy(body, 0, encBody, cbSize, body.Length);
 
-            Console.WriteLine("Protected Attributes = " + BitConverter.ToString(body[0].GetByteString()));
+#if DEBUG
+            {
+                CBORObject xxx = msg.EncodeToCBORObject();
+                Console.WriteLine("Protected Attributes = " + BitConverter.ToString(xxx[0].GetByteString()));
+            }
+#endif
 
             return encBody;
         }
@@ -742,14 +771,16 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             if (0 != (raw[0] & 0x80)) return null;  // This is not legal
             if (0 != (raw[0] & 0x70)) return null;  // These are not currently supported.
 
-            byte[] ivX = new byte[raw[0] & 0x7];
             int iX = 1;
-            Array.Copy(raw, iX, ivX, 0, ivX.Length);
-            map.Add(HeaderKeys.PartialIV, ivX);
+            if (0 != (raw[0] & 0x07)) {
+                byte[] ivX = new byte[raw[0] & 0x7];
+                Array.Copy(raw, iX, ivX, 0, ivX.Length);
+                map.Add(HeaderKeys.PartialIV, ivX);
+                iX += ivX.Length;
+            }
 
-            iX += ivX.Length;
             if (0 != (raw[0] & 0x08)) {
-                byte[] kidX = new byte[raw[ivX.Length]];
+                byte[] kidX = new byte[raw[iX]];
                 Array.Copy(raw, iX + 1, kidX, 0, kidX.Length);
                 iX += (kidX.Length + 1);
                 map.Add(HeaderKeys.KeyId, kidX);
