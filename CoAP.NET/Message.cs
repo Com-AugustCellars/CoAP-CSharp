@@ -919,7 +919,7 @@ namespace Com.AugustCellars.CoAP
         {
             get
             {
-                Option opt = GetFirstOption(OptionType.Accept);
+                Option opt = GetFirstOption(OptionType.ProxyUri);
                 if (opt == null)
                     return null;
 

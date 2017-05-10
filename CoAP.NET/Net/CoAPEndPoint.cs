@@ -111,7 +111,7 @@ namespace Com.AugustCellars.CoAP.Net
             _matcher = new Matcher(config);
             _coapStack = new CoapStack(config);
             _channel.DataReceived += ReceiveData;
-            _endpointSchema = "coaps";
+            _endpointSchema = "coap";
         }
 
         /// <inheritdoc/>
