@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading;
-using CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Server.Resources;
 
-namespace CoAP.Examples.Resources
+namespace Com.AugustCellars.CoAP.Examples.Resources
 {
     class TimeResource : Resource
     {

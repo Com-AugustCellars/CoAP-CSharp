@@ -13,7 +13,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 
-namespace CoAP.Channel
+namespace Com.AugustCellars.CoAP.Channel
 {
     public partial class UDPChannel
     {

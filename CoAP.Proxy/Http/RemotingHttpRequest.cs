@@ -17,7 +17,7 @@ using System.IO;
 using System.Runtime.Remoting.Channels;
 using System.Text;
 
-namespace CoAP.Http
+namespace Com.AugustCellars.CoAP.Http
 {
     class RemotingHttpRequest : IHttpRequest
     {

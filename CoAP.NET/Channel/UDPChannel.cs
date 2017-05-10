@@ -14,7 +14,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 
-namespace CoAP.Channel
+namespace Com.AugustCellars.CoAP.Channel
 {
     /// <summary>
     /// Channel via UDP protocol.

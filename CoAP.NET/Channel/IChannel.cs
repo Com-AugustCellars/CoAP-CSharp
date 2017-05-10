@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Channel
+namespace Com.AugustCellars.CoAP.Channel
 {
     /// <summary>
     /// Represents a channel where bytes data can flow through.

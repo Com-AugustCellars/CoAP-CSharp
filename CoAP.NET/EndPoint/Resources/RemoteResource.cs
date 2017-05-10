@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.EndPoint.Resources
+namespace Com.AugustCellars.CoAP.EndPoint.Resources
 {
     public class RemoteResource : Resource
     {

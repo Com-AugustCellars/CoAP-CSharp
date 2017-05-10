@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Channel
+namespace Com.AugustCellars.CoAP.Channel
 {
     /// <summary>
     /// Provides data for <see cref="IChannel.DataReceived"/> event.

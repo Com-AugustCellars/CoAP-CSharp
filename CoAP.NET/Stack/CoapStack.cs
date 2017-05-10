@@ -9,9 +9,9 @@
  * Please see README for more information.
  */
 
-using CoAP.Threading;
+using Com.AugustCellars.CoAP.Threading;
 
-namespace CoAP.Stack
+namespace Com.AugustCellars.CoAP.Stack
 {
     /// <summary>
     /// Builds up the stack of CoAP layers

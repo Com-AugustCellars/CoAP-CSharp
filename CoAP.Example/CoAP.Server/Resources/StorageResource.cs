@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Server.Resources;
 
-namespace CoAP.Examples.Resources
+namespace Com.AugustCellars.CoAP.Examples.Resources
 {
     class StorageResource : Resource
     {

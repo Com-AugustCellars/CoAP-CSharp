@@ -8,9 +8,9 @@ using TestMethod = NUnit.Framework.TestAttribute;
 #else
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
-using CoAP.EndPoint.Resources;
+using Com.AugustCellars.CoAP.EndPoint.Resources;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     [TestClass]
     public class ResourceTest

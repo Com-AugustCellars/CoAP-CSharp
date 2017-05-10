@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Codec
+namespace Com.AugustCellars.CoAP.Codec
 {
     /// <summary>
     /// Provides methods to parse incoming byte arrays to messages.
@@ -38,6 +38,10 @@ namespace CoAP.Codec
         /// Checks if the decoding message is an empty message.
         /// </summary>
         Boolean IsEmpty { get; }
+        /// <summary>
+        /// Checks if the decoding message is a signal
+        /// </summary>
+        Boolean IsSignal { get; }
         /// <summary>
         /// Gets the version of the decoding message.
         /// </summary>

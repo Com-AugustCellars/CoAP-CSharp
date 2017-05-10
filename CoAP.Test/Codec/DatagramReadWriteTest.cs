@@ -8,7 +8,7 @@ using TestMethod = NUnit.Framework.TestAttribute;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
 
-namespace CoAP.Codec
+namespace Com.AugustCellars.CoAP.Codec
 {
     [TestClass]
     public class DatagramReadWriteTest

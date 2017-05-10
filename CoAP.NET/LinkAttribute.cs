@@ -11,9 +11,9 @@
 
 using System;
 using System.Text;
-using CoAP.Log;
+using Com.AugustCellars.CoAP.Log;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// Class for linkformat attributes.

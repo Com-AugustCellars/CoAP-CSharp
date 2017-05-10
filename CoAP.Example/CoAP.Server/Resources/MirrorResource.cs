@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Text;
-using CoAP.Net;
-using CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Server.Resources;
 
-namespace CoAP.Examples.Resources
+namespace Com.AugustCellars.CoAP.Examples.Resources
 {
     /// <summary>
     /// This resource responds with the data from a request in its payload. This

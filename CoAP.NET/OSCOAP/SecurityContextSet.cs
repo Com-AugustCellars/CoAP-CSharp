@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace CoAP.OSCOAP
+namespace Com.AugustCellars.CoAP.OSCOAP
 {
     public class SecurityContextSet
     {

@@ -9,7 +9,7 @@
  * Please see README for more information.
  */
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// CoAP option types as defined in

@@ -11,11 +11,11 @@
 
 using System;
 using System.Timers;
-using CoAP.Log;
-using CoAP.Net;
-using CoAP.Observe;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Observe;
 
-namespace CoAP.Stack
+namespace Com.AugustCellars.CoAP.Stack
 {
     public class ObserveLayer : AbstractLayer
     {

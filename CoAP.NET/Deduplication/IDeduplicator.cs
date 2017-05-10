@@ -9,9 +9,9 @@
  * Please see README for more information.
  */
 
-using CoAP.Net;
+using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP.Deduplication
+namespace Com.AugustCellars.CoAP.Deduplication
 {
     /// <summary>
     /// Provides methods to detect duplicates.

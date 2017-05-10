@@ -13,12 +13,12 @@ using TestCleanup = NUnit.Framework.TearDownAttribute;
 #else
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
-using CoAP.Deduplication;
-using CoAP.Server;
-using CoAP.Net;
-using CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Deduplication;
+using Com.AugustCellars.CoAP.Server;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Server.Resources;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     [TestClass]
     public class MemoryLeakingHashMapTest

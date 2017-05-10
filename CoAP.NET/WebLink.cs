@@ -10,10 +10,10 @@
  */
 
 using System;
-using CoAP.Server.Resources;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// This class can be used to programmatically browse a remote CoAP endoint.

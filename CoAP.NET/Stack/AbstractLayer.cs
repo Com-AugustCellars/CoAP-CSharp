@@ -9,10 +9,10 @@
  * Please see README for more information.
  */
 
-using CoAP.Net;
-using CoAP.Threading;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Threading;
 
-namespace CoAP.Stack
+namespace Com.AugustCellars.CoAP.Stack
 {
     /// <summary>
     /// A partial implementation of a layer.

@@ -12,10 +12,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using CoAP.Log;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP.EndPoint.Resources
+namespace Com.AugustCellars.CoAP.EndPoint.Resources
 {
     /// <summary>
     /// This class describes the functionality of a CoAP resource.

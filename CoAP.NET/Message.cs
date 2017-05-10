@@ -11,9 +11,9 @@
 
 using System;
 using System.Collections.Generic;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// The class Message models the base class of all CoAP messages.
@@ -919,7 +919,7 @@ namespace CoAP
         {
             get
             {
-                Option opt = GetFirstOption(OptionType.Accept);
+                Option opt = GetFirstOption(OptionType.ProxyUri);
                 if (opt == null)
                     return null;
 

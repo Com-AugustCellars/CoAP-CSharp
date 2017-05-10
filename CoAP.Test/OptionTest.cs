@@ -8,7 +8,7 @@ using TestMethod = NUnit.Framework.TestAttribute;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 #endif
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     [TestClass]
     public class OptionTest

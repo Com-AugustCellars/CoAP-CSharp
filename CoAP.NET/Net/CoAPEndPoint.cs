@@ -10,13 +10,13 @@
  */
 
 using System;
-using CoAP.Channel;
-using CoAP.Codec;
-using CoAP.Log;
-using CoAP.Stack;
-using CoAP.Threading;
+using Com.AugustCellars.CoAP.Channel;
+using Com.AugustCellars.CoAP.Codec;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Stack;
+using Com.AugustCellars.CoAP.Threading;
 
-namespace CoAP.Net
+namespace Com.AugustCellars.CoAP.Net
 {
     /// <summary>
     /// EndPoint encapsulates the stack that executes the CoAP protocol.
@@ -24,6 +24,10 @@ namespace CoAP.Net
     public partial class CoAPEndPoint : IEndPoint, IOutbox
     {
         static readonly ILogger log = LogManager.GetLogger(typeof(CoAPEndPoint));
+
+        public delegate IMessageEncoder FindMessageEncoder();
+
+        public delegate IMessageDecoder FindMessageDecoder(byte[] data);
 
         readonly ICoapConfig _config;
         readonly IChannel _channel;
@@ -33,6 +37,10 @@ namespace CoAP.Net
         private Int32 _running;
         private System.Net.EndPoint _localEP;
         private IExecutor _executor;
+        protected String _endpointSchema;
+
+        private FindMessageEncoder _messageEncoder = Spec.NewMessageEncoder;
+        private FindMessageDecoder _messageDecoder = Spec.NewMessageDecoder;
 
         /// <inheritdoc/>
         public event EventHandler<MessageEventArgs<Request>> SendingRequest;
@@ -103,6 +111,7 @@ namespace CoAP.Net
             _matcher = new Matcher(config);
             _coapStack = new CoapStack(config);
             _channel.DataReceived += ReceiveData;
+            _endpointSchema = "coap";
         }
 
         /// <inheritdoc/>
@@ -139,6 +148,17 @@ namespace CoAP.Net
             }
         }
 
+        public FindMessageDecoder MessageDecoder
+        {
+            set { _messageDecoder = value; }
+            get { return _messageDecoder;  }
+        }
+
+        public FindMessageEncoder MessageEncoder {
+            set { _messageEncoder = value; }
+            get { return _messageEncoder; }
+        }
+
         /// <inheritdoc/>
         public IOutbox Outbox
         {
@@ -149,6 +169,14 @@ namespace CoAP.Net
         public Boolean Running
         {
             get { return _running > 0; }
+        }
+
+        /// <summary>
+        /// Return the stack used by this end point
+        /// </summary>
+        public CoapStack Stack
+        {
+            get { return _coapStack; }
         }
 
         /// <inheritdoc/>
@@ -210,6 +238,7 @@ namespace CoAP.Net
         /// <inheritdoc/>
         public void SendRequest(Request request)
         {
+            if (request.URI.Scheme != _endpointSchema) throw new Exception("Schema is incorrect for the end point");
             _executor.Start(() => _coapStack.SendRequest(request));
         }
 
@@ -232,7 +261,7 @@ namespace CoAP.Net
 
         private void ReceiveData(DataReceivedEventArgs e)
         {
-            IMessageDecoder decoder = Spec.NewMessageDecoder(e.Data);
+            IMessageDecoder decoder = _messageDecoder(e.Data); // Spec.NewMessageDecoder(e.Data);
             if (decoder.IsRequest)
             {
                 Request request;
@@ -348,9 +377,8 @@ namespace CoAP.Net
         private Byte[] Serialize(EmptyMessage message)
         {
             Byte[] bytes = message.Bytes;
-            if (bytes == null)
-            {
-                bytes = Spec.NewMessageEncoder().Encode(message);
+            if (bytes == null) {
+                bytes = _messageEncoder().Encode(message);  //  Spec.NewMessageEncoder().Encode(message);
                 message.Bytes = bytes;
             }
             return bytes;
@@ -359,9 +387,8 @@ namespace CoAP.Net
         private Byte[] Serialize(Request request)
         {
             Byte[] bytes = request.Bytes;
-            if (bytes == null)
-            {
-                bytes = Spec.NewMessageEncoder().Encode(request);
+            if (bytes == null) {
+                bytes = _messageEncoder().Encode(request); //  Spec.NewMessageEncoder().Encode(request);
                 request.Bytes = bytes;
             }
             return bytes;
@@ -372,7 +399,7 @@ namespace CoAP.Net
             Byte[] bytes = response.Bytes;
             if (bytes == null)
             {
-                bytes = Spec.NewMessageEncoder().Encode(response);
+                bytes = _messageEncoder().Encode(response); // Spec.NewMessageEncoder().Encode(response);
                 response.Bytes = bytes;
             }
             return bytes;

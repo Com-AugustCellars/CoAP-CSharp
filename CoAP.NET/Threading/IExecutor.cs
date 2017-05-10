@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Threading
+namespace Com.AugustCellars.CoAP.Threading
 {
     /// <summary>
     /// Provides methods to execute tasks.

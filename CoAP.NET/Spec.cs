@@ -11,11 +11,11 @@
 
 using System;
 using System.Collections.Generic;
-using CoAP.Codec;
-using CoAP.Log;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Codec;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     public static class Spec
     {
@@ -88,7 +88,7 @@ namespace CoAP
                 throw ThrowHelper.Argument("nibble", "Unsupported option delta " + nibble);
         }
 
-        class MessageEncoder18 : MessageEncoder
+        public class MessageEncoder18 : MessageEncoder
         {
             protected override void Serialize(DatagramWriter writer, Message msg, Int32 code)
             {
@@ -160,7 +160,7 @@ namespace CoAP
             }
         }
 
-        class MessageDecoder18 : MessageDecoder
+        public class MessageDecoder18 : MessageDecoder
         {
             public MessageDecoder18(Byte[] data)
                 : base(data)

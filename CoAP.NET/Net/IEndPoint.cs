@@ -10,9 +10,9 @@
  */
 
 using System;
-using CoAP.Stack;
+using Com.AugustCellars.CoAP.Stack;
 
-namespace CoAP.Net
+namespace Com.AugustCellars.CoAP.Net
 {
     /// <summary>
     /// Represents a communication endpoint multiplexing CoAP message exchanges

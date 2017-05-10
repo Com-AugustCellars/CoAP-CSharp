@@ -13,11 +13,11 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
-using CoAP.Http;
-using CoAP.Threading;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Http;
+using Com.AugustCellars.CoAP.Threading;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP.Proxy
+namespace Com.AugustCellars.CoAP.Proxy
 {
     /// <summary>
     /// Class encapsulating the logic of a http server. The class create a receiver

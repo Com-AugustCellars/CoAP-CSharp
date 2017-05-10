@@ -14,7 +14,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// Default implementation of <see cref="ICoapConfig"/>.

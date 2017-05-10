@@ -14,7 +14,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace CoAP.Server.Resources
+namespace Com.AugustCellars.CoAP.Server.Resources
 {
     /// <summary>
     /// Wraps different attributes that the CoAP protocol defines

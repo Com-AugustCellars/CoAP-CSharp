@@ -12,7 +12,7 @@
 using System;
 using System.Threading;
 
-namespace CoAP.Threading
+namespace Com.AugustCellars.CoAP.Threading
 {
     /// <summary>
     /// <see cref="IExecutor"/> that use the <see cref="ThreadPool"/>.

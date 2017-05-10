@@ -11,10 +11,10 @@
 
 using System;
 using System.Timers;
-using CoAP.Log;
-using CoAP.Net;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP.Stack
+namespace Com.AugustCellars.CoAP.Stack
 {
     /// <summary>
     /// The reliability layer

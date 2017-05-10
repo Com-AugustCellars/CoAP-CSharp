@@ -12,7 +12,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CoAP.Util
+namespace Com.AugustCellars.CoAP.Util
 {
     /// <summary>
     /// <see cref="IEqualityComparer&lt;T&gt;"/> for arrays.

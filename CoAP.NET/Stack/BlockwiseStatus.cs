@@ -12,7 +12,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CoAP.Stack
+namespace Com.AugustCellars.CoAP.Stack
 {
     /// <summary>
     /// Represents the status of a blockwise transfer of a request or a response.

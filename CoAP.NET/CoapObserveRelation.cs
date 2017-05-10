@@ -10,10 +10,10 @@
  */
 
 using System;
-using CoAP.Net;
-using CoAP.Observe;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Observe;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// Represents a CoAP observe relation between a CoAP client and a resource on a server.

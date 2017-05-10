@@ -11,9 +11,9 @@
 
 using System;
 using System.Threading;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP.Observe
+namespace Com.AugustCellars.CoAP.Observe
 {
     /// <summary>
     /// This class holds the state of an observe relation such

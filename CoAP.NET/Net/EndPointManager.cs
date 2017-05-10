@@ -9,7 +9,7 @@
  * Please see README for more information.
  */
 
-namespace CoAP.Net
+namespace Com.AugustCellars.CoAP.Net
 {
     public static partial class EndPointManager
     {

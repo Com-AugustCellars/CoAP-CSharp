@@ -11,7 +11,7 @@
 
 using System;
 
-namespace CoAP.Codec
+namespace Com.AugustCellars.CoAP.Codec
 {
     /// <summary>
     /// Base class for message decoders.
@@ -90,6 +90,16 @@ namespace CoAP.Codec
         public Boolean IsEmpty
         {
             get { return m_code == Code.Empty; }
+        }
+
+        /// <inheritdoc/>
+        public Boolean IsSignal
+        {
+            get
+            {
+                return m_code >= CoapConstants.SignalCodeLowerBound &&
+                       m_code <= CoapConstants.SignalCodeUpperBound;
+            }
         }
 
         /// <inheritdoc/>

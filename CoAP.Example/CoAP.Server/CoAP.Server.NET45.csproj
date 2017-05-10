@@ -8,7 +8,7 @@
     <ProjectGuid>{05CC2E5E-B663-4560-844C-C8E52ED1C9D1}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CoAP.Examples</RootNamespace>
+    <RootNamespace>Com.AugustCellars.CoAP.Examples</RootNamespace>
     <AssemblyName>CoAPServer</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

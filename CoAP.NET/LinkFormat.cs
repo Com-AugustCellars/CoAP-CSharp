@@ -13,13 +13,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
-using CoAP.EndPoint.Resources;
-using CoAP.Log;
-using CoAP.Server.Resources;
-using CoAP.Util;
-using Resource = CoAP.EndPoint.Resources.Resource;
+using Com.AugustCellars.CoAP.EndPoint.Resources;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Util;
+using Resource = Com.AugustCellars.CoAP.EndPoint.Resources.Resource;
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// This class provides link format definitions as specified in

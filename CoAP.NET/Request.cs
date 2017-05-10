@@ -12,14 +12,14 @@
 using System;
 using System.Net;
 using System.Text.RegularExpressions;
-using CoAP.Log;
-using CoAP.Net;
-using CoAP.Observe;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Observe;
 #if INCLUDE_OSCOAP
-using CoAP.OSCOAP;
+using Com.AugustCellars.CoAP.OSCOAP;
 #endif
 
-namespace CoAP
+namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// This class describes the functionality of a CoAP Request as

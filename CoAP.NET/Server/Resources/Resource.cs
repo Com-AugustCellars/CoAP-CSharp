@@ -12,12 +12,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using CoAP.Log;
-using CoAP.Net;
-using CoAP.Observe;
-using CoAP.Threading;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Observe;
+using Com.AugustCellars.CoAP.Threading;
 
-namespace CoAP.Server.Resources
+namespace Com.AugustCellars.CoAP.Server.Resources
 {
     /// <summary>
     /// Basic implementation of a resource.

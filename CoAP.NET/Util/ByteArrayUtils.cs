@@ -12,7 +12,7 @@
 using System;
 using System.Text;
 
-namespace CoAP.Util
+namespace Com.AugustCellars.CoAP.Util
 {
     /// <summary>
     /// Utility methods for bytes array.

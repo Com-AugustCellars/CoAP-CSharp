@@ -10,9 +10,9 @@
  */
 
 using System;
-using CoAP.Util;
+using Com.AugustCellars.CoAP.Util;
 
-namespace CoAP.Proxy
+namespace Com.AugustCellars.CoAP.Proxy
 {
     /// <summary>
     /// Provides the translations between the messages from the internal CoAP nodes and external ones.

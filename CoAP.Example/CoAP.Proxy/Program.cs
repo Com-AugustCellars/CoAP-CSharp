@@ -1,10 +1,10 @@
 ﻿using System;
-using CoAP.Proxy;
-using CoAP.Proxy.Resources;
-using CoAP.Server;
-using CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Proxy;
+using Com.AugustCellars.CoAP.Proxy.Resources;
+using Com.AugustCellars.CoAP.Server;
+using Com.AugustCellars.CoAP.Server.Resources;
 
-namespace CoAP.Examples
+namespace Com.AugustCellars.CoAP.Examples
 {
     class Program
     {

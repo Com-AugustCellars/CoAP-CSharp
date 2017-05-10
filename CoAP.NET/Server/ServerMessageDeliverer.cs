@@ -11,14 +11,14 @@
 
 using System;
 using System.Collections.Generic;
-using CoAP.Log;
-using CoAP.Net;
-using CoAP.Observe;
-using CoAP.Server.Resources;
-using CoAP.Util;
-using CoAP.Threading;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Observe;
+using Com.AugustCellars.CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Util;
+using Com.AugustCellars.CoAP.Threading;
 
-namespace CoAP.Server
+namespace Com.AugustCellars.CoAP.Server
 {
     /// <summary>
     /// Delivers requests to corresponding resources and

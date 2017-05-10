@@ -10,9 +10,9 @@
  */
 
 using System;
-using CoAP.Net;
+using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP.Server.Resources
+namespace Com.AugustCellars.CoAP.Server.Resources
 {
     /// <summary>
     /// Represents an exchange of a CoAP request and response and

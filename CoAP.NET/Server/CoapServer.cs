@@ -12,11 +12,11 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
-using CoAP.Log;
-using CoAP.Net;
-using CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Server.Resources;
 
-namespace CoAP.Server
+namespace Com.AugustCellars.CoAP.Server
 {
     /// <summary>
     /// Represents an execution environment for CoAP <see cref="IResource"/>s.
