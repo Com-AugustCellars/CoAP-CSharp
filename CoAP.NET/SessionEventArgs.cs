@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Com.AugustCellars.CoAP
 {
-    public class SessionEventArgs
+    public class SessionEventArgs : EventArgs
     {
         /// <summary>
         /// List of all events that could occur

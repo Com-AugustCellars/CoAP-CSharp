@@ -45,8 +45,8 @@
     <Reference Include="Common.Logging.Core">
       <HintPath>..\packages\Common.Logging.Core.3.0.0\lib\net40\Common.Logging.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Com.Augustcellars.COSE">
-      <HintPath>..\packages\Com.AugustCellars.COSE.0.1.0\lib\portable-net40+s15+win+wpa81+wp8\COSE.dll</HintPath>
+    <Reference Include="COSE">
+      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.1\lib\portable-net40+s15+win+wpa81+wp8\COSE.dll</HintPath>
     </Reference>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
       <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
@@ -143,6 +143,7 @@
     <Compile Include="Server\Resources\ResourceAttributes.cs" />
     <Compile Include="Server\Resources\TimerResource.cs" />
     <Compile Include="Server\ServerMessageDeliverer.cs" />
+    <Compile Include="SessionEventArgs.cs" />
     <Compile Include="Spec.cs" />
     <Compile Include="Stack\AbstractLayer.cs" />
     <Compile Include="Stack\BlockwiseLayer.cs" />

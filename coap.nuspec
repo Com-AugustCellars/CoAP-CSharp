@@ -14,6 +14,8 @@
         <releaseNotes>
           This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
           This project is NOT to be used for commercial purposes.  It is intented only for research and verification work.
+* 1.1.5
+  - Implement a basic version of DTLS client code          
 * 1.1.1
   - Correct dll name          
 * 1.1.0
