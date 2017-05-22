@@ -85,10 +85,17 @@
     <Compile Include="Deduplication\IDeduplicator.cs" />
     <Compile Include="Deduplication\NoopDeduplicator.cs" />
     <Compile Include="Deduplication\SweepDeduplicator.cs" />
+    <Compile Include="DTLS\DTLSClient.cs" />
+    <Compile Include="DTLS\DTLSClientChannel.cs" />
+    <Compile Include="DTLS\DTLSClientEndPoint.cs" />
+    <Compile Include="DTLS\DTLSSession.cs" />
+    <Compile Include="DTLS\QueueItem.cs" />
     <Compile Include="EmptyMessage.cs" />
     <Compile Include="EndPoint\Resources\RemoteResource.cs" />
     <Compile Include="EndPoint\Resources\Resource.cs" />
     <Compile Include="ICoapConfig.cs" />
+    <Compile Include="ISecureSession.cs" />
+    <Compile Include="ISession.cs" />
     <Compile Include="LinkAttribute.cs" />
     <Compile Include="LinkFormat.cs" />
     <Compile Include="Log\CommonLoggingManager.cs" />

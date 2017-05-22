@@ -45,9 +45,6 @@
     <Reference Include="Common.Logging.Core">
       <HintPath>..\packages\Common.Logging.Core.3.0.0\lib\net40\Common.Logging.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Com.Augustcellars.COSE">
-      <HintPath>..\packages\Com.AugustCellars.COSE.0.1.0\lib\portable-net40+s15+win+wpa81+wp8\COSE.dll</HintPath>
-    </Reference>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
       <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
       <Private>True</Private>
@@ -55,6 +52,9 @@
     <Reference Include="CBOR, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\PeterO.Cbor.2.4.2\lib\portable-net40+sl50+win+wpa81+wp80\CBOR.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="COSE, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.1\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8\COSE.dll</HintPath>
     </Reference>
     <Reference Include="Numbers, Version=0.2.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\PeterO.Numbers.0.2.2\lib\portable-net40+sl50+win+wpa81+wp80\Numbers.dll</HintPath>
@@ -85,10 +85,17 @@
     <Compile Include="Deduplication\IDeduplicator.cs" />
     <Compile Include="Deduplication\NoopDeduplicator.cs" />
     <Compile Include="Deduplication\SweepDeduplicator.cs" />
+    <Compile Include="DTLS\DTLSClient.cs" />
+    <Compile Include="DTLS\DTLSClientChannel.cs" />
+    <Compile Include="DTLS\DTLSClientEndPoint.cs" />
+    <Compile Include="DTLS\DTLSSession.cs" />
+    <Compile Include="DTLS\QueueItem.cs" />
     <Compile Include="EmptyMessage.cs" />
     <Compile Include="EndPoint\Resources\RemoteResource.cs" />
     <Compile Include="EndPoint\Resources\Resource.cs" />
     <Compile Include="ICoapConfig.cs" />
+    <Compile Include="ISecureSession.cs" />
+    <Compile Include="ISession.cs" />
     <Compile Include="LinkAttribute.cs" />
     <Compile Include="LinkFormat.cs" />
     <Compile Include="Log\CommonLoggingManager.cs" />
@@ -136,6 +143,7 @@
     <Compile Include="Server\Resources\ResourceAttributes.cs" />
     <Compile Include="Server\Resources\TimerResource.cs" />
     <Compile Include="Server\ServerMessageDeliverer.cs" />
+    <Compile Include="SessionEventArgs.cs" />
     <Compile Include="Spec.cs" />
     <Compile Include="Stack\AbstractLayer.cs" />
     <Compile Include="Stack\BlockwiseLayer.cs" />

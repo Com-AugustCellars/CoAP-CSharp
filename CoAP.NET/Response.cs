@@ -78,5 +78,7 @@ namespace Com.AugustCellars.CoAP
             response.Token = request.Token;
             return response;
         }
+
+        public ISession Session { get; set; }
     }
 }

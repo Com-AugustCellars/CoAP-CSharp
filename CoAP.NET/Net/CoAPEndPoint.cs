@@ -37,7 +37,7 @@ namespace Com.AugustCellars.CoAP.Net
         private Int32 _running;
         private System.Net.EndPoint _localEP;
         private IExecutor _executor;
-        protected String _endpointSchema;
+        private String _endpointSchema;
 
         private FindMessageEncoder _messageEncoder = Spec.NewMessageEncoder;
         private FindMessageDecoder _messageDecoder = Spec.NewMessageDecoder;
@@ -128,6 +128,12 @@ namespace Com.AugustCellars.CoAP.Net
                 _executor = value ?? Executors.NoThreading;
                 _coapStack.Executor = _executor;
             }
+        }
+
+        public String EndpointSchema
+        {
+            get => _endpointSchema;
+            set => _endpointSchema = value;
         }
 
         /// <inheritdoc/>
@@ -259,46 +265,52 @@ namespace Com.AugustCellars.CoAP.Net
             _executor.Start(() => ReceiveData(e));
         }
 
+        /// <summary>
+        /// We have received a blob of data from a channel.
+        /// Decode the message, set some fields and dispatch it up the chain.
+        /// </summary>
+        /// <param name="e"></param>
         private void ReceiveData(DataReceivedEventArgs e)
         {
-            IMessageDecoder decoder = _messageDecoder(e.Data); // Spec.NewMessageDecoder(e.Data);
-            if (decoder.IsRequest)
-            {
+            IMessageDecoder decoder = _messageDecoder(e.Data);
+
+            if (decoder.IsRequest) {
                 Request request;
-                try
-                {
+
+                try {
                     request = decoder.DecodeRequest();
                 }
-                catch (Exception)
-                {
-                    if (decoder.IsReply)
-                    {
-                        if (log.IsWarnEnabled)
+                catch (Exception) {
+
+                    if (decoder.IsReply) {
+                        if (log.IsWarnEnabled) {
                             log.Warn("Message format error caused by " + e.EndPoint);
+                        }
                     }
-                    else
-                    {
+                    else {
                         // manually build RST from raw information
-                        EmptyMessage rst = new EmptyMessage(MessageType.RST);
-                        rst.Destination = e.EndPoint;
-                        rst.ID = decoder.ID;
+                        EmptyMessage rst = new EmptyMessage(MessageType.RST) {
+                            Destination = e.EndPoint,
+                            ID = decoder.ID
+                        };
 
                         Fire(SendingEmptyMessage, rst);
 
                         _channel.Send(Serialize(rst), rst.Destination);
 
-                        if (log.IsWarnEnabled)
+                        if (log.IsWarnEnabled) {
                             log.Warn("Message format error caused by " + e.EndPoint + " and reseted.");
+                        }
                     }
                     return;
                 }
 
                 request.Source = e.EndPoint;
+                request.Session = e.Session;
 
                 Fire(ReceivingRequest, request);
 
-                if (!request.IsCancelled)
-                {
+                if (!request.IsCancelled) {
                     Exchange exchange = _matcher.ReceiveRequest(request);
                     if (exchange != null)
                     {
@@ -307,59 +319,51 @@ namespace Com.AugustCellars.CoAP.Net
                     }
                 }
             }
-            else if (decoder.IsResponse)
-            {
+            else if (decoder.IsResponse) {
                 Response response = decoder.DecodeResponse();
                 response.Source = e.EndPoint;
 
                 Fire(ReceivingResponse, response);
 
-                if (!response.IsCancelled)
-                {
+                if (!response.IsCancelled) {
                     Exchange exchange = _matcher.ReceiveResponse(response);
-                    if (exchange != null)
-                    {
+                    if (exchange != null) {
                         response.RTT = (DateTime.Now - exchange.Timestamp).TotalMilliseconds;
                         exchange.EndPoint = this;
                         _coapStack.ReceiveResponse(exchange, response);
                     }
-                    else if (response.Type != MessageType.ACK)
-                    {
-                        if (log.IsDebugEnabled)
+                    else if (response.Type != MessageType.ACK) {
+                        if (log.IsDebugEnabled) {
                             log.Debug("Rejecting unmatchable response from " + e.EndPoint);
+                        }
                         Reject(response);
                     }
                 }
             }
-            else if (decoder.IsEmpty)
-            {
+            else if (decoder.IsEmpty) { 
                 EmptyMessage message = decoder.DecodeEmptyMessage();
                 message.Source = e.EndPoint;
 
                 Fire(ReceivingEmptyMessage, message);
 
-                if (!message.IsCancelled)
-                {
+                if (!message.IsCancelled) {
                     // CoAP Ping
-                    if (message.Type == MessageType.CON || message.Type == MessageType.NON)
-                    {
-                        if (log.IsDebugEnabled)
+                    if (message.Type == MessageType.CON || message.Type == MessageType.NON) {
+                        if (log.IsDebugEnabled) {
                             log.Debug("Responding to ping by " + e.EndPoint);
+                        }
                         Reject(message);
                     }
-                    else
-                    {
+                    else {
                         Exchange exchange = _matcher.ReceiveEmptyMessage(message);
-                        if (exchange != null)
-                        {
+                        if (exchange != null) {
                             exchange.EndPoint = this;
                             _coapStack.ReceiveEmptyMessage(exchange, message);
                         }
                     }
                 }
             }
-            else if (log.IsDebugEnabled)
-            {
+            else if (log.IsDebugEnabled) {
                 log.Debug("Silently ignoring non-CoAP message from " + e.EndPoint);
             }
         }
