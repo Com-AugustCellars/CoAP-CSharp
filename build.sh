@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ev
 
-nuget restore $SLN
+nuget restore $SLN -Verbosity=detailed
 
 msbuild /p:Configuration=$VERSION $SLN
 
