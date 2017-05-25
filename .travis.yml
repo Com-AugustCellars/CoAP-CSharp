@@ -15,7 +15,8 @@ env:
 #    VERSION=Debug
 
 install:
-   - nuget install NUnit.Runners -Version 3.5.0 -OutputDirectory testrunner
+   - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+   - mono nuget install NUnit.Runners -Version 3.5.0 -OutputDirectory testrunner
 
 script:
   - ./build.sh
