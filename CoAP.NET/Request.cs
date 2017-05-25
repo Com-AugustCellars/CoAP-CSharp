@@ -181,6 +181,8 @@ namespace Com.AugustCellars.CoAP
             return this;
         }
 
+        public Boolean ObserverReconnect { get; set; }
+
         /// <summary>
         /// Sets CoAP's observe option. If the target resource of this request
 	    /// responds with a success code and also sets the observe option, it will

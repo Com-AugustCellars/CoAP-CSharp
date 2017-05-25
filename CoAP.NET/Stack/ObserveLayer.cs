@@ -223,6 +223,8 @@ namespace Com.AugustCellars.CoAP.Stack
 
         private void PrepareReregistration(Exchange exchange, Response response, Action<Request> reregister)
         {
+            if (!exchange.Request.ObserverReconnect) return;
+
             Int64 timeout = response.MaxAge * 1000 + _backoff + _Random.Next(2, 15) * 1000;
             ReregistrationContext ctx = exchange.GetOrAdd<ReregistrationContext>(
                 ReregistrationContextKey, _ => new ReregistrationContext(exchange, timeout, reregister));
