@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ev
-mono nuget
-mono nuget restore $SLN -verbose
+mono nuget.exe
+mono nuget.exe restore $SLN -verbose
 
 msbuild /p:Configuration=$VERSION $SLN
 
