@@ -19,8 +19,8 @@ namespace Com.AugustCellars.CoAP.Stack
 {
     public class ObserveLayer : AbstractLayer
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(ObserveLayer));
-        static readonly Object ReregistrationContextKey = "ReregistrationContext";
+        private static readonly ILogger log = LogManager.GetLogger(typeof(ObserveLayer));
+        private static readonly Object ReregistrationContextKey = "ReregistrationContext";
 
         /// <summary>
         /// Additional time to wait until re-registration
@@ -39,32 +39,29 @@ namespace Com.AugustCellars.CoAP.Stack
         public override void SendResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
             ObserveRelation relation = exchange.Relation;
-            if (relation != null && relation.Established)
-            {
-                if (exchange.Request.IsAcknowledged || exchange.Request.Type == MessageType.NON)
-                {
+            if (relation != null && relation.Established)  {
+                if (exchange.Request.IsAcknowledged || exchange.Request.Type == MessageType.NON) {
                     // Transmit errors as CON
-                    if (!Code.IsSuccess(response.Code))
-                    {
-                        if (log.IsDebugEnabled)
+                    if (!Code.IsSuccess(response.Code)) {
+                        if (log.IsDebugEnabled) { 
                             log.Debug("Response has error code " + response.Code + " and must be sent as CON");
+                        }
                         response.Type = MessageType.CON;
                         relation.Cancel();
                     }
-                    else
-                    {
+                    else { 
                         // Make sure that every now and than a CON is mixed within
-                        if (relation.Check())
-                        {
-                            if (log.IsDebugEnabled)
+                        if (relation.Check()) {
+                            if (log.IsDebugEnabled) {
                                 log.Debug("The observe relation check requires the notification to be sent as CON");
+                            }
                             response.Type = MessageType.CON;
                         }
-                        else
-                        {
+                        else {
                             // By default use NON, but do not override resource decision
-                            if (response.Type == MessageType.Unknown)
+                            if (response.Type == MessageType.Unknown) {
                                 response.Type = MessageType.NON;
+                            }
                         }
                     }
                 }
@@ -76,8 +73,7 @@ namespace Com.AugustCellars.CoAP.Stack
                  * The matcher must be able to find the NON notifications to remove
                  * them from the exchangesByID map
                  */
-                if (response.Type == MessageType.NON)
-                {
+                if (response.Type == MessageType.NON) {
                     relation.AddNotification(response);
                 }
 
@@ -90,33 +86,31 @@ namespace Com.AugustCellars.CoAP.Stack
                  * counter). When a fresh/younger notification arrives but must be
                  * postponed we forget any former notification.
                  */
-                if (response.Type == MessageType.CON)
-                {
+                if (response.Type == MessageType.CON) {
                     PrepareSelfReplacement(nextLayer, exchange, response);
                 }
 
                 // The decision whether to postpone this notification or not and the
                 // decision which notification is the freshest to send next must be
                 // synchronized
-                lock (exchange)
-                {
+                lock (exchange) {
                     Response current = relation.CurrentControlNotification;
-                    if (current != null && IsInTransit(current))
-                    {
-                        if (log.IsDebugEnabled)
+                    if (current != null && IsInTransit(current)) {
+                        if (log.IsDebugEnabled) {
                             log.Debug("A former notification is still in transit. Postpone " + response);
+                        }
                         // use the same ID
                         response.ID = current.ID;
                         relation.NextControlNotification = response;
                         return;
                     }
-                    else
-                    {
+                    else { 
                         relation.CurrentControlNotification = response;
                         relation.NextControlNotification = null;
                     }
                 }
             }
+
             // else no observe was requested or the resource does not allow it
             base.SendResponse(nextLayer, exchange, response);
         }

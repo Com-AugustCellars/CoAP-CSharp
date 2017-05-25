@@ -29,7 +29,7 @@ namespace Com.AugustCellars.CoAP.Server
         static readonly ILogger log = LogManager.GetLogger(typeof(ServerMessageDeliverer));
         readonly ICoapConfig _config;
         readonly IResource _root;
-        readonly ObserveManager _observeManager = new ObserveManager();
+        private readonly ObserveManager _observeManager = new ObserveManager();
 
         /// <summary>
         /// Constructs a default message deliverer that delivers requests
@@ -46,19 +46,19 @@ namespace Com.AugustCellars.CoAP.Server
         {
             Request request = exchange.Request;
             IResource resource = FindResource(request.UriPaths);
-            if (resource != null)
-            {
+            if (resource != null) {
                 CheckForObserveOption(exchange, resource);
 
                 // Get the executor and let it process the request
                 IExecutor executor = resource.Executor;
-                if (executor != null)
+                if (executor != null) {
                     executor.Start(() => resource.HandleRequest(exchange));
-                else
+                }
+                else {
                     resource.HandleRequest(exchange);
+                }
             }
-            else
-            {
+            else {
                 exchange.SendResponse(new Response(StatusCode.NotFound));
             }
         }
@@ -91,18 +91,18 @@ namespace Com.AugustCellars.CoAP.Server
         private void CheckForObserveOption(Exchange exchange, IResource resource)
         {
             Request request = exchange.Request;
-            if (request.Method != Method.GET)
+            if (request.Method != Method.GET) {
                 return;
+            }
 
             System.Net.EndPoint source = request.Source;
             Int32? obs = request.Observe;
-            if (obs.HasValue && resource.Observable)
-            {
-                if (obs == 0)
-                {
+            if (obs.HasValue && resource.Observable) {
+                if (obs == 0) {
                     // Requests wants to observe and resource allows it :-)
-                    if (log.IsDebugEnabled)
+                    if (log.IsDebugEnabled) {
                         log.Debug("Initiate an observe relation between " + source + " and resource " + resource.Uri);
+                    }
                     ObservingEndpoint remote = _observeManager.FindObservingEndpoint(source);
                     ObserveRelation relation = new ObserveRelation(_config, remote, resource, exchange);
                     remote.AddObserveRelation(relation);
@@ -110,11 +110,11 @@ namespace Com.AugustCellars.CoAP.Server
                     // all that's left is to add the relation to the resource which
                     // the resource must do itself if the response is successful
                 }
-                else if (obs == 1)
-                {
+                else if (obs == 1) {
                     ObserveRelation relation = _observeManager.GetRelation(source, request.Token);
-                    if (relation != null)
+                    if (relation != null) {
                         relation.Cancel();
+                    }
                 }
             }
         }
