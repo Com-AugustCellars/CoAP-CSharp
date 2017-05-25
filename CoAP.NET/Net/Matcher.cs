@@ -89,7 +89,7 @@ namespace Com.AugustCellars.CoAP.Net
              */
 
             // the MID is from the local namespace -- use blank address
-            Exchange.KeyID keyID = new Exchange.KeyID(request.ID, null);
+            Exchange.KeyID keyID = new Exchange.KeyID(request.ID, null, request.Session);
             Exchange.KeyToken keyToken = new Exchange.KeyToken(request.Token);
 
             exchange.Completed += OnExchangeCompleted;
@@ -168,7 +168,7 @@ namespace Com.AugustCellars.CoAP.Net
             // Do not insert ACKs and RSTs.
             if (response.Type == MessageType.CON || response.Type == MessageType.NON)
             {
-                Exchange.KeyID keyID = new Exchange.KeyID(response.ID, null);
+                Exchange.KeyID keyID = new Exchange.KeyID(response.ID, null, response.Session);
                 _exchangesByID[keyID] = exchange;
             }
 
@@ -204,7 +204,7 @@ namespace Com.AugustCellars.CoAP.Net
 		     * (Retransmission is supposed to be done by the retransm. layer)
 		     */
 
-            Exchange.KeyID keyId = new Exchange.KeyID(request.ID, request.Source);
+            Exchange.KeyID keyId = new Exchange.KeyID(request.ID, request.Source, request.Session);
 
             /*
              * The differentiation between the case where there is a Block1 or
@@ -212,25 +212,22 @@ namespace Com.AugustCellars.CoAP.Net
              * all exchanges that do not need blockwise transfer have simpler and
              * faster code than exchanges with blockwise transfer.
              */
-            if (!request.HasOption(OptionType.Block1) && !request.HasOption(OptionType.Block2))
-            {
+            if (!request.HasOption(OptionType.Block1) && !request.HasOption(OptionType.Block2)) {
                 Exchange exchange = new Exchange(request, Origin.Remote);
                 Exchange previous = _deduplicator.FindPrevious(keyId, exchange);
-                if (previous == null)
-                {
+                if (previous == null) {
                     exchange.Completed += OnExchangeCompleted;
                     return exchange;
                 }
-                else
-                {
-                    if (log.IsInfoEnabled)
+                else {
+                    if (log.IsInfoEnabled) {
                         log.Info("Duplicate request: " + request);
+                    }
                     request.Duplicate = true;
                     return previous;
                 }
             }
-            else
-            {
+            else {
 #if INCLUDE_OSCOAP
                 byte[] oscoapValue = null;
                 if (request.HasOption(OptionType.Oscoap)) {
@@ -241,34 +238,32 @@ namespace Com.AugustCellars.CoAP.Net
                 Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, request.Source);
 #endif
 
-                if (log.IsDebugEnabled)
+                if (log.IsDebugEnabled) {
                     log.Debug("Looking up ongoing exchange for " + keyUri);
+                }
 
                 Exchange ongoing;
-                if (_ongoingExchanges.TryGetValue(keyUri, out ongoing))
-                {
+                if (_ongoingExchanges.TryGetValue(keyUri, out ongoing)) {
                     Exchange prev = _deduplicator.FindPrevious(keyId, ongoing);
-                    if (prev != null)
-                    {
-                        if (log.IsInfoEnabled)
+                    if (prev != null) {
+                        if (log.IsInfoEnabled) {
                             log.Info("Duplicate ongoing request: " + request);
+                        }
                         request.Duplicate = true;
                     }
-                    else
-                    {
+                    else {
                         // the exchange is continuing, we can (i.e., must) clean up the previous response
-                        if (ongoing.CurrentResponse.Type != MessageType.ACK && !ongoing.CurrentResponse.HasOption(OptionType.Observe))
-                        {
-                            keyId = new Exchange.KeyID(ongoing.CurrentResponse.ID, null);
-                            if (log.IsDebugEnabled)
+                        if (ongoing.CurrentResponse.Type != MessageType.ACK && !ongoing.CurrentResponse.HasOption(OptionType.Observe)) {
+                            keyId = new Exchange.KeyID(ongoing.CurrentResponse.ID, null, ongoing.CurrentResponse.Session);
+                            if (log.IsDebugEnabled) {
                                 log.Debug("Ongoing exchange got new request, cleaning up " + keyId);
+                            }
                             _exchangesByID.Remove(keyId);
                         }
                     }
                     return ongoing;
                 }
-                else
-                {
+                else {
                     // We have no ongoing exchange for that request block. 
                     /*
                      * Note the difficulty of the following code: The first message
@@ -280,18 +275,18 @@ namespace Com.AugustCellars.CoAP.Net
 
                     Exchange exchange = new Exchange(request, Origin.Remote);
                     Exchange previous = _deduplicator.FindPrevious(keyId, exchange);
-                    if (previous == null)
-                    {
-                        if (log.IsDebugEnabled)
+                    if (previous == null) {
+                        if (log.IsDebugEnabled) {
                             log.Debug("New ongoing request, storing " + keyUri + " for " + request);
+                        }
                         exchange.Completed += OnExchangeCompleted;
                         _ongoingExchanges[keyUri] = exchange;
                         return exchange;
                     }
-                    else
-                    {
-                        if (log.IsInfoEnabled)
+                    else {
+                        if (log.IsInfoEnabled) {
                             log.Info("Duplicate initial request: " + request);
+                        }
                         request.Duplicate = true;
                         return previous;
                     }
@@ -312,10 +307,10 @@ namespace Com.AugustCellars.CoAP.Net
             Exchange.KeyID keyId;
             if (response.Type == MessageType.ACK)
                 // own namespace
-                keyId = new Exchange.KeyID(response.ID, null);
+                keyId = new Exchange.KeyID(response.ID, null, response.Session);
             else
                 // remote namespace
-                keyId = new Exchange.KeyID(response.ID, response.Source);
+                keyId = new Exchange.KeyID(response.ID, response.Source, response.Session);
 
             Exchange.KeyToken keyToken = new Exchange.KeyToken(response.Token);
 
@@ -333,7 +328,7 @@ namespace Com.AugustCellars.CoAP.Net
                 }
                 else
                 {
-                    keyId = new Exchange.KeyID(exchange.CurrentRequest.ID, null);
+                    keyId = new Exchange.KeyID(exchange.CurrentRequest.ID, null, response.Session);
                     if (log.IsDebugEnabled)
                         log.Debug("Exchange got response: Cleaning up " + keyId);
                     _exchangesByID.Remove(keyId);
@@ -377,7 +372,7 @@ namespace Com.AugustCellars.CoAP.Net
         public Exchange ReceiveEmptyMessage(EmptyMessage message)
         {
             // local namespace
-            Exchange.KeyID keyID = new Exchange.KeyID(message.ID, null);
+            Exchange.KeyID keyID = new Exchange.KeyID(message.ID, null, null);
             Exchange exchange;
             if (_exchangesByID.TryGetValue(keyID, out exchange))
             {
@@ -410,7 +405,7 @@ namespace Com.AugustCellars.CoAP.Net
             foreach (Response previous in relation.ClearNotifications())
             {
                 // notifications are local MID namespace
-                Exchange.KeyID keyId = new Exchange.KeyID(previous.ID, null);
+                Exchange.KeyID keyId = new Exchange.KeyID(previous.ID, null, null);
                 _exchangesByID.Remove(keyId);
             }
         }
@@ -427,7 +422,7 @@ namespace Com.AugustCellars.CoAP.Net
             if (exchange.Origin == Origin.Local)
             {
                 // this endpoint created the Exchange by issuing a request
-                Exchange.KeyID keyID = new Exchange.KeyID(exchange.CurrentRequest.ID, null);
+                Exchange.KeyID keyID = new Exchange.KeyID(exchange.CurrentRequest.ID, null, null);
                 Exchange.KeyToken keyToken = new Exchange.KeyToken(exchange.CurrentRequest.Token);
 
                 if (log.IsDebugEnabled)
@@ -445,7 +440,7 @@ namespace Com.AugustCellars.CoAP.Net
                 if (response != null && response.Type != MessageType.ACK)
                 {
                     // only response MIDs are stored for ACK and RST, no reponse Tokens
-                    Exchange.KeyID midKey = new Exchange.KeyID(response.ID, null);
+                    Exchange.KeyID midKey = new Exchange.KeyID(response.ID, null, response.Session);
                     //if (log.IsDebugEnabled)
                     //    log.Debug("Remote ongoing completed, cleaning up " + midKey);
                     _exchangesByID.Remove(midKey);

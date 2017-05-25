@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Collections.Generic;
 using Com.AugustCellars.CoAP.Util;
 
@@ -36,6 +37,7 @@ namespace Com.AugustCellars.CoAP.Examples
             String payload = null;
             Boolean loop = false;
             Boolean byEvent = true;
+            OneKey authKey = null;
 
             if (args.Length == 0)
                 PrintUsage();
@@ -47,8 +49,22 @@ namespace Com.AugustCellars.CoAP.Examples
                 {
                     if (arg.Equals("-l"))
                         loop = true;
-                    if (arg.Equals("-e"))
+                    else if (arg.Equals("-e"))
                         byEvent = true;
+                    else if (arg.StartsWith("-psk=")) {
+                        if (authKey == null) {
+                            authKey = new OneKey();
+                            authKey.Add(COSE.CoseKeyKeys.KeyType, COSE.GeneralValues.KeyType_Octet);
+                        }
+                        authKey.Add(CoseKeyParameterKeys.Octet_k, CBORObject.FromObject(Encoding.UTF8.GetBytes(arg.Substring(5))));
+                    }
+                    else if (arg.StartsWith("-psk-id=")) {
+                        if (authKey == null) {
+                            authKey = new OneKey();
+                            authKey.Add(COSE.CoseKeyKeys.KeyType, COSE.GeneralValues.KeyType_Octet);
+                        }
+                        authKey.Add(COSE.CoseKeyKeys.KeyIdentifier, CBORObject.FromObject(Encoding.UTF8.GetBytes(arg.Substring(8))));
+                    }
                     else
                         Console.WriteLine("Unknown option: " + arg);
                 }
@@ -102,6 +118,17 @@ namespace Com.AugustCellars.CoAP.Examples
                 uri = new Uri(uri, "/.well-known/core");
             }
 
+            CoAPEndPoint ep = null;
+            if (uri.Scheme == "coaps") {
+                if (authKey == null) {
+                    Console.WriteLine("Must use the -psk option to provide an authentication key");
+                    return;
+                }
+                ep = new DTLSClientEndPoint(authKey);
+                ep.Start();
+                request.EndPoint = ep;
+            }
+
             request.URI = uri;
             request.SetPayload(payload, MediaType.TextPlain);
 
@@ -126,8 +153,10 @@ namespace Com.AugustCellars.CoAP.Examples
                             Console.WriteLine(Utils.ToString(response));
                             Console.WriteLine("Time (ms): " + response.RTT);
                         }
-                        if (!loop)
+                        if (!loop) {
+                            if (ep != null) ep.Stop();
                             Environment.Exit(0);
+                        }
                     };
                     request.Send();
                     while (true)
@@ -184,6 +213,7 @@ namespace Com.AugustCellars.CoAP.Examples
             {
                 Console.WriteLine("Failed executing request: " + ex.Message);
                 Console.WriteLine(ex);
+                if (ep != null) ep.Stop();
                 Environment.Exit(1);
             }
         }

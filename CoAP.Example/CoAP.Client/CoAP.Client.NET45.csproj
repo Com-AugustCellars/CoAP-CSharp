@@ -32,6 +32,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
+    </Reference>
+    <Reference Include="CBOR, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\PeterO.Cbor.2.4.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CBOR.dll</HintPath>
+    </Reference>
+    <Reference Include="COSE, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Com.AugustCellars.COSE.1.0.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8\COSE.dll</HintPath>
+    </Reference>
+    <Reference Include="Numbers, Version=0.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\PeterO.Numbers.0.2.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\Numbers.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
@@ -43,6 +55,9 @@
       <Project>{45DB1E45-4831-4E4A-BB1E-AE92EEA182E3}</Project>
       <Name>CoAP.NET45</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

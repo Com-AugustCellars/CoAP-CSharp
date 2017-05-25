@@ -314,12 +314,14 @@ namespace Com.AugustCellars.CoAP.Net
         {
             private readonly Int32 _id;
             private readonly System.Net.EndPoint _endpoint;
+            private readonly ISession _session;
             private readonly Int32 _hash;
 
-            public KeyID(Int32 id, System.Net.EndPoint ep)
+            public KeyID(Int32 id, System.Net.EndPoint ep, ISession session)
             {
                 _id = id;
                 _endpoint = ep;
+                _session = session;
                 _hash = id * 31 + (ep == null ? 0 : ep.GetHashCode());
             }
 
@@ -335,7 +337,7 @@ namespace Com.AugustCellars.CoAP.Net
                 KeyID other = obj as KeyID;
                 if (other == null)
                     return false;
-                return _id == other._id && Object.Equals(_endpoint, other._endpoint);
+                return _id == other._id && Object.Equals(_endpoint, other._endpoint); // && (_session == other._session);
             }
 
             /// <inheritdoc/>

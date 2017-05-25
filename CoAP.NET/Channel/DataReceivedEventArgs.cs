@@ -20,23 +20,33 @@ namespace Com.AugustCellars.CoAP.Channel
     {
         readonly Byte[] _data;
         readonly System.Net.EndPoint _endPoint;
+        private readonly ISession _session;
 
         /// <summary>
         /// </summary>
-        public DataReceivedEventArgs(Byte[] data, System.Net.EndPoint endPoint)
+        public DataReceivedEventArgs(Byte[] data, System.Net.EndPoint endPoint, ISession session)
         {
             _data = data;
             _endPoint = endPoint;
+            _session = session;
         }
 
         /// <summary>
         /// Gets the received bytes.
         /// </summary>
-        public Byte[] Data { get { return _data; } }
+        public Byte[] Data { get => _data;  }
 
         /// <summary>
         /// Gets the <see cref="System.Net.EndPoint"/> where the data is received from.
         /// </summary>
-        public System.Net.EndPoint EndPoint { get { return _endPoint; } }
+        public System.Net.EndPoint EndPoint { get => _endPoint;  }
+
+        /// <summary>
+        /// Gets the communication session for the message.
+        /// </summary>
+        public ISession Session
+        {
+            get => _session;
+        }
     }
 }

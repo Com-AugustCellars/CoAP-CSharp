@@ -19,7 +19,7 @@ namespace Com.AugustCellars.CoAP.Channel
     /// <summary>
     /// Channel via UDP protocol.
     /// </summary>
-    public partial class UDPChannel : IChannel
+    public partial class UDPChannel : IChannel, ISession
     {
         /// <summary>
         /// Default size of buffer for receiving packet.
@@ -245,7 +245,7 @@ namespace Com.AugustCellars.CoAP.Channel
         {
             EventHandler<DataReceivedEventArgs> h = DataReceived;
             if (h != null)
-                h(this, new DataReceivedEventArgs(data, ep));
+                h(this, new DataReceivedEventArgs(data, ep, this));
         }
 
         private void BeginSend()

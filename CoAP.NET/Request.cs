@@ -11,10 +11,12 @@
 
 using System;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Observe;
+using Org.BouncyCastle.Crypto.Tls;
 #if INCLUDE_OSCOAP
 using Com.AugustCellars.CoAP.OSCOAP;
 #endif
@@ -392,9 +394,28 @@ namespace Com.AugustCellars.CoAP
 #if INCLUDE_OSCOAP
         public SecurityContext OscoapContext
         {
-            get { return _oscoapContext;}
-            set { _oscoapContext = value; }
+            get => _oscoapContext;
+            set => _oscoapContext = value;
         }
 #endif
+
+        /// <summary>
+        /// Return the security context associated with TLS.
+        /// </summary>
+        public ISecureSession TlsContext
+        {
+            get
+            {
+                if (Session is ISecureSession) {
+                    return (ISecureSession) Session;
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Give information about what session the request came from.
+        /// </summary>
+        public ISession Session { get; set; }
     }
 }
