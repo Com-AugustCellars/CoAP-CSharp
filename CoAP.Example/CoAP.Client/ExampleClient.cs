@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Text;
 using System.Collections.Generic;
+using PeterO.Cbor;
+using Com.AugustCellars.COSE;
 using Com.AugustCellars.CoAP.Util;
+using Com.AugustCellars.CoAP.DTLS;
+using Com.AugustCellars.CoAP.Net;
 
 #if DNX451
 using Common.Logging;
