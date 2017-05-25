@@ -16,7 +16,7 @@ namespace Com.AugustCellars.CoAP.Examples.Resources
             Attributes.AddResourceType("CurrentTime");
             Observable = true;
 
-            _timer = new Timer(Timed, null, 0, 2000);
+            _timer = new Timer(Timed, null, 0, 2000*30*30);
         }
 
         private void Timed(Object o)
