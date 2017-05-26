@@ -24,22 +24,19 @@ namespace Com.AugustCellars.CoAP.Observe
     /// </summary>
     public class ObserveRelation
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(ObserveRelation));
-        readonly ICoapConfig _config;
-        readonly ObservingEndpoint _endpoint;
-        readonly IResource _resource;
-        readonly Exchange _exchange;
-        private Response _recentControlNotification;
-        private Response _nextControlNotification;
-        private String _key;
-        private Boolean _established;
+        private static readonly ILogger _Log = LogManager.GetLogger(typeof(ObserveRelation));
+        private readonly ICoapConfig _config;
+        private readonly ObservingEndpoint _endpoint;
+        private readonly IResource _resource;
+        private readonly Exchange _exchange;
+        private readonly String _key;
         private DateTime _interestCheckTime = DateTime.Now;
         private Int32 _interestCheckCounter = 1;
 
         /// <summary>
         /// The notifications that have been sent, so they can be removed from the Matcher
         /// </summary>
-        private ConcurrentQueue<Response> _notifications = new ConcurrentQueue<Response>();
+        private readonly ConcurrentQueue<Response> _notifications = new ConcurrentQueue<Response>();
 
         /// <summary>
         /// Constructs a new observe relation.
@@ -50,19 +47,11 @@ namespace Com.AugustCellars.CoAP.Observe
         /// <param name="exchange">the exchange that tries to establish the observe relation</param>
         public ObserveRelation(ICoapConfig config, ObservingEndpoint endpoint, IResource resource, Exchange exchange)
         {
-            if (config == null)
-                throw ThrowHelper.ArgumentNull("config");
-            if (endpoint == null)
-                throw ThrowHelper.ArgumentNull("endpoint");
-            if (resource == null)
-                throw ThrowHelper.ArgumentNull("resource");
-            if (exchange == null)
-                throw ThrowHelper.ArgumentNull("exchange");
-            _config = config;
-            _endpoint = endpoint;
-            _resource = resource;
-            _exchange = exchange;
-            _key = String.Format("{0}#{1}", Source, exchange.Request.TokenString);
+            _config = config?? throw ThrowHelper.ArgumentNull("config");
+            _endpoint = endpoint?? throw ThrowHelper.ArgumentNull("endpoint");
+            _resource = resource?? throw ThrowHelper.ArgumentNull("resource");
+            _exchange = exchange?? throw ThrowHelper.ArgumentNull("exchange");
+            _key = $"{Source}#{exchange.Request.TokenString}";
         }
 
         /// <summary>
@@ -70,7 +59,7 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         public IResource Resource
         {
-            get { return _resource; }
+            get =>_resource;
         }
 
         /// <summary>
@@ -78,12 +67,12 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         public Exchange Exchange
         {
-            get { return _exchange; }
+            get => _exchange;
         }
 
         public String Key
         {
-            get { return _key; }
+            get => _key;
         }
 
         /// <summary>
@@ -91,41 +80,31 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         public System.Net.EndPoint Source
         {
-            get { return _endpoint.EndPoint; }
+            get => _endpoint.EndPoint;
         }
 
-        public Response CurrentControlNotification
-        {
-            get { return _recentControlNotification; }
-            set { _recentControlNotification = value; }
-        }
+        public Response CurrentControlNotification { get; set; }
 
-        public Response NextControlNotification
-        {
-            get { return _nextControlNotification; }
-            set { _nextControlNotification = value; }
-        }
+        public Response NextControlNotification { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating if this relation has been established.
         /// </summary>
-        public Boolean Established
-        {
-            get { return _established; }
-            set { _established = value; }
-        }
+        public Boolean Established { get; set; }
 
         /// <summary>
         /// Cancel this observe relation.
         /// </summary>
         public void Cancel()
         {
-            if (log.IsDebugEnabled)
-                log.Debug("Cancel observe relation from " + _key + " with " + _resource.Path);
+            if (_Log.IsDebugEnabled) {
+                _Log.Debug("Cancel observe relation from " + _key + " with " + _resource.Path);
+            }
             // stop ongoing retransmissions
-            if (_exchange.Response != null)
+            if (_exchange.Response != null) {
                 _exchange.Response.Cancel();
-            _established = false;
+            }
+            Established = false;
             _resource.RemoveObserveRelation(this);
             _endpoint.RemoveObserveRelation(this);
             _exchange.Complete = true;
@@ -149,30 +128,41 @@ namespace Com.AugustCellars.CoAP.Observe
             _resource.HandleRequest(_exchange);
         }
 
+        /// <summary>
+        /// Do we think that we should be doing a CON check on the resource?
+        /// The check is done on both a time intervolt and a number of notifications.
+        /// </summary>
+        /// <returns>true if should do a CON check</returns>
         public Boolean Check()
         {
-            Boolean check = false;
+            bool check = false;
             DateTime now = DateTime.Now;
             check |= _interestCheckTime.AddMilliseconds(_config.NotificationCheckIntervalTime) < now;
             check |= (++_interestCheckCounter >= _config.NotificationCheckIntervalCount);
-            if (check)
-            {
+            if (check) {
                 _interestCheckTime = now;
                 _interestCheckCounter = 0;
             }
             return check;
         }
 
+        /// <summary>
+        /// Add the response to the notification list for this observation
+        /// </summary>
+        /// <param name="notification">Response to send</param>
         public void AddNotification(Response notification)
         {
             _notifications.Enqueue(notification);
         }
 
+        /// <summary>
+        /// Enumerate through all of the queued notifications
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<Response> ClearNotifications()
         {
             Response resp;
-            while (_notifications.TryDequeue(out resp))
-            {
+            while (_notifications.TryDequeue(out resp)) {
                 yield return resp;
             }
         }

@@ -23,8 +23,8 @@ namespace Com.AugustCellars.CoAP.Observe
     /// </summary>
     public class ObservingEndpoint
     {
-        readonly System.Net.EndPoint _endpoint;
-        readonly ICollection<ObserveRelation> _relations = new SynchronizedCollection<ObserveRelation>();
+        private readonly System.Net.EndPoint _endpoint;
+        private readonly ICollection<ObserveRelation> _relations = new SynchronizedCollection<ObserveRelation>();
 
         /// <summary>
         /// Constructs a new observing endpoint.
@@ -39,7 +39,7 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         public System.Net.EndPoint EndPoint
         {
-            get { return _endpoint; }
+            get => _endpoint;
         }
 
         /// <summary>
@@ -63,10 +63,10 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         public ObserveRelation GetObserveRelation(Byte[] token)
         {
-            foreach (ObserveRelation relation in _relations)
-            {
-                if (ByteArrayUtils.Equals(token, relation.Exchange.Request.Token))
+            foreach (ObserveRelation relation in _relations) {
+                if (ByteArrayUtils.Equals(token, relation.Exchange.Request.Token)) {
                     return relation;
+                }
             }
             return null;
         }
@@ -77,8 +77,7 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         public void CancelAll()
         {
-            foreach (ObserveRelation relation in _relations)
-            {
+            foreach (ObserveRelation relation in _relations) {
                 relation.Cancel();
             }
         }

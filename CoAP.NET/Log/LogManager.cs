@@ -18,7 +18,7 @@ namespace Com.AugustCellars.CoAP.Log
     /// </summary>
     public static class LogManager
     {
-        static LogLevel _level = LogLevel.All;
+        static LogLevel _level = LogLevel.None;
         static ILogManager _manager;
 
         static LogManager()

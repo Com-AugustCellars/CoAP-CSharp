@@ -31,9 +31,9 @@ namespace Com.AugustCellars.CoAP.Observe
         /// <summary>
         /// Gets the request sent to refresh an observation.
         /// </summary>
-        public Request RefreshRequest
+        public Request RefreshRequest 
         {
-            get { return _refreshRequest; }
+            get =>_refreshRequest;
         }
     }
 }

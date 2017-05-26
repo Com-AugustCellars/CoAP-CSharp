@@ -11,7 +11,6 @@
 
 using System;
 using System.Threading;
-using Com.AugustCellars.CoAP.Util;
 
 namespace Com.AugustCellars.CoAP.Observe
 {
@@ -21,9 +20,8 @@ namespace Com.AugustCellars.CoAP.Observe
     /// </summary>
     public class ObserveNotificationOrderer
     {
-        readonly ICoapConfig _config;
+        private readonly ICoapConfig _config;
         private Int32 _number;
-        private DateTime _timestamp;
 
         public ObserveNotificationOrderer()
             : this(null)
@@ -41,8 +39,7 @@ namespace Com.AugustCellars.CoAP.Observe
         public Int32 GetNextObserveNumber()
         {
             Int32 next = Interlocked.Increment(ref _number);
-            while (next >= 1 << 24)
-            {
+            while (next >= 1 << 24) {
                 Interlocked.CompareExchange(ref _number, 0, next);
                 next = Interlocked.Increment(ref _number);
             }
@@ -54,20 +51,20 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         public Int32 Current
         {
-            get { return _number; }
+            get => _number;
         }
 
-        public DateTime Timestamp
-        {
-            get { return _timestamp; }
-            set { _timestamp = value; }
-        }
+        public DateTime Timestamp { get; set; }
 
+        /// <summary>
+        /// Is this the most recent response that we have seen for this observe relation?
+        /// </summary>
+        /// <param name="response"></param>
+        /// <returns></returns>
         public Boolean IsNew(Response response)
         {
             Int32? obs = response.Observe;
-            if (!obs.HasValue)
-            {
+            if (!obs.HasValue) {
                 // this is a final response, e.g., error or proactive cancellation
                 return true;
             }
@@ -76,21 +73,19 @@ namespace Com.AugustCellars.CoAP.Observe
             // arrive and be processed by different threads. We have to
             // ensure that only the most fresh one is being delivered.
             // We use the notation from the observe draft-08.
-            DateTime T1 = Timestamp;
-            DateTime T2 = DateTime.Now;
-            Int32 V1 = Current;
-            Int32 V2 = obs.Value;
+            DateTime t1 = Timestamp;
+            DateTime t2 = DateTime.Now;
+            Int32 v1 = Current;
+            Int32 v2 = obs.Value;
             Int64 notifMaxAge = (_config ?? CoapConfig.Default).NotificationMaxAge;
-            if (V1 < V2 && V2 - V1 < 1 << 23
-                    || V1 > V2 && V1 - V2 > 1 << 23
-                    || T2 > T1.AddMilliseconds(notifMaxAge))
-            {
-                Timestamp = T2;
-                _number = V2;
+            if ((v1 < v2) && (v2 - v1 < 1 << 23)
+                    || (v1 > v2) && (v1 - v2 > 1 << 23)
+                    || (t2 > t1.AddMilliseconds(notifMaxAge))) {
+                Timestamp = t2;
+                _number = v2;
                 return true;
             }
-            else
-            {
+            else {
                 return false;
             }
         }

@@ -19,8 +19,9 @@ namespace Com.AugustCellars.CoAP.Stack
 {
     public class ObserveLayer : AbstractLayer
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(ObserveLayer));
-        static readonly Object ReregistrationContextKey = "ReregistrationContext";
+        private static readonly ILogger log = LogManager.GetLogger(typeof(ObserveLayer));
+        private static readonly Object ReregistrationContextKey = "ReregistrationContext";
+        private static readonly Random _Random = new Random();
 
         /// <summary>
         /// Additional time to wait until re-registration
@@ -39,32 +40,29 @@ namespace Com.AugustCellars.CoAP.Stack
         public override void SendResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
             ObserveRelation relation = exchange.Relation;
-            if (relation != null && relation.Established)
-            {
-                if (exchange.Request.IsAcknowledged || exchange.Request.Type == MessageType.NON)
-                {
+            if (relation != null && relation.Established)  {
+                if (exchange.Request.IsAcknowledged || exchange.Request.Type == MessageType.NON) {
                     // Transmit errors as CON
-                    if (!Code.IsSuccess(response.Code))
-                    {
-                        if (log.IsDebugEnabled)
+                    if (!Code.IsSuccess(response.Code)) {
+                        if (log.IsDebugEnabled) { 
                             log.Debug("Response has error code " + response.Code + " and must be sent as CON");
+                        }
                         response.Type = MessageType.CON;
                         relation.Cancel();
                     }
-                    else
-                    {
+                    else { 
                         // Make sure that every now and than a CON is mixed within
-                        if (relation.Check())
-                        {
-                            if (log.IsDebugEnabled)
+                        if (relation.Check()) {
+                            if (log.IsDebugEnabled) {
                                 log.Debug("The observe relation check requires the notification to be sent as CON");
+                            }
                             response.Type = MessageType.CON;
                         }
-                        else
-                        {
+                        else {
                             // By default use NON, but do not override resource decision
-                            if (response.Type == MessageType.Unknown)
+                            if (response.Type == MessageType.Unknown) {
                                 response.Type = MessageType.NON;
+                            }
                         }
                     }
                 }
@@ -76,8 +74,7 @@ namespace Com.AugustCellars.CoAP.Stack
                  * The matcher must be able to find the NON notifications to remove
                  * them from the exchangesByID map
                  */
-                if (response.Type == MessageType.NON)
-                {
+                if (response.Type == MessageType.NON) {
                     relation.AddNotification(response);
                 }
 
@@ -90,33 +87,31 @@ namespace Com.AugustCellars.CoAP.Stack
                  * counter). When a fresh/younger notification arrives but must be
                  * postponed we forget any former notification.
                  */
-                if (response.Type == MessageType.CON)
-                {
+                if (response.Type == MessageType.CON) {
                     PrepareSelfReplacement(nextLayer, exchange, response);
                 }
 
                 // The decision whether to postpone this notification or not and the
                 // decision which notification is the freshest to send next must be
                 // synchronized
-                lock (exchange)
-                {
+                lock (exchange) {
                     Response current = relation.CurrentControlNotification;
-                    if (current != null && IsInTransit(current))
-                    {
-                        if (log.IsDebugEnabled)
+                    if (current != null && IsInTransit(current)) {
+                        if (log.IsDebugEnabled) {
                             log.Debug("A former notification is still in transit. Postpone " + response);
+                        }
                         // use the same ID
                         response.ID = current.ID;
                         relation.NextControlNotification = response;
                         return;
                     }
-                    else
-                    {
+                    else { 
                         relation.CurrentControlNotification = response;
                         relation.NextControlNotification = null;
                     }
                 }
             }
+
             // else no observe was requested or the resource does not allow it
             base.SendResponse(nextLayer, exchange, response);
         }
@@ -124,25 +119,23 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <inheritdoc/>
         public override void ReceiveResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
-            if (response.HasOption(OptionType.Observe))
-            {
-                if (exchange.Request.IsCancelled)
-                {
+            if (response.HasOption(OptionType.Observe)) {
+                if (exchange.Request.IsCancelled) {
                     // The request was canceled and we no longer want notifications
-                    if (log.IsDebugEnabled)
+                    if (log.IsDebugEnabled) {
                         log.Debug("ObserveLayer rejecting notification for canceled Exchange");
+                    }
+
                     EmptyMessage rst = EmptyMessage.NewRST(response);
                     SendEmptyMessage(nextLayer, exchange, rst);
                     // Matcher sets exchange as complete when RST is sent
                 }
-                else
-                {
+                else {
                     PrepareReregistration(exchange, response, msg => SendRequest(nextLayer, exchange, msg));
                     base.ReceiveResponse(nextLayer, exchange, response);
                 }
             }
-            else
-            {
+            else {
                 // No observe option in response => always deliver
                 base.ReceiveResponse(nextLayer, exchange, response);
             }
@@ -176,18 +169,16 @@ namespace Com.AugustCellars.CoAP.Stack
 
         private void PrepareSelfReplacement(INextLayer nextLayer, Exchange exchange, Response response)
         {
-            response.Acknowledged += (o, e) =>
-            {
-                lock (exchange)
-                {
+            response.Acknowledged += (o, e) => {
+                lock (exchange) {
                     ObserveRelation relation = exchange.Relation;
                     Response next = relation.NextControlNotification;
                     relation.CurrentControlNotification = next; // next may be null
                     relation.NextControlNotification = null;
-                    if (next != null)
-                    {
-                        if (log.IsDebugEnabled)
+                    if (next != null) {
+                        if (log.IsDebugEnabled) {
                             log.Debug("Notification has been acknowledged, send the next one");
+                        }
                         // this is not a self replacement, hence a new ID
                         next.ID = Message.None;
                         // Create a new task for sending next response so that we can leave the sync-block
@@ -196,23 +187,20 @@ namespace Com.AugustCellars.CoAP.Stack
                 }
             };
 
-            response.Retransmitting += (o, e) =>
-            {
-                lock (exchange)
-                {
+            response.Retransmitting += (o, e) => {
+                lock (exchange) {
                     ObserveRelation relation = exchange.Relation;
                     Response next = relation.NextControlNotification;
-                    if (next != null)
-                    {
-                        if (log.IsDebugEnabled)
+                    if (next != null) {
+                        if (log.IsDebugEnabled) {
                             log.Debug("The notification has timed out and there is a fresher notification for the retransmission.");
+                        }
                         // Cancel the original retransmission and send the fresh notification here
                         response.IsCancelled = true;
                         // use the same ID
                         next.ID = response.ID;
                         // Convert all notification retransmissions to CON
-                        if (next.Type != MessageType.CON)
-                        {
+                        if (next.Type != MessageType.CON) {
                             next.Type = MessageType.CON;
                             PrepareSelfReplacement(nextLayer, exchange, next);
                         }
@@ -224,40 +212,43 @@ namespace Com.AugustCellars.CoAP.Stack
                 }
             };
 
-            response.TimedOut += (o, e) =>
-            {
+            response.TimedOut += (o, e) => {
                 ObserveRelation relation = exchange.Relation;
-                if (log.IsDebugEnabled)
-                    log.Debug("Notification" + relation.Exchange.Request.TokenString
-                        + " timed out. Cancel all relations with source " + relation.Source);
+                if (log.IsDebugEnabled) {
+                    log.Debug($"Notification {relation.Exchange.Request.TokenString} timed out. Cancel all relations with source {relation.Source}");
+                }
                 relation.CancelAll();
             };
         }
 
         private void PrepareReregistration(Exchange exchange, Response response, Action<Request> reregister)
         {
-            Int64 timeout = response.MaxAge * 1000 + _backoff;
+            if (!exchange.Request.ObserveReconnect) return;
+
+            Int64 timeout = response.MaxAge * 1000 + _backoff + _Random.Next(2, 15) * 1000;
             ReregistrationContext ctx = exchange.GetOrAdd<ReregistrationContext>(
                 ReregistrationContextKey, _ => new ReregistrationContext(exchange, timeout, reregister));
 
-            if (log.IsDebugEnabled)
+            if (log.IsDebugEnabled) {
                 log.Debug("Scheduling re-registration in " + timeout + "ms for " + exchange.Request);
+            }
 
             ctx.Restart();
         }
 
         class ReregistrationContext : IDisposable
         {
-            private Exchange _exchange;
-            private Action<Request> _reregister;
-            private Timer _timer;
+            private readonly Exchange _exchange;
+            private readonly Action<Request> _reregister;
+            private readonly Timer _timer;
 
             public ReregistrationContext(Exchange exchange, Int64 timeout, Action<Request> reregister)
             {
                 _exchange = exchange;
                 _reregister = reregister;
-                _timer = new Timer(timeout);
-                _timer.AutoReset = false;
+                _timer = new Timer(timeout) {
+                    AutoReset = false
+                };
                 _timer.Elapsed += timer_Elapsed;
             }
 
@@ -286,8 +277,7 @@ namespace Com.AugustCellars.CoAP.Stack
             void timer_Elapsed(Object sender, ElapsedEventArgs e)
             {
                 Request request = _exchange.Request;
-                if (!request.IsCancelled)
-                {
+                if (!request.IsCancelled) {
                     Request refresh = Request.NewGet();
                     refresh.SetOptions(request.GetOptions());
                     // make sure Observe is set and zero
@@ -296,15 +286,16 @@ namespace Com.AugustCellars.CoAP.Stack
                     refresh.Token = request.Token;
                     refresh.Destination = request.Destination;
                     refresh.CopyEventHandler(request);
-                    if (log.IsDebugEnabled)
+                    if (log.IsDebugEnabled) {
                         log.Debug("Re-registering for " + request);
+                    }
                     request.FireReregister(refresh);
                     _reregister(refresh);
                 }
-                else
-                {
-                    if (log.IsDebugEnabled)
+                else {
+                    if (log.IsDebugEnabled) {
                         log.Debug("Dropping re-registration for canceled " + request);
+                    }
                 }
             }
         }
