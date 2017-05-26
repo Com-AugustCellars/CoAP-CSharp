@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Text;
 using System.Collections.Generic;
-using Com.AugustCellars.CoAP.DTLS;
-using Com.AugustCellars.CoAP.Util;
-using Com.AugustCellars.COSE;
 using PeterO.Cbor;
+using Com.AugustCellars.COSE;
+using Com.AugustCellars.CoAP.Util;
+using Com.AugustCellars.CoAP.DTLS;
 using Com.AugustCellars.CoAP.Net;
 
 #if DNX451
