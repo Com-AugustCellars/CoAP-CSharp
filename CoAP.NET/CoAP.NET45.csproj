@@ -53,8 +53,8 @@
       <HintPath>..\packages\PeterO.Cbor.2.4.2\lib\portable-net40+sl50+win+wpa81+wp80\CBOR.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="COSE, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8\COSE.dll</HintPath>
+    <Reference Include="COSE, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.1\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8\COSE.dll</HintPath>
     </Reference>
     <Reference Include="Numbers, Version=0.2.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\PeterO.Numbers.0.2.2\lib\portable-net40+sl50+win+wpa81+wp80\Numbers.dll</HintPath>
@@ -85,9 +85,12 @@
     <Compile Include="Deduplication\IDeduplicator.cs" />
     <Compile Include="Deduplication\NoopDeduplicator.cs" />
     <Compile Include="Deduplication\SweepDeduplicator.cs" />
+    <Compile Include="DTLS\DTLSChannel.cs" />
     <Compile Include="DTLS\DTLSClient.cs" />
     <Compile Include="DTLS\DTLSClientChannel.cs" />
     <Compile Include="DTLS\DTLSClientEndPoint.cs" />
+    <Compile Include="DTLS\DTLSEndPoint.cs" />
+    <Compile Include="DTLS\DtlsServer.cs" />
     <Compile Include="DTLS\DTLSSession.cs" />
     <Compile Include="DTLS\QueueItem.cs" />
     <Compile Include="EmptyMessage.cs" />

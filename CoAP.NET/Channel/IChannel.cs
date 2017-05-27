@@ -38,7 +38,8 @@ namespace Com.AugustCellars.CoAP.Channel
         /// Sends data through this channel. This method should be non-blocking.
         /// </summary>
         /// <param name="data">the bytes to send</param>
+        /// <param name="session">what session to send this on</param>
         /// <param name="ep">the target endpoint</param>
-        void Send(Byte[] data, System.Net.EndPoint ep);
+        void Send(Byte[] data, ISession session, System.Net.EndPoint ep);
     }
 }

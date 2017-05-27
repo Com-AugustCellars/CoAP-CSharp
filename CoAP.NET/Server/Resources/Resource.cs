@@ -487,20 +487,23 @@ namespace Com.AugustCellars.CoAP.Server.Resources
              */
 
             ObserveRelation relation = exchange.Relation;
-            if (relation == null)
+            if (relation == null) {
                 return; // because request did not try to establish a relation
+            }
 
-            if (Code.IsSuccess(response.Code))
-            {
-                response.SetOption(Option.Create(OptionType.Observe, _notificationOrderer.Current));
+            if (Code.IsSuccess(response.Code)) {
+                if (response.Session.IsReliable) {
+                    response.SetOption(Option.Create(OptionType.Observe, 0));
+                }
+                else {
+                    response.SetOption(Option.Create(OptionType.Observe, _notificationOrderer.Current));
+                }
 
-                if (!relation.Established)
-                {
+                if (!relation.Established) {
                     relation.Established = true;
                     AddObserveRelation(relation);
                 }
-                else if (_observeType != MessageType.Unknown)
-                {
+                else if (_observeType != MessageType.Unknown) {
                     // The resource can control the message type of the notification
                     response.Type = _observeType;
                 }

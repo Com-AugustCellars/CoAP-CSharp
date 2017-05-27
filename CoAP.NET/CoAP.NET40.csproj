@@ -85,9 +85,12 @@
     <Compile Include="Deduplication\IDeduplicator.cs" />
     <Compile Include="Deduplication\NoopDeduplicator.cs" />
     <Compile Include="Deduplication\SweepDeduplicator.cs" />
+    <Compile Include="DTLS\DTLSChannel.cs" />
     <Compile Include="DTLS\DTLSClient.cs" />
     <Compile Include="DTLS\DTLSClientChannel.cs" />
     <Compile Include="DTLS\DTLSClientEndPoint.cs" />
+    <Compile Include="DTLS\DTLSEndPoint.cs" />
+    <Compile Include="DTLS\DtlsServer.cs" />
     <Compile Include="DTLS\DTLSSession.cs" />
     <Compile Include="DTLS\QueueItem.cs" />
     <Compile Include="EmptyMessage.cs" />
