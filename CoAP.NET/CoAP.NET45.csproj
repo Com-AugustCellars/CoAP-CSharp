@@ -53,8 +53,8 @@
       <HintPath>..\packages\PeterO.Cbor.2.4.2\lib\portable-net40+sl50+win+wpa81+wp80\CBOR.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="COSE, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.1\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8\COSE.dll</HintPath>
+    <Reference Include="COSE, Version=1.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8\COSE.dll</HintPath>
     </Reference>
     <Reference Include="Numbers, Version=0.2.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\PeterO.Numbers.0.2.2\lib\portable-net40+sl50+win+wpa81+wp80\Numbers.dll</HintPath>
