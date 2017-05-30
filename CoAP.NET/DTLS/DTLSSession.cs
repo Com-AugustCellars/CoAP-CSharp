@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 
 using System.Net;
 using System.Collections.Concurrent;
@@ -10,7 +9,6 @@ using Com.AugustCellars.COSE;
 
 using PeterO.Cbor;
 
-using Org.BouncyCastle;
 using Org.BouncyCastle.Crypto.Tls;
 using Org.BouncyCastle.Security;
 using DataReceivedEventArgs = Com.AugustCellars.CoAP.Channel.DataReceivedEventArgs;
@@ -29,12 +27,12 @@ namespace Com.AugustCellars.CoAP.DTLS
         private readonly OneKey _userKey;
         private readonly KeySet _userKeys;
         private readonly KeySet _serverKeys;
+        private OneKey _authKey;
 
         private readonly ConcurrentQueue<QueueItem> _queue = new ConcurrentQueue<QueueItem>();
         private readonly EventHandler<DataReceivedEventArgs> _dataReceived;
-#if LATER
+
         private readonly EventHandler<SessionEventArgs> _sessionEvents;
-#endif
 
         /// <summary>
         /// List of event handlers to inform about session events.
@@ -56,6 +54,16 @@ namespace Com.AugustCellars.CoAP.DTLS
             _userKeys = userKeys;
             _serverKeys = serverKeys;
             _transport = new OurTransport(ipEndPoint);
+        }
+
+        public OneKey AuthenticationKey
+        {
+            get => _authKey;
+        }
+        /// <inheritdoc/>
+        public bool IsReliable
+        {
+            get => false;
         }
 
         /// <summary>
@@ -101,6 +109,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             DtlsClientProtocol clientProtocol = new DtlsClientProtocol(new SecureRandom());
 
             _transport.UDPChannel = udpChannel;
+            _authKey = _userKey;
 
             _listening = 1;
             DtlsTransport dtlsClient = clientProtocol.Connect(_client, _transport);
@@ -110,10 +119,9 @@ namespace Com.AugustCellars.CoAP.DTLS
             //  We are now in the world of a connected system -
             //  We need to do the receive calls
 
-            new Thread(() => StartListen()).Start();
+            new Thread(StartListen).Start();
         }
 
-#if LATER
         /// <summary>
         /// Start up a session on the server side
         /// </summary>
@@ -123,7 +131,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
             DtlsServerProtocol serverProtocol = new DtlsServerProtocol(new SecureRandom());
 
-            TlsServer server = new DtlsServer(_serverKeys, _userKeys);
+            DtlsServer server = new DtlsServer(_serverKeys, _userKeys);
 
             _transport.UDPChannel = udpChannel;
             _transport.Receive(message);
@@ -137,10 +145,10 @@ namespace Com.AugustCellars.CoAP.DTLS
             _listening = 0;
 
             _dtlsSession = dtlsServer;
+            _authKey = server.AuthenticationKey;
 
-            new Thread(() => StartListen()).Start();
+            new Thread(StartListen).Start();
         }
-#endif
 
         /// <summary>
         /// Stop the current session
@@ -182,8 +190,6 @@ namespace Com.AugustCellars.CoAP.DTLS
                     break;
 
                 _dtlsSession.Send(q.Data, 0, q.Data.Length);
-
-                q = null;
             }
 
             lock (_writeLock) {
@@ -203,7 +209,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             _transport.Receive(e.Data);
             lock (_transport.Queue) {
                 if (_listening == 0) {
-                    new Thread(() => StartListen()).Start();
+                    new Thread(StartListen).Start();
                 }
             }
         }
@@ -222,7 +228,13 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             byte[] buf = new byte[2000];
             while (true) {
-                int size = _dtlsSession.Receive(buf, 0, buf.Length, 1000);
+                int size = -1;
+                try {
+                    size = _dtlsSession.Receive(buf, 0, buf.Length, 1000);
+                }
+                catch (Exception) {
+                }
+
                 if (size == -1) {
                     lock (_transport.Queue) {
                         if (_transport.Queue.Count == 0) {
@@ -245,7 +257,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             }
         }
 
-        class OurTransport : DatagramTransport
+        private class OurTransport : DatagramTransport
         {
             private UDPChannel _udpChannel;
             private readonly System.Net.EndPoint _ep;
@@ -301,7 +313,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                     byte[] packet;
                     _receivingQueue.TryDequeue(out packet);
-                    int copyLength = System.Math.Min(len, packet.Length);
+                    int copyLength = Math.Min(len, packet.Length);
                     Array.Copy(packet, 0, buf, off, copyLength);
                     Debug.Print($"OurTransport::Receive - EP:{_ep} Data Length: {packet.Length}");
                     Debug.Print(BitConverter.ToString(buf, off, copyLength));
@@ -316,7 +328,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 byte[] newBuf = new byte[len];
                 Array.Copy(buf, off, newBuf, 0, newBuf.Length);
                 buf = newBuf;
-                _udpChannel.Send(buf, _ep);
+                _udpChannel.Send(buf, _udpChannel, _ep);
             }
 
             private readonly ConcurrentQueue<byte[]> _receivingQueue = new ConcurrentQueue<byte[]>();

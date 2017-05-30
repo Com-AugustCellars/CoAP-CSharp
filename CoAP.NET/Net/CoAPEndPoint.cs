@@ -296,7 +296,7 @@ namespace Com.AugustCellars.CoAP.Net
 
                         Fire(SendingEmptyMessage, rst);
 
-                        _channel.Send(Serialize(rst), rst.Destination);
+                        _channel.Send(Serialize(rst), e.Session, rst.Destination);
 
                         if (log.IsWarnEnabled) {
                             log.Warn("Message format error caused by " + e.EndPoint + " and reseted.");
@@ -375,7 +375,7 @@ namespace Com.AugustCellars.CoAP.Net
             Fire(SendingEmptyMessage, rst);
 
             if (!rst.IsCancelled)
-                _channel.Send(Serialize(rst), rst.Destination);
+                _channel.Send(Serialize(rst), null /*message.Session*/, rst.Destination);
         }
 
         private Byte[] Serialize(EmptyMessage message)
@@ -440,7 +440,7 @@ namespace Com.AugustCellars.CoAP.Net
             Fire(SendingRequest, request);
 
             if (!request.IsCancelled)
-                _channel.Send(Serialize(request), request.Destination);
+                _channel.Send(Serialize(request), request.Session, request.Destination);
         }
 
         void IOutbox.SendResponse(Exchange exchange, Response response)
@@ -450,7 +450,7 @@ namespace Com.AugustCellars.CoAP.Net
             Fire(SendingResponse, response);
 
             if (!response.IsCancelled)
-                _channel.Send(Serialize(response), response.Destination);
+                _channel.Send(Serialize(response), response.Session, response.Destination);
         }
 
         void IOutbox.SendEmptyMessage(Exchange exchange, EmptyMessage message)
@@ -460,7 +460,7 @@ namespace Com.AugustCellars.CoAP.Net
             Fire(SendingEmptyMessage, message);
 
             if (!message.IsCancelled)
-                _channel.Send(Serialize(message), message.Destination);
+                _channel.Send(Serialize(message), null /*  exchange.Session */, message.Destination);
         }
     }
 }

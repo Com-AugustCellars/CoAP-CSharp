@@ -187,7 +187,7 @@ namespace Com.AugustCellars.CoAP.Channel
         }
 
         /// <inheritdoc/>
-        public void Send(Byte[] data, System.Net.EndPoint ep)
+        public void Send(Byte[] data, ISession sessionReceive, System.Net.EndPoint ep)
         {
             RawData raw = new RawData();
             raw.Data = data;
@@ -315,5 +315,8 @@ namespace Com.AugustCellars.CoAP.Channel
             public Byte[] Data;
             public System.Net.EndPoint EndPoint;
         }
+
+        public event EventHandler<SessionEventArgs> SessionEvent;
+        public bool IsReliable { get => false; }
     }
 }
