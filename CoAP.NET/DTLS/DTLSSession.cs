@@ -228,7 +228,13 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             byte[] buf = new byte[2000];
             while (true) {
-                int size = _dtlsSession.Receive(buf, 0, buf.Length, 1000);
+                int size = -1;
+                try {
+                    size = _dtlsSession.Receive(buf, 0, buf.Length, 1000);
+                }
+                catch (Exception) {
+                }
+
                 if (size == -1) {
                     lock (_transport.Queue) {
                         if (_transport.Queue.Count == 0) {

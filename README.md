@@ -124,6 +124,9 @@ respones a plain string in code "2.05 Content".
 
 See [CoAP Example Server](CoAP.Server) for more.
 
+## Building the sources
+
+I am currently sync-ed up to Visual Studio 2017 and have started using language features of C# v7.0 that are supported both in Visual Studio and in the latest version of mono.
 
 ## License
 
