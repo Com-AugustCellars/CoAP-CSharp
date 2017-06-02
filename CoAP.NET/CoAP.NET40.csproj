@@ -52,14 +52,12 @@
       <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="CBOR, Version=2.5.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\PeterO.Cbor.2.5.1\lib\portable-net40+sl50+win+wpa81+wp80\CBOR.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Numbers, Version=0.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\PeterO.Numbers.0.4.0\lib\portable-net40+sl50+win+wpa81+wp80\Numbers.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
+    <Reference Include="CBOR, Version=2.5.1.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
+      <HintPath>..\packages\PeterO.Cbor.2.5.1\lib\portable-net40+sl5+win+wpa81+wp80\CBOR.dll</HintPath>
+    </Reference>
+    <Reference Include="Numbers, Version=0.4.0.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
+      <HintPath>..\packages\PeterO.Numbers.0.4.0\lib\portable-net40+sl5+win+wpa81+wp80\Numbers.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
