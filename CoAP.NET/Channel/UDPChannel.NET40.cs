@@ -24,11 +24,11 @@ namespace Com.AugustCellars.CoAP.Channel
 
         private void BeginReceive(UDPSocket socket)
         {
-            if (_running == 0)
+            if (_running == 0) {
                 return;
+            }
 
-            if (socket.ReadBuffer.RemoteEndPoint == null)
-            {
+            if (socket.ReadBuffer.RemoteEndPoint == null) {
                 socket.ReadBuffer.RemoteEndPoint = socket.Socket.Connected ?
                     socket.Socket.RemoteEndPoint :
                     new IPEndPoint(socket.Socket.AddressFamily == AddressFamily.InterNetwork ?
@@ -36,23 +36,19 @@ namespace Com.AugustCellars.CoAP.Channel
             }
             
             Boolean willRaiseEvent;
-            try
-            {
+            try {
                 willRaiseEvent = socket.Socket.ReceiveFromAsync(socket.ReadBuffer);
             }
-            catch (ObjectDisposedException)
-            {
+            catch (ObjectDisposedException) {
                 // do nothing
                 return;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 EndReceive(socket, ex);
                 return;
             }
 
-            if (!willRaiseEvent)
-            {
+            if (!willRaiseEvent) {
                 ProcessReceive(socket.ReadBuffer);
             }
         }
@@ -63,23 +59,19 @@ namespace Com.AugustCellars.CoAP.Channel
             socket.WriteBuffer.RemoteEndPoint = destination;
 
             Boolean willRaiseEvent;
-            try
-            {
+            try {
                 willRaiseEvent = socket.Socket.SendToAsync(socket.WriteBuffer);
             }
-            catch (ObjectDisposedException)
-            {
+            catch (ObjectDisposedException) {
                 // do nothing
                 return;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 EndSend(socket, ex);
                 return;
             }
 
-            if (!willRaiseEvent)
-            {
+            if (!willRaiseEvent) {
                 ProcessSend(socket.WriteBuffer);
             }
         }
@@ -88,13 +80,11 @@ namespace Com.AugustCellars.CoAP.Channel
         {
             UDPSocket socket = (UDPSocket)e.UserToken;
 
-            if (e.SocketError == SocketError.Success)
-            {
+            if (e.SocketError == SocketError.Success) {
                 EndReceive(socket, e.Buffer, e.Offset, e.BytesTransferred, e.RemoteEndPoint);
             }
             else if (e.SocketError != SocketError.OperationAborted
-                && e.SocketError != SocketError.Interrupted)
-            {
+                && e.SocketError != SocketError.Interrupted) {
                 EndReceive(socket, new SocketException((Int32)e.SocketError));
             }
         }
@@ -103,20 +93,17 @@ namespace Com.AugustCellars.CoAP.Channel
         {
             UDPSocket socket = (UDPSocket)e.UserToken;
 
-            if (e.SocketError == SocketError.Success)
-            {
+            if (e.SocketError == SocketError.Success) {
                 EndSend(socket, e.BytesTransferred);
             }
-            else
-            {
+            else {
                 EndSend(socket, new SocketException((Int32)e.SocketError));
             }
         }
 
         void SocketAsyncEventArgs_Completed(Object sender, SocketAsyncEventArgs e)
         {
-            switch (e.LastOperation)
-            {
+            switch (e.LastOperation) {
                 case SocketAsyncOperation.ReceiveFrom:
                     ProcessReceive(e);
                     break;
@@ -151,15 +138,12 @@ namespace Com.AugustCellars.CoAP.Channel
 
             public void SetWriteBuffer(Byte[] data, Int32 offset, Int32 count)
             {
-                if (count > _writeBuffer.Length)
-                {
+                if (count > _writeBuffer.Length) {
                     WriteBuffer.SetBuffer(data, offset, count);
                     _isOuterBuffer = true;
                 }
-                else
-                {
-                    if (_isOuterBuffer)
-                    {
+                else {
+                    if (_isOuterBuffer) {
                         WriteBuffer.SetBuffer(_writeBuffer, 0, _writeBuffer.Length);
                         _isOuterBuffer = false;
                     }

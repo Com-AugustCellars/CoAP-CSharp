@@ -23,7 +23,7 @@ namespace Com.AugustCellars.CoAP.Net
     /// </summary>
     public partial class CoAPEndPoint : IEndPoint, IOutbox
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(CoAPEndPoint));
+        static readonly ILogger _Log = LogManager.GetLogger(typeof(CoAPEndPoint));
 
         public delegate IMessageEncoder FindMessageEncoder();
 
@@ -203,13 +203,13 @@ namespace Com.AugustCellars.CoAP.Net
             }
             catch
             {
-                if (log.IsWarnEnabled)
-                    log.Warn("Cannot start endpoint at " + _localEP);
+                if (_Log.IsWarnEnabled)
+                    _Log.Warn("Cannot start endpoint at " + _localEP);
                 Stop();
                 throw;
             }
-            if (log.IsDebugEnabled)
-                log.Debug("Starting endpoint bound to " + _localEP);
+            if (_Log.IsDebugEnabled)
+                _Log.Debug("Starting endpoint bound to " + _localEP);
         }
 
         /// <inheritdoc/>
@@ -217,8 +217,8 @@ namespace Com.AugustCellars.CoAP.Net
         {
             if (System.Threading.Interlocked.Exchange(ref _running, 0) == 0)
                 return;
-            if (log.IsDebugEnabled)
-                log.Debug("Stopping endpoint bound to " + _localEP);
+            if (_Log.IsDebugEnabled)
+                _Log.Debug("Stopping endpoint bound to " + _localEP);
             _channel.Stop();
             _matcher.Stop();
             _matcher.Clear();
@@ -283,8 +283,8 @@ namespace Com.AugustCellars.CoAP.Net
                 catch (Exception) {
 
                     if (decoder.IsReply) {
-                        if (log.IsWarnEnabled) {
-                            log.Warn("Message format error caused by " + e.EndPoint);
+                        if (_Log.IsWarnEnabled) {
+                            _Log.Warn("Message format error caused by " + e.EndPoint);
                         }
                     }
                     else {
@@ -298,8 +298,8 @@ namespace Com.AugustCellars.CoAP.Net
 
                         _channel.Send(Serialize(rst), e.Session, rst.Destination);
 
-                        if (log.IsWarnEnabled) {
-                            log.Warn("Message format error caused by " + e.EndPoint + " and reseted.");
+                        if (_Log.IsWarnEnabled) {
+                            _Log.Warn("Message format error caused by " + e.EndPoint + " and reseted.");
                         }
                     }
                     return;
@@ -320,8 +320,18 @@ namespace Com.AugustCellars.CoAP.Net
                 }
             }
             else if (decoder.IsResponse) {
-                Response response = decoder.DecodeResponse();
+                Response response;
+
+                try {
+                    response = decoder.DecodeResponse();
+                }
+                catch (Exception ex) {
+                    _Log.Debug(m => m("ReceiveData: Decode Response Failed  data={0}\nException={1}", BitConverter.ToString(e.Data), ex.ToString()));
+                    return;
+                }
+
                 response.Source = e.EndPoint;
+                _Log.Debug(m => m("ReceiveData: {0}", Util.Utils.ToString(response)));
 
                 Fire(ReceivingResponse, response);
 
@@ -333,15 +343,24 @@ namespace Com.AugustCellars.CoAP.Net
                         _coapStack.ReceiveResponse(exchange, response);
                     }
                     else if (response.Type != MessageType.ACK) {
-                        if (log.IsDebugEnabled) {
-                            log.Debug("Rejecting unmatchable response from " + e.EndPoint);
+                        if (_Log.IsDebugEnabled) {
+                            _Log.Debug("Rejecting unmatchable response from " + e.EndPoint);
                         }
                         Reject(response);
                     }
                 }
             }
             else if (decoder.IsEmpty) { 
-                EmptyMessage message = decoder.DecodeEmptyMessage();
+                EmptyMessage message;
+
+                try {
+                    message = decoder.DecodeEmptyMessage();
+                }
+                catch (Exception ex) {
+                    _Log.Debug(m => m("ReceiveData: Decode Empty Failed  data={0}\nException={1}", BitConverter.ToString(e.Data), ex.ToString()));
+                    return;
+                }
+
                 message.Source = e.EndPoint;
 
                 Fire(ReceivingEmptyMessage, message);
@@ -349,8 +368,8 @@ namespace Com.AugustCellars.CoAP.Net
                 if (!message.IsCancelled) {
                     // CoAP Ping
                     if (message.Type == MessageType.CON || message.Type == MessageType.NON) {
-                        if (log.IsDebugEnabled) {
-                            log.Debug("Responding to ping by " + e.EndPoint);
+                        if (_Log.IsDebugEnabled) {
+                            _Log.Debug("Responding to ping by " + e.EndPoint);
                         }
                         Reject(message);
                     }
@@ -363,8 +382,8 @@ namespace Com.AugustCellars.CoAP.Net
                     }
                 }
             }
-            else if (log.IsDebugEnabled) {
-                log.Debug("Silently ignoring non-CoAP message from " + e.EndPoint);
+            else if (_Log.IsDebugEnabled) {
+                _Log.Debug("Silently ignoring non-CoAP message from " + e.EndPoint);
             }
         }
 
