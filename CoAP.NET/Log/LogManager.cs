@@ -14,47 +14,42 @@ using System;
 namespace Com.AugustCellars.CoAP.Log
 {
     /// <summary>
-    /// Log manager.
+    /// Log manager.  We will use our internal console manager if we cannot find the common logging version.
     /// </summary>
     public static class LogManager
     {
-        static LogLevel _level = LogLevel.None;
-        static ILogManager _manager;
+        private static ILogManager _Manager;
 
         static LogManager()
         {
             Type test;
-            try
-            {
+            try {
                 test = Type.GetType("Common.Logging.LogManager, Common.Logging");
             }
-            catch
-            {
+            catch {
                 test = null;
             }
 
-            if (test == null)
-                _manager = new ConsoleLogManager();
-            else
-                _manager = new CommonLoggingManager();
+            if (test == null) {
+                _Manager = new ConsoleLogManager();
+            }
+            else {
+                _Manager = new CommonLoggingManager();
+            }
         }
 
         /// <summary>
         /// Gets or sets the global log level.
         /// </summary>
-        public static LogLevel Level
-        {
-            get { return _level; }
-            set { _level = value; }
-        }
+        public static LogLevel Level { get; set; } = LogLevel.All;
 
         /// <summary>
         /// Gets or sets the <see cref="ILogManager"/> to provide loggers.
         /// </summary>
         public static ILogManager Instance
         {
-            get { return _manager; }
-            set { _manager = value ?? NopLogManager.Instance; }
+            get => _Manager;
+            set => _Manager = value ?? NopLogManager.Instance;
         }
 
         /// <summary>
@@ -62,7 +57,7 @@ namespace Com.AugustCellars.CoAP.Log
         /// </summary>
         public static ILogger GetLogger(Type type)
         {
-            return _manager.GetLogger(type);
+            return _Manager.GetLogger(type);
         }
 
         /// <summary>
@@ -70,7 +65,7 @@ namespace Com.AugustCellars.CoAP.Log
         /// </summary>
         public static ILogger GetLogger(String name)
         {
-            return _manager.GetLogger(name);
+            return _Manager.GetLogger(name);
         }
     }
 

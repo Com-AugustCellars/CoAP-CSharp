@@ -13,18 +13,29 @@ using System;
 
 namespace Com.AugustCellars.CoAP.Log
 {
+    /// <summary>
+    /// Create the internal console writer - which is just about ready to become a lie
+    /// </summary>
     class ConsoleLogManager : ILogManager
     {
-        static readonly ILogger _logger = new TextWriterLogger(Console.Out);
-
+        /// <summary>
+        /// Create a logger based on the type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public ILogger GetLogger(Type type)
         {
-            return _logger;
+            return new TextWriterLogger(type.Name, Console.Out);
         }
 
+        /// <summary>
+        /// Create a logger w/ an arbitrary name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public ILogger GetLogger(string name)
         {
-            return _logger;
+            return new TextWriterLogger(name, Console.Out);
         }
     }
 }

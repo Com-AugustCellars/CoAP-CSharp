@@ -78,12 +78,22 @@ namespace Com.AugustCellars.CoAP.Log
                 // NOP
             }
 
+            public void Debug(Action<FormatMessageHandler> callbackHandler)
+            {
+                // NOP
+            }
+
             public void Error(Object message)
             {
                 // NOP
             }
 
             public void Error(Object message, Exception exception)
+            {
+                // NOP
+            }
+
+            public void Error(Action<FormatMessageHandler> callbackHandler)
             {
                 // NOP
             }
@@ -98,6 +108,11 @@ namespace Com.AugustCellars.CoAP.Log
                 // NOP
             }
 
+            public void Fatal(Action<FormatMessageHandler> callbackHandler)
+            {
+                // NOP
+            }
+
             public void Info(Object message)
             {
                 // NOP
@@ -108,12 +123,21 @@ namespace Com.AugustCellars.CoAP.Log
                 // NOP
             }
 
+            public void Info(Action<FormatMessageHandler> callbackHandler)
+            {
+                // NOP
+            }
+
             public void Warn(Object message)
             {
                 // NOP
             }
 
             public void Warn(Object message, Exception exception)
+            {
+                // NOP
+            }
+            public void Warn(Action<FormatMessageHandler> callbackHandler)
             {
                 // NOP
             }
