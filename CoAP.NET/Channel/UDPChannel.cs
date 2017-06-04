@@ -230,7 +230,7 @@ namespace Com.AugustCellars.CoAP.Channel
 
         private void EndReceive(UDPSocket socket, Exception ex)
         {
-            _Log.Fatal("EndReceive: Fatal on receive ", ex);
+            _Log.Warn("EndReceive: Fatal on receive ", ex);
             // TODO may log exception?
             BeginReceive(socket);
         }
@@ -278,6 +278,7 @@ namespace Com.AugustCellars.CoAP.Channel
 
         private void EndSend(UDPSocket socket, Exception ex)
         {
+            _Log.Warn("EndSend: error trying to send", ex);
             // TODO may log exception?
             BeginSend();
         }
