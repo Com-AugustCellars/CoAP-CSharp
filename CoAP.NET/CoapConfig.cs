@@ -19,23 +19,23 @@ namespace Com.AugustCellars.CoAP
     /// <summary>
     /// Default implementation of <see cref="ICoapConfig"/>.
     /// </summary>
-    public partial class CoapConfig : ICoapConfig
+    public class CoapConfig : ICoapConfig
     {
-        private static ICoapConfig _default;
+        private static ICoapConfig _Default;
+        private const Double TOLERANCE = 0.0001;
 
         public static ICoapConfig Default
         {
             get
             {
-                if (_default == null)
-                {
-                    lock (typeof(CoapConfig))
-                    {
-                        if (_default == null)
-                            _default = LoadConfig();
+                if (_Default == null) {
+                    lock (typeof(CoapConfig)) {
+                        if (_Default == null) {
+                            _Default = LoadConfig();
+                        }
                     }
                 }
-                return _default;
+                return _Default;
             }
         }
 
@@ -51,7 +51,8 @@ namespace Com.AugustCellars.CoAP
         private Int32 _blockwiseStatusLifetime = 10 * 60 * 1000; // ms
         private Boolean _useRandomIDStart = true;
         private Boolean _useRandomTokenStart = true;
-        private String _deduplicator = CoAP.Deduplication.DeduplicatorFactory.MarkAndSweepDeduplicator;
+        private int _tokenLength = 4;
+        private String _deduplicator = Deduplication.DeduplicatorFactory.MarkAndSweepDeduplicator;
         private Int32 _cropRotationPeriod = 2000; // ms
         private Int32 _exchangeLifetime = 247 * 1000; // ms
         private Int64 _markAndSweepInterval = 10 * 1000; // ms
@@ -142,11 +143,10 @@ namespace Com.AugustCellars.CoAP
         /// <inheritdoc/>
         public Double AckRandomFactor
         {
-            get { return _ackRandomFactor; }
+            get => _ackRandomFactor;
             set
             {
-                if (_ackRandomFactor != value)
-                {
+                if (Math.Abs(_ackRandomFactor - value) > TOLERANCE) {
                     _ackRandomFactor = value;
                     NotifyPropertyChanged("AckRandomFactor");
                 }
@@ -156,11 +156,10 @@ namespace Com.AugustCellars.CoAP
         /// <inheritdoc/>
         public Double AckTimeoutScale
         {
-            get { return _ackTimeoutScale; }
+            get => _ackTimeoutScale;
             set
             {
-                if (_ackTimeoutScale != value)
-                {
+                if (Math.Abs(_ackTimeoutScale - value) > TOLERANCE) {
                     _ackTimeoutScale = value;
                     NotifyPropertyChanged("AckTimeoutScale");
                 }
@@ -247,6 +246,19 @@ namespace Com.AugustCellars.CoAP
                 {
                     _useRandomTokenStart = value;
                     NotifyPropertyChanged("UseRandomTokenStart");
+                }
+            }
+        }
+
+        /// <inheritdoc />
+        public int TokenLength
+        {
+            get => _tokenLength;
+            set
+            {
+                if (_tokenLength != value) {
+                    _tokenLength = value;
+                    NotifyPropertyChanged("TokenLength");
                 }
             }
         }
@@ -482,6 +494,7 @@ namespace Com.AugustCellars.CoAP
             DefaultBlockSize = GetInt32(nvc, "DefaultBlockSize", "DEFAULT_BLOCK_SIZE", DefaultBlockSize);
             UseRandomIDStart = GetBoolean(nvc, "UseRandomIDStart", "USE_RANDOM_MID_START", UseRandomIDStart);
             UseRandomTokenStart = GetBoolean(nvc, "UseRandomTokenStart", "USE_RANDOM_TOKEN_START", UseRandomTokenStart);
+            TokenLength = GetInt32(nvc, "TokenLength", "TOKEN_LENGTH", TokenLength);
             Deduplicator = GetString(nvc, "Deduplicator", "DEDUPLICATOR", Deduplicator);
             CropRotationPeriod = GetInt32(nvc, "CropRotationPeriod", "CROP_ROTATION_PERIOD", CropRotationPeriod);
             ExchangeLifetime = GetInt32(nvc, "ExchangeLifetime", "EXCHANGE_LIFETIME", ExchangeLifetime);
@@ -516,6 +529,7 @@ namespace Com.AugustCellars.CoAP
                 w.Write("DefaultBlockSize="); w.WriteLine(DefaultBlockSize);
                 w.Write("UseRandomIDStart="); w.WriteLine(UseRandomIDStart);
                 w.Write("UseRandomTokenStart="); w.WriteLine(UseRandomTokenStart);
+                w.Write("TokenLength="); w.WriteLine(TokenLength);
                 w.Write("Deduplicator="); w.WriteLine(Deduplicator);
                 w.Write("CropRotationPeriod="); w.WriteLine(CropRotationPeriod);
                 w.Write("ExchangeLifetime="); w.WriteLine(ExchangeLifetime);

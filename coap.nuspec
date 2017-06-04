@@ -14,6 +14,9 @@
         <releaseNotes>
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
 This project is NOT to be used for commercial purposes.  It is intented only for research and verification work.
+1.1.5
+  - Change to use random tokens rather than a counter.
+  - Define a new configuration parameter 'TokenLength'.  Defaults to 4.
 1.1.4
   - Refer to strongly named assemblies.  These will become strongly named in the next version
   - Updates dealing with the internal logging system so it can be made to log to a file rather than the console
