@@ -40,8 +40,9 @@ namespace Com.AugustCellars.CoAP.Stack
         /// </summary>
         public override void SendRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
-            if (request.Type == MessageType.Unknown)
+            if (request.Type == MessageType.Unknown) {
                 request.Type = MessageType.CON;
+            }
 
             if (request.Type == MessageType.CON)
             {
