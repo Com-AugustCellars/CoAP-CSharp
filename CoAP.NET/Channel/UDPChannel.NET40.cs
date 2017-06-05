@@ -24,6 +24,7 @@ namespace Com.AugustCellars.CoAP.Channel
 
         private void BeginReceive(UDPSocket socket)
         {
+            _Log.Debug(m => m("BeginReceive: socket={0}  _running={1}", socket.ToString(), _running));
             if (_running == 0) {
                 return;
             }
@@ -33,21 +34,26 @@ namespace Com.AugustCellars.CoAP.Channel
                     socket.Socket.RemoteEndPoint :
                     new IPEndPoint(socket.Socket.AddressFamily == AddressFamily.InterNetwork ?
                         IPAddress.Any : IPAddress.IPv6Any, 0);
+                _Log.Debug( m => m("BeginReceive: Setup the remote endpoint {0}", socket.ReadBuffer.RemoteEndPoint.ToString()));
             }
             
             Boolean willRaiseEvent;
             try {
+                _Log.Debug("BeginReceive:  Start async read");
                 willRaiseEvent = socket.Socket.ReceiveFromAsync(socket.ReadBuffer);
             }
             catch (ObjectDisposedException) {
+                _Log.Debug(m => m("BeginRecieve:  Socket {0} is disposed", socket.ToString()));
                 // do nothing
                 return;
             }
             catch (Exception ex) {
+                _Log.Debug(m =>m("BeginReceive: Socket {0} has exception", socket.ToString()));
                 EndReceive(socket, ex);
                 return;
             }
 
+            _Log.Debug(m => m("BeginReceive: willRaiseEvent={0}", willRaiseEvent));
             if (!willRaiseEvent) {
                 ProcessReceive(socket.ReadBuffer);
             }
@@ -78,13 +84,16 @@ namespace Com.AugustCellars.CoAP.Channel
 
         private void ProcessReceive(SocketAsyncEventArgs e)
         {
+            _Log.Debug("ProcessReceive");
             UDPSocket socket = (UDPSocket)e.UserToken;
 
             if (e.SocketError == SocketError.Success) {
+                _Log.Debug("ProcessReceive: ==> EndReceive");
                 EndReceive(socket, e.Buffer, e.Offset, e.BytesTransferred, e.RemoteEndPoint);
             }
             else if (e.SocketError != SocketError.OperationAborted
                 && e.SocketError != SocketError.Interrupted) {
+                _Log.Debug(m => m("ProcessRecieve: ==> exception handler {0}", e.SocketError.ToString()));
                 EndReceive(socket, new SocketException((Int32)e.SocketError));
             }
         }

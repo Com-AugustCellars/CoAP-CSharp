@@ -26,7 +26,7 @@ namespace Com.AugustCellars.CoAP.Channel
         /// Default size of buffer for receiving packet.
         /// </summary>
         public const Int32 DefaultReceivePacketSize = 4096;
-        private Int32 _receiveBufferSize;
+
         private Int32 _port;
         private System.Net.EndPoint _localEP;
         private UDPSocket _socket;
@@ -78,11 +78,7 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <summary>
         /// Gets or sets the <see cref="Socket.ReceiveBufferSize"/>.
         /// </summary>
-        public Int32 ReceiveBufferSize
-        {
-            get =>_receiveBufferSize;
-            set =>_receiveBufferSize = value;
-        }
+        public Int32 ReceiveBufferSize { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="Socket.SendBufferSize"/>.
@@ -101,6 +97,8 @@ namespace Com.AugustCellars.CoAP.Channel
             if (System.Threading.Interlocked.CompareExchange(ref _running, 1, 0) > 0) {
                 return;
             }
+
+            _Log.Debug("Start");
 
             if (_localEP == null) {
                 try {
@@ -126,6 +124,7 @@ namespace Com.AugustCellars.CoAP.Channel
                         _socket.Socket.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)27, 0);
                     }
                     catch {
+                        _Log.Debug("Create backup socket");
                         // IPv4-mapped address seems not to be supported, set up a separated socket of IPv4.
                         _socketBackup = SetupUDPSocket(AddressFamily.InterNetwork, ReceivePacketSize + 1);
                     }
@@ -141,10 +140,10 @@ namespace Com.AugustCellars.CoAP.Channel
                 _socket.Socket.Bind(_localEP);
             }
 
-            if (_receiveBufferSize > 0) {
-                _socket.Socket.ReceiveBufferSize = _receiveBufferSize;
+            if (ReceiveBufferSize > 0) {
+                _socket.Socket.ReceiveBufferSize = ReceiveBufferSize;
                 if (_socketBackup != null) {
-                    _socketBackup.Socket.ReceiveBufferSize = _receiveBufferSize;
+                    _socketBackup.Socket.ReceiveBufferSize = ReceiveBufferSize;
                 }
             }
 
@@ -161,6 +160,7 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <inheritdoc/>
         public void Stop()
         {
+            _Log.Debug("Stop");
             if (System.Threading.Interlocked.Exchange(ref _running, 0) == 0) {
                 return;
             }
@@ -193,11 +193,13 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <inheritdoc/>
         public void Dispose()
         {
+            _Log.Debug("Dispose");
             Stop();
         }
 
         private void BeginReceive()
         {
+            _Log.Debug(m => m("BeginRecieve:  _running={0}", _running));
             if (_running > 0) {
                 BeginReceive(_socket);
 
@@ -209,9 +211,9 @@ namespace Com.AugustCellars.CoAP.Channel
 
         private void EndReceive(UDPSocket socket, Byte[] buffer, Int32 offset, Int32 count, System.Net.EndPoint ep)
         {
-            if (count > 0) {
-                _Log.Debug(m => m("EndReceive: length={0}", count));
+            _Log.Debug(m => m("EndReceive: length={0}", count));
 
+            if (count > 0) {
                 Byte[] bytes = new Byte[count];
                 Buffer.BlockCopy(buffer, offset, bytes, 0, count);
 
@@ -225,18 +227,19 @@ namespace Com.AugustCellars.CoAP.Channel
                 FireDataReceived(bytes, ep);
             }
 
+            _Log.Debug("EndReceive: restart the read");
             BeginReceive(socket);
         }
 
         private void EndReceive(UDPSocket socket, Exception ex)
         {
             _Log.Warn("EndReceive: Fatal on receive ", ex);
-            // TODO may log exception?
             BeginReceive(socket);
         }
 
         private void FireDataReceived(Byte[] data, System.Net.EndPoint ep)
         {
+            _Log.Debug(m => m("FireDataReceived: data length={0}", data.Length));
             EventHandler<DataReceivedEventArgs> h = DataReceived;
             if (h != null) {
                 h(this, new DataReceivedEventArgs(data, ep, this));
