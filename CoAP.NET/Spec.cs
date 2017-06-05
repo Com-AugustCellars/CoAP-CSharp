@@ -104,9 +104,6 @@ namespace Com.AugustCellars.CoAP
 
                 foreach (Option opt in options)
                 {
-                    if (opt.Type == OptionType.Token)
-                        continue;
-
                     // write 4-bit option delta
                     Int32 optNum = (Int32)opt.Type;
                     Int32 optionDelta = optNum - lastOptionNumber;

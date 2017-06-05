@@ -117,8 +117,6 @@ namespace Com.AugustCellars.CoAP
                 {
                     case OptionType.MaxAge:
                         return IntValue == CoapConstants.DefaultMaxAge;
-                    case OptionType.Token:
-                        return Length == 0;
                     default:
                         return false;
                 }
@@ -325,8 +323,6 @@ namespace Com.AugustCellars.CoAP
                     return "Location-Query";
                 case OptionType.UriPath:
                     return "Uri-Path";
-                case OptionType.Token:
-                    return "Token";
                 case OptionType.UriQuery:
                     return "Uri-Query";
                 case OptionType.Observe:
@@ -385,7 +381,6 @@ namespace Com.AugustCellars.CoAP
                 case OptionType.LocationQuery:
                 case OptionType.ProxyUri:
                 case OptionType.ProxyScheme:
-                case OptionType.Token:
                     return OptionFormat.String;
                 case OptionType.ETag:
                 case OptionType.IfMatch:
@@ -457,7 +452,6 @@ namespace Com.AugustCellars.CoAP
                 case OptionType.LocationPath:
                 case OptionType.LocationQuery:
                 case OptionType.UriPath:
-                case OptionType.Token:
                 case OptionType.UriQuery:
                 case OptionType.IfMatch:
                 case OptionType.IfNoneMatch:
