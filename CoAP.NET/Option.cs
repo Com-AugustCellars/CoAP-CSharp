@@ -25,35 +25,26 @@ namespace Com.AugustCellars.CoAP
         private static readonly IConvertor<Int64> int64Convertor = new Int64Convertor();
         private static readonly IConvertor<String> stringConvertor = new StringConvertor();
 
-        private OptionType _type;
-        /// <summary>
-        /// NOTE: value bytes in network byte order (big-endian)
-        /// </summary>
-        private Byte[] _valueBytes;
-
         /// <summary>
         /// Initializes an option.
         /// </summary>
         /// <param name="type">The type of the option</param>
         protected Option(OptionType type)
         {
-            this._type = type;
+            Type = type;
         }
 
         /// <summary>
         /// Gets the type of the option.
         /// </summary>
-        public OptionType Type
-        {
-            get { return _type; }
-        }
+        public OptionType Type { get; }
 
         /// <summary>
         /// Gets the name of the option that corresponds to its type.
         /// </summary>
         public String Name
         {
-            get { return Option.ToString(_type); }
+            get => Option.ToString(Type);
         }
 
         /// <summary>
@@ -61,48 +52,36 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Int32 Length
         {
-            get { return null == this._valueBytes ? 0 : this._valueBytes.Length; }
+            get => null == RawValue ? 0 : this.RawValue.Length;
         }
 
         /// <summary>
         /// Gets or sets raw bytes value of the option in network byte order (big-endian).
         /// </summary>
-        public Byte[] RawValue
-        {
-            get { return this._valueBytes; }
-            set { this._valueBytes = value; }
-        }
+        public Byte[] RawValue { get; set; }
 
         /// <summary>
         /// Gets or sets string value of the option.
         /// </summary>
         public String StringValue
         {
-            get
-            {
-                return stringConvertor.Decode(this._valueBytes) as String;
-            }
+            get => stringConvertor.Decode(RawValue);
             set
             {
-                if (value == null)
-                    throw ThrowHelper.ArgumentNull("value");
-                _valueBytes = stringConvertor.Encode(value);
+                if (value == null) throw ThrowHelper.ArgumentNull("value");
+                RawValue = stringConvertor.Encode(value);
             }
         }
+
+
 
         /// <summary>
         /// Gets or sets int value of the option.
         /// </summary>
         public Int32 IntValue
         {
-            get
-            {
-                return (Int32)int32Convertor.Decode(this._valueBytes);
-            }
-            set
-            {
-                this._valueBytes = int32Convertor.Encode(value);
-            }
+            get => int32Convertor.Decode(this.RawValue);
+            set => RawValue = int32Convertor.Encode(value);
         }
 
         /// <summary>
@@ -110,14 +89,8 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Int64 LongValue
         {
-            get
-            {
-                return (Int64)int64Convertor.Decode(_valueBytes);
-            }
-            set
-            {
-                _valueBytes = int64Convertor.Encode(value);
-            }
+            get => int64Convertor.Decode(RawValue);
+            set => RawValue = int64Convertor.Encode(value);
         }
 
         /// <summary>
@@ -127,8 +100,8 @@ namespace Com.AugustCellars.CoAP
         {
             get
             {
-                IConvertor convertor = GetConvertor(this._type);
-                return null == convertor ? null : convertor.Decode(this._valueBytes);
+                IConvertor convertor = GetConvertor(this.Type);
+                return null == convertor ? null : convertor.Decode(this.RawValue);
             }
         }
 
@@ -140,7 +113,7 @@ namespace Com.AugustCellars.CoAP
             get
             {
                 // TODO refactor
-                switch (this._type)
+                switch (this.Type)
                 {
                     case OptionType.MaxAge:
                         return IntValue == CoapConstants.DefaultMaxAge;
@@ -154,10 +127,10 @@ namespace Com.AugustCellars.CoAP
 
         public String ToValueString()
         {
-            switch (GetFormatByType(_type))
+            switch (GetFormatByType(Type))
             {
                 case OptionFormat.Integer:
-                    return (_type == OptionType.Accept || _type == OptionType.ContentFormat) ?
+                    return (Type == OptionType.Accept || Type == OptionType.ContentFormat) ?
                         ("\"" + MediaType.ToString(IntValue) + "\"") :
                         IntValue.ToString();
                 case OptionFormat.String:
@@ -172,7 +145,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public override String ToString()
         {
-            return ToString(_type) + ": " + ToValueString();
+            return ToString(Type) + ": " + ToValueString();
         }
 
         /// <summary>
@@ -182,29 +155,23 @@ namespace Com.AugustCellars.CoAP
         public override Int32 GetHashCode()
         {
             const Int32 prime = 31;
-            Int32 result = 1;
-            result = prime * result + (Int32)this._type;
-            result = prime * result + ByteArrayUtils.ComputeHash(this.RawValue);
+            Int32 result = (Int32) this.Type;
+            result = prime * result + ByteArrayUtils.ComputeHash(RawValue);
             return result;
         }
 
         public override Boolean Equals(Object obj)
         {
-            if (null == obj)
-                return false;
-            if (Object.ReferenceEquals(this, obj))
-                return true;
-            if (this.GetType() != obj.GetType())
-                return false;
-            Option other = (Option)obj;
-            if (this._type != other._type)
-                return false;
-            if (null == this.RawValue && null != other.RawValue)
-                return false;
-            else if (null != this.RawValue && null == other.RawValue)
-                return false;
-            else
-                return Utils.AreSequenceEqualTo(this.RawValue, other.RawValue);
+            if (null == obj) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (GetType() != obj.GetType()) return false;
+
+            Option other = (Option) obj;
+            if (Type != other.Type) return false;
+            if (RawValue == null && other.RawValue == null) return false;
+            if (RawValue == null || other.RawValue == null) return false;
+            if (RawValue.Length != other.RawValue.Length) return false;
+            return Utils.AreSequenceEqualTo(RawValue, other.RawValue);
         }
 
         /// <summary>
@@ -214,8 +181,7 @@ namespace Com.AugustCellars.CoAP
         /// <returns>The new option</returns>
         public static Option Create(OptionType type)
         {
-            switch (type)
-            {
+            switch (type) {
                 case OptionType.Block1:
                 case OptionType.Block2:
                     return new BlockOption(type);
@@ -292,13 +258,10 @@ namespace Com.AugustCellars.CoAP
             List<Option> opts = new List<Option>();
             if (!String.IsNullOrEmpty(s))
                 s = s.TrimStart('/');
-            if (!String.IsNullOrEmpty(s))
-            {
-                foreach (String segment in s.Split(new String[] { delimiter }, StringSplitOptions.None))
-                {
+            if (!String.IsNullOrEmpty(s)) {
+                foreach (String segment in s.Split(new String[] { delimiter }, StringSplitOptions.None)) {
                     // empty path segments are allowed (e.g., /test vs /test/)
-                    if ("/".Equals(delimiter) || !String.IsNullOrEmpty(segment))
-                    {
+                    if ("/".Equals(delimiter) || !String.IsNullOrEmpty(segment)) {
                         opts.Add(Create(type, segment));
                     }
                 }
@@ -314,20 +277,20 @@ namespace Com.AugustCellars.CoAP
         /// <returns>The joined string</returns>
         public static String Join(IEnumerable<Option> options, String delimiter)
         {
-            if (null == options)
-            {
+            if (null == options) {
                 return String.Empty;
             }
-            else
-            {
+            else {
                 StringBuilder sb = new StringBuilder();
                 Boolean append = false;
-                foreach (Option opt in options)
-                {
-                    if (append)
+                foreach (Option opt in options) {
+                    if (append) {
                         sb.Append(delimiter);
-                    else
+                    }
+                    else {
                         append = true;
+                    }
+
                     sb.Append(opt.StringValue);
                 }
                 return sb.ToString();
@@ -341,8 +304,7 @@ namespace Com.AugustCellars.CoAP
         /// <returns>A string describing the option type</returns>
         public static String ToString(OptionType type)
         {
-            switch (type)
-            {
+            switch (type) {
                 case OptionType.Reserved:
                     return "Reserved";
                 case OptionType.ContentFormat:
@@ -401,8 +363,7 @@ namespace Com.AugustCellars.CoAP
         /// <returns>the option format corresponding to the option type</returns>
         public static OptionFormat GetFormatByType(OptionType type)
         {
-            switch (type)
-            {
+            switch (type) {
                 case OptionType.ContentFormat:
                 case OptionType.MaxAge:
                 case OptionType.UriPort:
@@ -476,8 +437,7 @@ namespace Com.AugustCellars.CoAP
 
         private static IConvertor GetConvertor(OptionType type)
         {
-            switch (type)
-            {
+            switch (type) {
                 case OptionType.Reserved:
                     return null;
                 case OptionType.ContentType:
@@ -522,13 +482,13 @@ namespace Com.AugustCellars.CoAP
         {
             public Int32 Decode(Byte[] bytes)
             {
-                if (null == bytes)
+                if (null == bytes) {
                     return 0;
+                }
 
                 Int32 iOutcome = 0;
                 Byte bLoop;
-                for (Int32 i = 0; i < bytes.Length; i++)
-                {
+                for (Int32 i = 0; i < bytes.Length; i++) {
                     bLoop = bytes[i];
                     //iOutcome |= (bLoop & 0xFF) << (8 * i);
                     iOutcome <<= 8;
@@ -540,16 +500,16 @@ namespace Com.AugustCellars.CoAP
             public Byte[] Encode(Int32 value)
             {
                 Int32 len = 0;
-                for (Int32 i = 0; i < 4; i++)
-                {
-                    if (value >= 1 << (i * 8) || value < 0)
+                for (Int32 i = 0; i < 4; i++) {
+                    if (value >= 1 << (i * 8) || value < 0) {
                         len++;
-                    else
+                    }
+                    else {
                         break;
+                    }
                 }
                 Byte[] ret = new Byte[len];
-                for (Int32 i = 0; i < len; i++)
-                {
+                for (Int32 i = 0; i < len; i++) {
                     ret[len - i - 1] = (Byte)(value >> i * 8);
                 }
                 return ret;
@@ -565,13 +525,13 @@ namespace Com.AugustCellars.CoAP
         {
             public Int64 Decode(Byte[] bytes)
             {
-                if (null == bytes)
+                if (null == bytes) {
                     return 0;
+                }
 
                 Int64 iOutcome = 0;
                 Byte bLoop;
-                for (Int32 i = 0; i < bytes.Length; i++)
-                {
+                for (Int32 i = 0; i < bytes.Length; i++) {
                     bLoop = bytes[i];
                     iOutcome <<= 8;
                     iOutcome |= (bLoop & 0xFFU);
@@ -582,16 +542,14 @@ namespace Com.AugustCellars.CoAP
             public Byte[] Encode(Int64 value)
             {
                 Int32 len = 0;
-                for (Int32 i = 0; i < 8; i++)
-                {
+                for (Int32 i = 0; i < 8; i++) {
                     if (value >= 1L << (i * 8) || value < 0L)
                         len++;
                     else
                         break;
                 }
                 Byte[] ret = new Byte[len];
-                for (Int32 i = 0; i < len; i++)
-                {
+                for (Int32 i = 0; i < len; i++) {
                     ret[len - i - 1] = (Byte)(value >> i * 8);
                 }
                 return ret;
@@ -607,12 +565,12 @@ namespace Com.AugustCellars.CoAP
         {
             public String Decode(Byte[] bytes)
             {
-                return null == bytes ? null : System.Text.Encoding.UTF8.GetString(bytes);
+                return null == bytes ? null : Encoding.UTF8.GetString(bytes);
             }
 
             public Byte[] Encode(String value)
             {
-                return System.Text.Encoding.UTF8.GetBytes(value);
+                return Encoding.UTF8.GetBytes(value);
             }
 
             Object IConvertor.Decode(Byte[] bytes)
