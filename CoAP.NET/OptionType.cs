@@ -43,6 +43,11 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         IfNoneMatch = 5,
         /// <summary>
+        /// E, Duration, 1 B, 0
+        /// <remarks>RFC 7641</remarks>
+        /// </summary>
+        Observe = 6,
+        /// <summary>
         /// C, uint, 0-2 B
         /// <remarks>RFC 7252</remarks>
         /// </summary>
@@ -84,15 +89,27 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         Accept = 17,
         /// <summary>
-        /// C, Sequence of Bytes, 1-2 B, -. NOTE: this option has been replaced with <see cref="Message.Token"/> since draft 13.
-        /// <remarks>draft-ietf-core-coap-03, draft-ietf-core-coap-12</remarks>
-        /// </summary>
-        Token = 19,
-        /// <summary>
         /// E, String, 1-270 B, -
         /// <remarks>RFC 7252</remarks>
         /// </summary>
         LocationQuery = 20,
+        /// <summary>
+        /// C, U, uint, 0-3
+        /// Block transfer from server to client
+        /// <remarks>RFC 7959</remarks>
+        /// </summary>
+        Block2 = 23,
+        /// <summary>
+        /// C, U, uint, 0-3
+        /// Block transfer from client to server
+        /// <remarks>RFC 7959</remarks>
+        /// </summary>
+        Block1 = 27,
+        /// <summary>
+        /// uint, 0-4
+        /// <remarks>RFC 7959</remarks>
+        /// </summary>
+        Size2 = 28,
         /// <summary>
         /// C, String, 1-270 B, "coap"
         /// <remarks>RFC 7252</remarks>
@@ -124,30 +141,13 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         Reserved4 = 140,
 
-        /// <summary>
-        /// E, Duration, 1 B, 0
-        /// <remarks>draft-ietf-core-observe</remarks>
-        /// </summary>
-        Observe = 6,
-
-        /// <summary>
-        /// <remarks>draft-ietf-core-block</remarks>
-        /// </summary>
-        Block2 = 23,
-        /// <summary>
-        /// <remarks>draft-ietf-core-block</remarks>
-        /// </summary>
-        Block1 = 27,
-        /// <summary>
-        /// <remarks>draft-ietf-core-block</remarks>
-        /// </summary>
-        Size2 = 28,
 #if INCLUDE_OSCOAP
         /// <summary>
         /// <remarks>draft-ietf-core-oscoap</remarks>
         /// </summary>
         Oscoap = 65025,
 #endif
+
         /// <summary>
         /// no-op for fenceposting
         /// <remarks>draft-bormann-coap-misc-04</remarks>

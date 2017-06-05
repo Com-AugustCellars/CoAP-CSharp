@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Collections.Concurrent;
+using System.Linq;
 
 namespace Com.AugustCellars.CoAP.Util
 {
@@ -62,28 +63,33 @@ namespace Com.AugustCellars.CoAP.Util
         /// </summary>
         public static Boolean AreSequenceEqualTo<T>(IEnumerable<T> first, IEnumerable<T> second, IEqualityComparer<T> comparer)
         {
-            if (first == null && second == null)
+            if (first == second) return true;   //  If the objects are the same - 
+            if (first == null && second == null) {
                 return true;
-            else if (first != null && second != null)
-            {
-                if (comparer == null)
+            }
+            else if (first != null && second != null) {
+                if (comparer == null) {
                     comparer = EqualityComparer<T>.Default;
+                }
 
-                using (IEnumerator<T> it1 = first.GetEnumerator())
-                using (IEnumerator<T> it2 = second.GetEnumerator())
-                {
-                    while (it1.MoveNext() && it2.MoveNext())
-                    {
-                        if (!comparer.Equals(it1.Current, it2.Current))
+                using (IEnumerator<T> it1 = first.GetEnumerator()) {
+                    using (IEnumerator<T> it2 = second.GetEnumerator()) {
+                        while (it1.MoveNext() && it2.MoveNext()) {
+                            if (!comparer.Equals(it1.Current, it2.Current)) {
+                                return false;
+                            }
+                        }
+                        if (it1.MoveNext() || it2.MoveNext()) {
                             return false;
+                        }
+
+                        return true;
                     }
-                    if (it1.MoveNext() || it2.MoveNext())
-                        return false;
-                    return true;
                 }
             }
-            else
+            else {
                 return false;
+            }
         }
 
         /// <summary>
