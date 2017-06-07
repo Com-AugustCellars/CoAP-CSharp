@@ -112,6 +112,7 @@ namespace Com.AugustCellars.CoAP.Channel
 
         void SocketAsyncEventArgs_Completed(Object sender, SocketAsyncEventArgs e)
         {
+            _Log.Debug( m=> m("SocketAsyncEventArgs: operation = {0}", e.LastOperation.ToString()));
             switch (e.LastOperation) {
                 case SocketAsyncOperation.ReceiveFrom:
                     ProcessReceive(e);
