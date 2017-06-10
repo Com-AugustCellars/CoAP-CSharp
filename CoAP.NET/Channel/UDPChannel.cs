@@ -35,7 +35,9 @@ namespace Com.AugustCellars.CoAP.Channel
         private Int32 _writing;
         private readonly ConcurrentQueue<RawData> _sendingQueue = new ConcurrentQueue<RawData>();
 
+#if LOG_UDP_CHANNEL
         private static ILogger _Log = LogManager.GetLogger("UDPChannel");
+#endif
 
         /// <inheritdoc/>
         public event EventHandler<DataReceivedEventArgs> DataReceived;
@@ -98,7 +100,9 @@ namespace Com.AugustCellars.CoAP.Channel
                 return;
             }
 
+#if LOG_UDP_CHANNEL
             _Log.Debug("Start");
+#endif
 
             if (_localEP == null) {
                 try {
@@ -124,7 +128,9 @@ namespace Com.AugustCellars.CoAP.Channel
                         _socket.Socket.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)27, 0);
                     }
                     catch {
+#if LOG_UDP_CHANNEL
                         _Log.Debug("Create backup socket");
+#endif
                         // IPv4-mapped address seems not to be supported, set up a separated socket of IPv4.
                         _socketBackup = SetupUDPSocket(AddressFamily.InterNetwork, ReceivePacketSize + 1);
                     }
@@ -160,7 +166,9 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <inheritdoc/>
         public void Stop()
         {
+#if LOG_UDP_CHANNEL
             _Log.Debug("Stop");
+#endif
             if (System.Threading.Interlocked.Exchange(ref _running, 0) == 0) {
                 return;
             }
@@ -193,13 +201,17 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <inheritdoc/>
         public void Dispose()
         {
+#if LOG_UDP_CHANNEL
             _Log.Debug("Dispose");
+#endif
             Stop();
         }
 
         private void BeginReceive()
         {
+#if LOG_UDP_CHANNEL
             _Log.Debug(m => m("BeginRecieve:  _running={0}", _running));
+#endif
             if (_running > 0) {
                 BeginReceive(_socket);
 
@@ -211,7 +223,9 @@ namespace Com.AugustCellars.CoAP.Channel
 
         private void EndReceive(UDPSocket socket, Byte[] buffer, Int32 offset, Int32 count, System.Net.EndPoint ep)
         {
+#if LOG_UDP_CHANNEL
             _Log.Debug(m => m("EndReceive: length={0}", count));
+#endif
 
             if (count > 0) {
                 Byte[] bytes = new Byte[count];
@@ -227,19 +241,25 @@ namespace Com.AugustCellars.CoAP.Channel
                 FireDataReceived(bytes, ep);
             }
 
+#if LOG_UDP_CHANNEL
             _Log.Debug("EndReceive: restart the read");
+#endif
             BeginReceive(socket);
         }
 
         private void EndReceive(UDPSocket socket, Exception ex)
         {
+#if LOG_UDP_CHANNEL
             _Log.Warn("EndReceive: Fatal on receive ", ex);
+#endif
             BeginReceive(socket);
         }
 
         private void FireDataReceived(Byte[] data, System.Net.EndPoint ep)
         {
+#if LOG_UDP_CHANNEL
             _Log.Debug(m => m("FireDataReceived: data length={0}", data.Length));
+#endif
             EventHandler<DataReceivedEventArgs> h = DataReceived;
             if (h != null) {
                 h(this, new DataReceivedEventArgs(data, ep, this));
@@ -281,7 +301,9 @@ namespace Com.AugustCellars.CoAP.Channel
 
         private void EndSend(UDPSocket socket, Exception ex)
         {
+#if LOG_UDP_CHANNEL
             _Log.Warn("EndSend: error trying to send", ex);
+#endif
             // TODO may log exception?
             BeginSend();
         }
