@@ -124,6 +124,9 @@ respones a plain string in code "2.05 Content".
 
 See [CoAP Example Server](CoAP.Server) for more.
 
+## Building the sources
+
+I am currently sync-ed up to Visual Studio 2017 and have started using language features of C# v7.0 that are supported both in Visual Studio and in the latest version of mono.
 
 ## License
 
@@ -131,18 +134,18 @@ See [LICENSE](LICENSE) for more info.
 
 ## Acknowledgements
 
-This is a copy o the CoAP.NET project hosted at (https://http://coap.codeplex.com/).
+This is a copy of the CoAP.NET project hosted at (https://http://coap.codeplex.com/).
 As this project does not seem to be maintained anymore, and I am doing active updates to it, I have made a local copy that things are going to move forward on.
 
 Current projects are:
 
-- OSCoAP[https://datatracker.ietf.org/doc/draft-ietf-core-object-security/] - Add an implemenation of message based security
-- EDHOC[https://datatracker.ietf.org/doc/draft-selander-ace-cose-ecdhe/] - Ephemeral Diffie-Hellman over COSE - a key establishment protocol
+- [OSCoAP]{https://datatracker.ietf.org/doc/draft-ietf-core-object-security/} - Add an implemenation of message based security
+- [EDHOC]{https://datatracker.ietf.org/doc/draft-selander-ace-cose-ecdhe/} - Ephemeral Diffie-Hellman over COSE - a key establishment protocol
 - DTLS - Support DTLS for transport
-- TLS/TCP[https://datatracker.ietf.org/doc/draft-ietf-core-coap-tcp-tls/] - Support TCP and TLS over TCP for transport
-- Resource Directory[https://datatracker.ietf.org/doc/draft-ietf-core-resource-directory/] - Resource directory resources
-- PubSub[https://datatracker.ietf.org/doc/draft-ietf-core-coap-pubsub/] - Publish-Subscribe Broker
-- AAA[https://datatracker.ietf.org/doc/draft-ietf-ace-oauth-authz/] - Authentication and authoriztion protocol work
+- [TLS/TCP]{https://datatracker.ietf.org/doc/draft-ietf-core-coap-tcp-tls/} - Support TCP and TLS over TCP for transport
+- [Resource Directory]{https://datatracker.ietf.org/doc/draft-ietf-core-resource-directory/} - Resource directory resources
+- [PubSub]{https://datatracker.ietf.org/doc/draft-ietf-core-coap-pubsub/} - Publish-Subscribe Broker
+- [AAA]{https://datatracker.ietf.org/doc/draft-ietf-ace-oauth-authz/} - Authentication and authoriztion protocol work
 
 CoAP.NET is based on [**Californium**](https://github.com/mkovatsc/Californium),
 a CoAP framework in Java by Matthias Kovatsch, Dominique Im Obersteg,

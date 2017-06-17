@@ -1083,13 +1083,6 @@ namespace Com.AugustCellars.CoAP
             if (option == null)
                 throw new ArgumentNullException("opt");
 
-            if (option.Type == OptionType.Token)
-            {
-                // be compatible with draft 13-
-                Token = option.RawValue;
-                return this;
-            }
-
             LinkedList<Option> list;
             if (!_optionMap.TryGetValue(option.Type, out list))
             {

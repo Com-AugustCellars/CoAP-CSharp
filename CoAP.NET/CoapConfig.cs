@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 
 namespace Com.AugustCellars.CoAP
@@ -19,485 +20,315 @@ namespace Com.AugustCellars.CoAP
     /// <summary>
     /// Default implementation of <see cref="ICoapConfig"/>.
     /// </summary>
-    public partial class CoapConfig : ICoapConfig
+    public class CoapConfig : ICoapConfig
     {
-        private static ICoapConfig _default;
+
+
+        private readonly NameValueCollection _values = new NameValueCollection(StringComparer.OrdinalIgnoreCase);
+
+        private static ICoapConfig _Default;
 
         public static ICoapConfig Default
         {
             get
             {
-                if (_default == null)
-                {
-                    lock (typeof(CoapConfig))
-                    {
-                        if (_default == null)
-                            _default = LoadConfig();
+                if (_Default == null) {
+                    lock (typeof(CoapConfig)) {
+                        if (_Default == null) {
+                            _Default = LoadConfig();
+                        }
                     }
                 }
-                return _default;
+                return _Default;
             }
         }
 
-        private Int32 _port;
-        private Int32 _securePort = CoapConstants.DefaultSecurePort;
-        private Int32 _httpPort = 8080;
-        private Int32 _ackTimeout = CoapConstants.AckTimeout;
-        private Double _ackRandomFactor = CoapConstants.AckRandomFactor;
-        private Double _ackTimeoutScale = 2D;
-        private Int32 _maxRetransmit = CoapConstants.MaxRetransmit;
-        private Int32 _maxMessageSize = 1024;
-        private Int32 _defaultBlockSize = CoapConstants.DefaultBlockSize;
-        private Int32 _blockwiseStatusLifetime = 10 * 60 * 1000; // ms
-        private Boolean _useRandomIDStart = true;
-        private Boolean _useRandomTokenStart = true;
-        private String _deduplicator = CoAP.Deduplication.DeduplicatorFactory.MarkAndSweepDeduplicator;
-        private Int32 _cropRotationPeriod = 2000; // ms
-        private Int32 _exchangeLifetime = 247 * 1000; // ms
-        private Int64 _markAndSweepInterval = 10 * 1000; // ms
-        private Int64 _notificationMaxAge = 128 * 1000; // ms
-        private Int64 _notificationCheckIntervalTime = 24 * 60 * 60 * 1000; // ms
-        private Int32 _notificationCheckIntervalCount = 100; // ms
-        private Int32 _notificationReregistrationBackoff = 2000; // ms
-        private Int32 _channelReceiveBufferSize;
-        private Int32 _channelSendBufferSize;
-        private Int32 _channelReceivePacketSize = 2048;
+        private const int Default_HttpPort = 8080;
+        private const double Default_AckTimeoutScale = 2D;
+        private const int Default_MaxMessageSize = 1024;
+        private const int Default_BlockwiseStatusLifetime = 10 * 60 * 1000; // ms
+        private const bool Default_UseRandomIdStart = true;
+        private const int Default_TokenLength = 4;
+        private const string Default_Deduplicator = Deduplication.DeduplicatorFactory.MarkAndSweepDeduplicator;
+        private const int Default_CropRotationPeriod = 2000; // ms
+        private const int Default_ExchangeLifetime = 247 * 1000; // ms
+        private const Int64 Default_MarkAndSweepInterval = 10 * 1000; // ms
+        private const Int64 Default_NotificationMaxAge = 128 * 1000; // ms
+        private const Int64 Default_NotificationCheckIntervalTime = 24 * 60 * 60 * 1000; // ms
+        private const int Default_NotificationCheckIntervalCount = 100;
+        private const int Default_NotificationReregistrationBackoff = 2000; // ms
+        private const int Default_ChannelReceivePacketSize = 2048;
 #if INCLUDE_OSCOAP
-        private Int32 _oscoap_maxMessageSize = 1024;
-        private Int32 _oscoap_defaultBlockSize = CoapConstants.DefaultBlockSize;
-        private Int32 _oscoap_blockwiseStatusLifetime = 10 *60 * 1000; // ms
-        private bool _oscoap_ReplayWindow = true;
+        private const int Default_Oscoap_MaxMessageSize = 1024;
+        private const int Default_Oscoap_DefaultBlockSize = CoapConstants.DefaultBlockSize;
+        private const int Default_Oscoap_BlockwiseStatusLifetime = 10 *60 * 1000; // ms
+        private const bool Default_Oscoap_ReplayWindow = true;
 #endif
-
-        /// <summary>
-        /// Instantiate.
-        /// </summary>
-        public CoapConfig()
-        {
-            _port = Spec.DefaultPort;
-        }
 
         /// <inheritdoc/>
         public String Version
         {
-            get { return Spec.Name; }
+            get => Spec.Name;
         }
-        
+
         /// <inheritdoc/>
         public Int32 DefaultPort
         {
-            get { return _port; }
-            set
-            {
-                if (_port != value)
-                {
-                    _port = value;
-                    NotifyPropertyChanged("DefaultPort");
-                }
-            }
+            get => GetInt("DefaultPort", CoapConstants.DefaultPort);
+            set => SetValue("DefaultPort", value);
         }
 
         /// <inheritdoc/>
         public Int32 DefaultSecurePort
         {
-            get { return _securePort; }
-            set
-            {
-                if (_securePort != value)
-                {
-                    _securePort = value;
-                    NotifyPropertyChanged("DefaultSecurePort");
-                }
-            }
+            get => GetInt("DefaultSecurePort", CoapConstants.DefaultSecurePort);
+            set => SetValue("DefaultSecurePort", value);
         }
 
         /// <inheritdoc/>
         public Int32 HttpPort
         {
-            get { return _httpPort; }
-            set
-            {
-                if (_httpPort != value)
-                {
-                    _httpPort = value;
-                    NotifyPropertyChanged("HttpPort");
-                }
-            }
+            get => GetInt("HttpPort", Default_HttpPort);
+            set => SetValue("HttpPort", value);
         }
 
         /// <inheritdoc/>
         public Int32 AckTimeout
         {
-            get { return _ackTimeout; }
-            set
-            {
-                if (_ackTimeout != value)
-                {
-                    _ackTimeout = value;
-                    NotifyPropertyChanged("AckTimeout");
-                }
-            }
+            get => GetInt("AckTimeout", CoapConstants.AckTimeout);
+            set => SetValue("AckTimeout", value);
         }
 
         /// <inheritdoc/>
         public Double AckRandomFactor
         {
-            get { return _ackRandomFactor; }
-            set
-            {
-                if (_ackRandomFactor != value)
-                {
-                    _ackRandomFactor = value;
-                    NotifyPropertyChanged("AckRandomFactor");
-                }
-            }
+            get => GetDouble("AckRandomFactor", CoapConstants.AckRandomFactor);
+            set => SetValue("AckRandomFactor", value);
         }
 
         /// <inheritdoc/>
         public Double AckTimeoutScale
         {
-            get { return _ackTimeoutScale; }
-            set
-            {
-                if (_ackTimeoutScale != value)
-                {
-                    _ackTimeoutScale = value;
-                    NotifyPropertyChanged("AckTimeoutScale");
-                }
-            }
+            get => GetDouble("AckTimeoutScale", Default_AckTimeoutScale);
+            set => SetValue("AckTimeoutScale", value);
         }
 
         /// <inheritdoc/>
         public Int32 MaxRetransmit
         {
-            get { return _maxRetransmit; }
-            set
-            {
-                if (_maxRetransmit != value)
-                {
-                    _maxRetransmit = value;
-                    NotifyPropertyChanged("MaxRetransmit");
-                }
-            }
+            get => GetInt("MaxRetransmit", CoapConstants.MaxRetransmit);
+            set => SetValue("MaxRetransmit", value);
         }
 
         /// <inheritdoc/>
         public Int32 MaxMessageSize
         {
-            get { return _maxMessageSize; }
-            set
-            {
-                if (_maxMessageSize != value)
-                {
-                    _maxMessageSize = value;
-                    NotifyPropertyChanged("MaxMessageSize");
-                }
-            }
+            get => GetInt("MaxMessageSize", Default_MaxMessageSize);
+            set => SetValue("MaxMessageSize", value);
         }
 
         /// <inheritdoc/>
         public Int32 DefaultBlockSize
         {
-            get { return _defaultBlockSize; }
-            set
-            {
-                if (_defaultBlockSize != value)
-                {
-                    _defaultBlockSize = value;
-                    NotifyPropertyChanged("DefaultBlockSize");
-                }
-            }
+
+            get => GetInt("DefaultBlockSize", CoapConstants.DefaultBlockSize);
+            set => SetValue("DefaultBlockSize", value);
         }
 
         /// <inheritdoc/>
         public Int32 BlockwiseStatusLifetime
         {
-            get { return _blockwiseStatusLifetime; }
-            set
-            {
-                if (_blockwiseStatusLifetime != value)
-                {
-                    _blockwiseStatusLifetime = value;
-                    NotifyPropertyChanged("BlockwiseStatusLifetime");
-                }
-            }
+
+            get => GetInt("BlockwiseStatusLifetime", Default_BlockwiseStatusLifetime);
+            set => SetValue("BlockwiseStatusLifetime", value);
         }
 
         /// <inheritdoc/>
         public Boolean UseRandomIDStart
         {
-            get { return _useRandomIDStart; }
-            set
-            {
-                if (_useRandomIDStart != value)
-                {
-                    _useRandomIDStart = value;
-                    NotifyPropertyChanged("UseRandomIDStart");
-                }
-            }
+            get => GetBool("UseRandomIDStart", Default_UseRandomIdStart);
+            set => SetValue("UseRandomIDStart", value);
         }
 
         /// <inheritdoc/>
         public Boolean UseRandomTokenStart
         {
-            get { return _useRandomTokenStart; }
+            get => GetBool("UseRandomTokenStart", true);
+            set => SetValue("UseRandomTokenStart", value);
+        }
+
+        /// <inheritdoc />
+        public int TokenLength
+        {
+            get => GetInt("TokenLength", Default_TokenLength);
             set
             {
-                if (_useRandomTokenStart != value)
-                {
-                    _useRandomTokenStart = value;
-                    NotifyPropertyChanged("UseRandomTokenStart");
-                }
+                if (value < 0 || value > 8) throw new ArgumentOutOfRangeException();
+                SetValue("TokenLength", value);
             }
         }
 
         /// <inheritdoc/>
         public String Deduplicator
         {
-            get { return _deduplicator; }
-            set
-            {
-                if (_deduplicator != value)
-                {
-                    _deduplicator = value;
-                    NotifyPropertyChanged("Deduplicator");
-                }
-            }
+            get => GetString("Deduplicator", Default_Deduplicator);
+            set => SetValue("Deduplicator", value);
         }
 
         /// <inheritdoc/>
         public Int32 CropRotationPeriod
         {
-            get { return _cropRotationPeriod; }
-            set
-            {
-                if (_cropRotationPeriod != value)
-                {
-                    _cropRotationPeriod = value;
-                    NotifyPropertyChanged("CropRotationPeriod");
-                }
-            }
+            get => GetInt("CropRotationPeriod", Default_CropRotationPeriod);
+            set => SetValue("CropRotationPeriod", value);
         }
 
         /// <inheritdoc/>
         public Int32 ExchangeLifetime
         {
-            get { return _exchangeLifetime; }
-            set
-            {
-                if (_exchangeLifetime != value)
-                {
-                    _exchangeLifetime = value;
-                    NotifyPropertyChanged("ExchangeLifetime");
-                }
-            }
+            get => GetInt("ExchangeLifetime", Default_ExchangeLifetime);
+            set => SetValue("ExchangeLifetime", value);
         }
 
         /// <inheritdoc/>
         public Int64 MarkAndSweepInterval
         {
-            get { return _markAndSweepInterval; }
-            set
-            {
-                if (_markAndSweepInterval != value)
-                {
-                    _markAndSweepInterval = value;
-                    NotifyPropertyChanged("MarkAndSweepInterval");
-                }
-            }
+            get => GetInt64("MarkAndSweepInterval", Default_MarkAndSweepInterval);
+            set => SetValue("MarkAndSweepInterval", value);
         }
 
         /// <inheritdoc/>
         public Int64 NotificationMaxAge
         {
-            get { return _notificationMaxAge; }
-            set
-            {
-                if (_notificationMaxAge != value)
-                {
-                    _notificationMaxAge = value;
-                    NotifyPropertyChanged("NotificationMaxAge");
-                }
-            }
+            get => GetInt64("NotificationMaxAge", Default_NotificationMaxAge);
+            set => SetValue("NotificationMaxAge", value);
         }
 
         /// <inheritdoc/>
         public Int64 NotificationCheckIntervalTime
         {
-            get { return _notificationCheckIntervalTime; }
-            set
-            {
-                if (_notificationCheckIntervalTime != value)
-                {
-                    _notificationCheckIntervalTime = value;
-                    NotifyPropertyChanged("NotificationCheckIntervalTime");
-                }
-            }
+            get => GetInt64("NotificationCheckIntervalTime", Default_NotificationCheckIntervalTime);
+            set => SetValue("NotificationCheckIntervalTime", value);
         }
 
         /// <inheritdoc/>
         public Int32 NotificationCheckIntervalCount
         {
-            get { return _notificationCheckIntervalCount; }
-            set
-            {
-                if (_notificationCheckIntervalCount != value)
-                {
-                    _notificationCheckIntervalCount = value;
-                    NotifyPropertyChanged("NotificationCheckIntervalCount");
-                }
-            }
+            get => GetInt("NotificationCheckIntervalCount", Default_NotificationCheckIntervalCount);
+            set => SetValue("NotificationCheckIntervalCount", value);
         }
 
         /// <inheritdoc/>
         public Int32 NotificationReregistrationBackoff
         {
-            get { return _notificationReregistrationBackoff; }
-            set
-            {
-                if (_notificationReregistrationBackoff != value)
-                {
-                    _notificationReregistrationBackoff = value;
-                    NotifyPropertyChanged("NotificationReregistrationBackoff");
-                }
-            }
+            get => GetInt("NotificationReregistrationBackoff", Default_NotificationReregistrationBackoff);
+            set => SetValue("NotificationReregistrationBackoff", value);
         }
 
         /// <inheritdoc/>
         public Int32 ChannelReceiveBufferSize
         {
-            get { return _channelReceiveBufferSize; }
-            set
-            {
-                if (_channelReceiveBufferSize != value)
-                {
-                    _channelReceiveBufferSize = value;
-                    NotifyPropertyChanged("ChannelReceiveBufferSize");
-                }
-            }
+            get => GetInt("ChannelReceiveBufferSize", 0);
+            set => SetValue("ChannelReceiveBufferSize", value);
         }
 
         /// <inheritdoc/>
         public Int32 ChannelSendBufferSize
         {
-            get { return _channelSendBufferSize; }
-            set
-            {
-                if (_channelSendBufferSize != value)
-                {
-                    _channelSendBufferSize = value;
-                    NotifyPropertyChanged("ChannelSendBufferSize");
-                }
-            }
+            get => GetInt("ChannelSendBufferSize", 0);
+            set => SetValue("ChannelSendBufferSize", value);
         }
 
         /// <inheritdoc/>
         public Int32 ChannelReceivePacketSize
         {
-            get { return _channelReceivePacketSize; }
-            set
-            {
-                if (_channelReceivePacketSize != value)
-                {
-                    _channelReceivePacketSize = value;
-                    NotifyPropertyChanged("ChannelReceivePacketSize");
-                }
-            }
+            get => GetInt("ChannelReceivePacketSize", Default_ChannelReceivePacketSize);
+            set => SetValue("ChannelReceivePacketSize", value);
         }
 
 #if INCLUDE_OSCOAP
         /// <inheritdoc/>
         public Int32 OSCOAP_MaxMessageSize
         {
-            get { return _oscoap_maxMessageSize; }
-            set
-            {
-                if (_oscoap_maxMessageSize != value)
-                {
-                    _oscoap_maxMessageSize = value;
-                    NotifyPropertyChanged("OSCOAP_MaxMessageSize");
-                }
-            }
+            get => GetInt("OSCOAP_MaxMessageSize", Default_Oscoap_MaxMessageSize);
+            set => SetValue("OSCOAP_MaxMessageSize", value);
         }
 
         /// <inheritdoc/>
         public Int32 OSCOAP_DefaultBlockSize
         {
-            get { return _oscoap_defaultBlockSize; }
-            set
-            {
-                if (_oscoap_defaultBlockSize != value)
-                {
-                    _oscoap_defaultBlockSize = value;
-                    NotifyPropertyChanged("OSCOAP_DefaultBlockSize");
-                }
-            }
-        }
+            get => GetInt("OSCOAP_DefaultBlockSize", Default_Oscoap_DefaultBlockSize);
+            set => SetValue("OSCOAP_DefaultBlockSize", value);
+                    }
 
         /// <inheritdoc/>
         public Int32 OSCOAP_BlockwiseStatusLifetime
         {
-            get { return _oscoap_blockwiseStatusLifetime; }
-            set
-            {
-                if (_oscoap_blockwiseStatusLifetime != value)
-                {
-                    _oscoap_blockwiseStatusLifetime = value;
-                    NotifyPropertyChanged("OSCOAP_BlockwiseStatusLifetime");
-                }
-            }
+            get => GetInt("OSCOAP_BlockwiseStatusLifetime", Default_Oscoap_BlockwiseStatusLifetime);
+            set => SetValue("OSCOAP_BlockwiseStatusLifetime", value);
         }
 
         public bool OSCOAP_ReplayWindow {
-            get { return _oscoap_ReplayWindow; }
-            set {
-                if (_oscoap_ReplayWindow != value) {
-                    _oscoap_ReplayWindow = value;
-                    NotifyPropertyChanged("OSCOAP_ReplayWindow");
+            get => GetBool("OSCOAP_ReplayWindow", Default_Oscoap_ReplayWindow);
+            set => SetValue("OSCOAP_ReplayWindow", value);
+        }
+#endif
+
+        public bool GetValue(string valueName)
+        {
+            bool x = GetBoolean(_values, valueName, null, false);
+            return x;
+        }
+
+        public void SetValue(string valueName, string newValue)
+        {
+            string oldValue = _values[valueName];
+            if (oldValue == null || oldValue != newValue) {
+                _values[valueName] = newValue;
+                NotifyPropertyChanged(valueName);
+            }
+        }
+
+        public void SetValue(string valueName, bool newValue)
+        {
+            SetValue(valueName, newValue.ToString());
+        }
+
+        public void SetValue(string valueName, int newValue)
+        {
+            SetValue(valueName, newValue.ToString());
+        }
+
+        public void SetValue(string valueName, Int64 newValue)
+        {
+            SetValue(valueName, newValue.ToString());
+        }
+
+        public void SetValue(string valueName, double newValue)
+        {
+            string value = _values[valueName];
+            if (value == null) {
+                _values[valueName] = newValue.ToString(CultureInfo.InvariantCulture);
+                NotifyPropertyChanged(valueName);
+            }
+            else {
+                double oldValue;
+                double.TryParse(value, out oldValue);
+                if (Math.Abs(  newValue - oldValue) > double.Epsilon) {
+                    _values[valueName] = newValue.ToString(CultureInfo.InvariantCulture);
+                    NotifyPropertyChanged(valueName);
                 }
             }
         }
-#endif
 
         /// <inheritdoc/>
         public void Load(String configFile)
         {
-            String[] lines = File.ReadAllLines(configFile);
-            NameValueCollection nvc = new NameValueCollection(lines.Length, StringComparer.OrdinalIgnoreCase);
-            foreach (String line in lines)
-            {
-                String[] tmp = line.Split(new Char[] { '=' }, 2);
+            string[] lines = File.ReadAllLines(configFile);
+            foreach (string line in lines) {
+                string[] tmp = line.Split(new char[] { '=' }, 2);
                 if (tmp.Length == 2)
-                    nvc[tmp[0]] = tmp[1];
+                    _values[tmp[0]] = tmp[1];
             }
-
-            DefaultPort = GetInt32(nvc, "DefaultPort", "DEFAULT_COAP_PORT", DefaultPort);
-            DefaultSecurePort = GetInt32(nvc, "DefaultSecurePort", "DEFAULT_COAPS_PORT", DefaultSecurePort);
-            HttpPort = GetInt32(nvc, "HttpPort", "HTTP_PORT", HttpPort);
-            AckTimeout = GetInt32(nvc, "AckTimeout", "ACK_TIMEOUT", AckTimeout);
-            AckRandomFactor = GetDouble(nvc, "AckRandomFactor", "ACK_RANDOM_FACTOR", AckRandomFactor);
-            AckTimeoutScale = GetDouble(nvc, "AckTimeoutScale", "ACK_TIMEOUT_SCALE", AckTimeoutScale);
-            MaxRetransmit = GetInt32(nvc, "MaxRetransmit", "MAX_RETRANSMIT", MaxRetransmit);
-            MaxMessageSize = GetInt32(nvc, "MaxMessageSize", "MAX_MESSAGE_SIZE", MaxMessageSize);
-            DefaultBlockSize = GetInt32(nvc, "DefaultBlockSize", "DEFAULT_BLOCK_SIZE", DefaultBlockSize);
-            UseRandomIDStart = GetBoolean(nvc, "UseRandomIDStart", "USE_RANDOM_MID_START", UseRandomIDStart);
-            UseRandomTokenStart = GetBoolean(nvc, "UseRandomTokenStart", "USE_RANDOM_TOKEN_START", UseRandomTokenStart);
-            Deduplicator = GetString(nvc, "Deduplicator", "DEDUPLICATOR", Deduplicator);
-            CropRotationPeriod = GetInt32(nvc, "CropRotationPeriod", "CROP_ROTATION_PERIOD", CropRotationPeriod);
-            ExchangeLifetime = GetInt32(nvc, "ExchangeLifetime", "EXCHANGE_LIFETIME", ExchangeLifetime);
-            MarkAndSweepInterval = GetInt64(nvc, "MarkAndSweepInterval", "MARK_AND_SWEEP_INTERVAL", MarkAndSweepInterval);
-            NotificationMaxAge = GetInt64(nvc, "NotificationMaxAge", "NOTIFICATION_MAX_AGE", NotificationMaxAge);
-            NotificationCheckIntervalTime = GetInt64(nvc, "NotificationCheckIntervalTime", "NOTIFICATION_CHECK_INTERVAL", NotificationCheckIntervalTime);
-            NotificationCheckIntervalCount = GetInt32(nvc, "NotificationCheckIntervalCount", "NOTIFICATION_CHECK_INTERVAL_COUNT", NotificationCheckIntervalCount);
-            NotificationReregistrationBackoff = GetInt32(nvc, "NotificationReregistrationBackoff", "NOTIFICATION_REREGISTRATION_BACKOFF", NotificationReregistrationBackoff);
-            ChannelReceiveBufferSize = GetInt32(nvc, "ChannelReceiveBufferSize", "UDP_CONNECTOR_RECEIVE_BUFFER", ChannelReceiveBufferSize);
-            ChannelSendBufferSize = GetInt32(nvc, "ChannelSendBufferSize", "UDP_CONNECTOR_SEND_BUFFER", ChannelSendBufferSize);
-            ChannelReceivePacketSize = GetInt32(nvc, "ChannelReceivePacketSize", "UDP_CONNECTOR_DATAGRAM_SIZE", ChannelReceivePacketSize);
-#if INCLUDE_OSCOAP
-            OSCOAP_MaxMessageSize = GetInt32(nvc, "OSCOAP_MaxMessageSize", "MAX_MESSAGE_SIZE", OSCOAP_MaxMessageSize);
-            OSCOAP_DefaultBlockSize = GetInt32(nvc, "OSCOAP_DefaultBlockSize", "DEFAULT_BLOCK_SIZE", OSCOAP_DefaultBlockSize);
-            OSCOAP_ReplayWindow = GetBoolean(nvc, "OSCOAP_ReplayWindow", "REPLAY_WINDOW", OSCOAP_ReplayWindow);
-#endif
         }
 
         /// <inheritdoc/>
@@ -505,34 +336,15 @@ namespace Com.AugustCellars.CoAP
         {
             using (StreamWriter w = new StreamWriter(configFile))
             {
-                w.Write("DefaultPort="); w.WriteLine(DefaultPort);
-                w.Write("DefaultSecurePort="); w.WriteLine(DefaultSecurePort);
-                w.Write("HttpPort="); w.WriteLine(HttpPort);
-                w.Write("AckTimeout="); w.WriteLine(AckTimeout);
-                w.Write("AckRandomFactor="); w.WriteLine(AckRandomFactor);
-                w.Write("AckTimeoutScale="); w.WriteLine(AckTimeoutScale);
-                w.Write("MaxRetransmit="); w.WriteLine(MaxRetransmit);
-                w.Write("MaxMessageSize="); w.WriteLine(MaxMessageSize);
-                w.Write("DefaultBlockSize="); w.WriteLine(DefaultBlockSize);
-                w.Write("UseRandomIDStart="); w.WriteLine(UseRandomIDStart);
-                w.Write("UseRandomTokenStart="); w.WriteLine(UseRandomTokenStart);
-                w.Write("Deduplicator="); w.WriteLine(Deduplicator);
-                w.Write("CropRotationPeriod="); w.WriteLine(CropRotationPeriod);
-                w.Write("ExchangeLifetime="); w.WriteLine(ExchangeLifetime);
-                w.Write("MarkAndSweepInterval="); w.WriteLine(MarkAndSweepInterval);
-                w.Write("NotificationMaxAge="); w.WriteLine(NotificationMaxAge);
-                w.Write("NotificationCheckIntervalTime="); w.WriteLine(NotificationCheckIntervalTime);
-                w.Write("NotificationCheckIntervalCount="); w.WriteLine(NotificationCheckIntervalCount);
-                w.Write("NotificationReregistrationBackoff="); w.WriteLine(NotificationReregistrationBackoff);
-                w.Write("ChannelReceiveBufferSize="); w.WriteLine(ChannelReceiveBufferSize);
-                w.Write("ChannelSendBufferSize="); w.WriteLine(ChannelSendBufferSize);
-                w.Write("ChannelReceivePacketSize="); w.WriteLine(ChannelReceivePacketSize);
-#if INCLUDE_OSCOAP
-                w.Write("OSCOAP_MaxMessageSize="); w.WriteLine(OSCOAP_MaxMessageSize);
-                w.Write("OSCOAP_DefaultBlockSize="); w.WriteLine(OSCOAP_DefaultBlockSize);
-                w.Write("OSCOAP_ReplayWindow="); w.WriteLine(OSCOAP_ReplayWindow);
-#endif
+                foreach (string key in _values.Keys) {
+                    w.WriteLine($"{key}={_values[key]}");
+                }
             }
+        }
+
+        public string GetString(string key, string defaultValue)
+        {
+            return _values[key] ?? defaultValue;
         }
 
         private static String GetString(NameValueCollection nvc, String key1, String key2, String defaultValue)
@@ -540,25 +352,25 @@ namespace Com.AugustCellars.CoAP
             return nvc[key1] ?? nvc[key2] ?? defaultValue;
         }
 
-        private static Int32 GetInt32(NameValueCollection nvc, String key1, String key2, Int32 defaultValue)
+        public int GetInt(String key, int defaultValue)
         {
-            String value = GetString(nvc, key1, key2, null);
-            Int32 result;
-            return !String.IsNullOrEmpty(value) && Int32.TryParse(value, out result) ? result : defaultValue;
+            string value = GetString(key, null);
+            int result;
+            return !string.IsNullOrEmpty(value) && int.TryParse(value, out result) ? result : defaultValue;
         }
 
-        private static Int64 GetInt64(NameValueCollection nvc, String key1, String key2, Int64 defaultValue)
+        public Int64 GetInt64(String key, long defaultValue)
         {
-            String value = GetString(nvc, key1, key2, null);
+            string value = _values[key];
             Int64 result;
-            return !String.IsNullOrEmpty(value) && Int64.TryParse(value, out result) ? result : defaultValue;
+            return !string.IsNullOrEmpty(value) && Int64.TryParse(value, out result) ? result : defaultValue;
         }
 
-        private static Double GetDouble(NameValueCollection nvc, String key1, String key2, Double defaultValue)
+        public double GetDouble(string key, double defaultValue)
         {
-            String value = GetString(nvc, key1, key2, null);
-            Double result;
-            return !String.IsNullOrEmpty(value) && Double.TryParse(value, out result) ? result : defaultValue;
+            string value = _values[key];
+            double result;
+            return !string.IsNullOrEmpty(value) && double.TryParse(value, out result) ? result : defaultValue;
         }
 
         private static Boolean GetBoolean(NameValueCollection nvc, String key1, String key2, Boolean defaultValue)
@@ -566,6 +378,13 @@ namespace Com.AugustCellars.CoAP
             String value = GetString(nvc, key1, key2, null);
             Boolean result;
             return !String.IsNullOrEmpty(value) && Boolean.TryParse(value, out result) ? result : defaultValue;
+        }
+
+        public bool GetBool(String key, bool defaultValue)
+        {
+            string value = GetString(key, null);
+            bool result;
+            return !string.IsNullOrEmpty(value) && bool.TryParse(value, out result) ? result : defaultValue;
         }
 
         private static ICoapConfig LoadConfig()

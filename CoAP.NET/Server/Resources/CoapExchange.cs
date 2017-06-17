@@ -174,6 +174,8 @@ namespace Com.AugustCellars.CoAP.Server.Resources
             if (_eTag != null)
                 response.SetOption(Option.Create(OptionType.ETag, _eTag));
 
+            response.Session = _exchange.Request.Session;
+
             _resource.CheckObserveRelation(_exchange, response);
 
             _exchange.SendResponse(response);

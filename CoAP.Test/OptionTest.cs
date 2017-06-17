@@ -60,54 +60,6 @@ namespace Com.AugustCellars.CoAP
         }
 
         [TestMethod]
-        public void TestEmptyToken()
-        {
-            Option t1 = Option.Create(OptionType.Token, new Byte[0]);
-            Option t2 = Option.Create(OptionType.Token, new Byte[0]);
-            Option t3 = Option.Create(OptionType.Token, "full");
-
-            Assert.AreEqual(t1, t2);
-            Assert.AreEqual(t1.Length, 0);
-            Assert.AreNotEqual(t1, t3);
-        }
-
-        [TestMethod]
-        public void Test1ByteToken()
-        {
-            Option t1 = Option.Create(OptionType.Token, 0xCD);
-            Option t2 = Option.Create(OptionType.Token, 0xCD);
-            Option t3 = Option.Create(OptionType.Token, 0xCE);
-
-            Assert.AreEqual(t1, t2);
-            Assert.AreEqual(t1.Length, 1);
-            Assert.AreNotEqual(t1, t3);
-        }
-
-        [TestMethod]
-        public void Test2BytesToken()
-        {
-            Option t1 = Option.Create(OptionType.Token, 0xABCD);
-            Option t2 = Option.Create(OptionType.Token, 0xABCD);
-            Option t3 = Option.Create(OptionType.Token, 0xABCE);
-
-            Assert.AreEqual(t1, t2);
-            Assert.AreEqual(t1.Length, 2);
-            Assert.AreNotEqual(t1, t3);
-        }
-
-        [TestMethod]
-        public void Test4BytesToken()
-        {
-            Option t1 = Option.Create(OptionType.Token, 0x1234ABCD);
-            Option t2 = Option.Create(OptionType.Token, 0x1234ABCD);
-            Option t3 = Option.Create(OptionType.Token, 0x1234ABCE);
-
-            Assert.AreEqual(t1, t2);
-            Assert.AreEqual(t1.Length, 4);
-            Assert.AreNotEqual(t1, t3);
-        }
-
-        [TestMethod]
         public void TestSetValue()
         {
             Option option = Option.Create(OptionType.Reserved);

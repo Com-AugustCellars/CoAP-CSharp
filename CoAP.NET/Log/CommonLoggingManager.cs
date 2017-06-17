@@ -36,36 +36,49 @@ namespace Com.AugustCellars.CoAP.Log
 
             public void Debug(Object message, Exception exception)
             {
+                if (!IsDebugEnabled) return;
                 _log.Debug(message, exception);
             }
 
             public void Debug(Object message)
             {
+                if (!IsDebugEnabled) return;
                 _log.Debug(message);
+            }
+
+            public void Debug(Action<FormatMessageHandler> callbackHandler)
+            {
+                if (!IsDebugEnabled) return;
+                _log.Debug(callbackHandler);
             }
 
             public void DebugFormat(IFormatProvider provider, String format, params Object[] args)
             {
+                if (!IsDebugEnabled) return;
                 _log.DebugFormat(provider, format, args);
             }
 
             public void DebugFormat(String format, Object arg0, Object arg1, Object arg2)
             {
+                if (!IsDebugEnabled) return;
                 _log.DebugFormat(format, arg0, arg1, arg2);
             }
 
             public void DebugFormat(String format, Object arg0, Object arg1)
             {
+                if (!IsDebugEnabled) return;
                 _log.DebugFormat(format, arg0, arg1);
             }
 
             public void DebugFormat(String format, Object arg0)
             {
+                if (!IsDebugEnabled) return;
                 _log.DebugFormat(format, arg0);
             }
 
             public void DebugFormat(String format, params Object[] args)
             {
+                if (!IsDebugEnabled) return;
                 _log.DebugFormat(format, args);
             }
 
@@ -77,6 +90,12 @@ namespace Com.AugustCellars.CoAP.Log
             public void Error(Object message)
             {
                 _log.Error(message);
+            }
+
+            public void Error(Action<FormatMessageHandler> callbackHandler)
+            {
+                if (!IsErrorEnabled) return;
+                _log.Error(callbackHandler);
             }
 
             public void ErrorFormat(IFormatProvider provider, String format, params Object[] args)
@@ -114,6 +133,12 @@ namespace Com.AugustCellars.CoAP.Log
                 _log.Fatal(message);
             }
 
+            public void Fatal(Action<FormatMessageHandler> callbackHandler)
+            {
+                if (!IsFatalEnabled) return;
+                _log.Fatal(callbackHandler);
+            }
+
             public void FatalFormat(IFormatProvider provider, String format, params Object[] args)
             {
                 _log.FatalFormat(provider, format, args);
@@ -147,6 +172,12 @@ namespace Com.AugustCellars.CoAP.Log
             public void Info(Object message)
             {
                 _log.Info(message);
+            }
+
+            public void Info(Action<FormatMessageHandler> callbackHandler)
+            {
+                if (!IsInfoEnabled) return;
+                _log.Info(callbackHandler);
             }
 
             public void InfoFormat(IFormatProvider provider, String format, params Object[] args)
@@ -207,6 +238,12 @@ namespace Com.AugustCellars.CoAP.Log
             public void Warn(Object message)
             {
                 _log.Warn(message);
+            }
+
+            public void Warn(Action<FormatMessageHandler> callbackHandler)
+            {
+                if (!IsWarnEnabled) return;
+                _log.Warn(callbackHandler);
             }
 
             public void WarnFormat(IFormatProvider provider, String format, params Object[] args)

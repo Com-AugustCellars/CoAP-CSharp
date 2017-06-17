@@ -12,16 +12,20 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using Com.AugustCellars.CoAP.Deduplication;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Observe;
 using Com.AugustCellars.CoAP.Util;
 
+using Org.BouncyCastle.Security;
+
 namespace Com.AugustCellars.CoAP.Net
 {
     class Matcher : IMatcher, IDisposable
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(Matcher));
+        static readonly ILogger _Log = LogManager.GetLogger(typeof(Matcher));
 
         /// <summary>
         /// for all
@@ -41,12 +45,26 @@ namespace Com.AugustCellars.CoAP.Net
         private Int32 _running;
         private Int32 _currentID;
         private IDeduplicator _deduplicator;
+        private int _tokenLength;
+        private SecureRandom _random = new SecureRandom();
 
         public Matcher(ICoapConfig config)
         {
             _deduplicator = DeduplicatorFactory.CreateDeduplicator(config);
-            if (config.UseRandomIDStart)
+            if (config.UseRandomIDStart) {
                 _currentID = new Random().Next(1 << 16);
+            }
+            _tokenLength = config.TokenLength;
+
+            config.PropertyChanged += PropertyChanged;
+        }
+
+        private void PropertyChanged(object obj, PropertyChangedEventArgs eventArgs)
+        {
+            if (eventArgs.PropertyName == "TokenLength") {
+                ICoapConfig config = (ICoapConfig) obj;
+                _tokenLength = config.TokenLength;
+            }
         }
 
         /// <inheritdoc/>
@@ -78,8 +96,9 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public void SendRequest(Exchange exchange, Request request)
         {
-            if (request.ID == Message.None)
+            if (request.ID == Message.None) {
                 request.ID = System.Threading.Interlocked.Increment(ref _currentID) % (1 << 16);
+            }
 
             /*
              * The request is a CON or NON and must be prepared for these responses
@@ -90,12 +109,38 @@ namespace Com.AugustCellars.CoAP.Net
 
             // the MID is from the local namespace -- use blank address
             Exchange.KeyID keyID = new Exchange.KeyID(request.ID, null, request.Session);
-            Exchange.KeyToken keyToken = new Exchange.KeyToken(request.Token);
+
+            //  If we do not have a token, then create one
+            Exchange.KeyToken keyToken;
+            if (request.Token == null) {
+                int length = _tokenLength;
+                if (_tokenLength < 0) {
+                    length = _random.Next(8);
+                }
+
+                byte[] token = new byte[length];
+                int tries = 0;
+
+                do {
+                    if ((length < 8) && (tries > length * 5 + 1)) {
+                        length += 1;
+                        tries = 0;
+                        token = new byte[length];
+                    }
+
+                    _random.NextBytes(token);
+                    keyToken = new Exchange.KeyToken(token);
+                } while (_exchangesByToken.ContainsKey(keyToken));
+                request.Token = token;
+            }
+            else {
+                keyToken = new Exchange.KeyToken(request.Token);
+            }
 
             exchange.Completed += OnExchangeCompleted;
 
-            if (log.IsDebugEnabled)
-                log.Debug("Stored open request by " + keyID + ", " + keyToken);
+            
+            _Log.Debug(m => m("Stored open request by {0}, {1}", keyID, keyToken));
 
             _exchangesByID[keyID] = exchange;
             _exchangesByToken[keyToken] = exchange;
@@ -146,19 +191,19 @@ namespace Com.AugustCellars.CoAP.Net
                     // Remember ongoing blockwise GET requests
                     if (Utils.Put(_ongoingExchanges, keyUri, exchange) == null)
                     {
-                        if (log.IsDebugEnabled)
-                            log.Debug("Ongoing Block2 started late, storing " + keyUri + " for " + request);
+                        if (_Log.IsDebugEnabled)
+                            _Log.Debug("Ongoing Block2 started late, storing " + keyUri + " for " + request);
                     }
                     else
                     {
-                        if (log.IsDebugEnabled)
-                            log.Debug("Ongoing Block2 continued, storing " + keyUri + " for " + request);
+                        if (_Log.IsDebugEnabled)
+                            _Log.Debug("Ongoing Block2 continued, storing " + keyUri + " for " + request);
                     }
                 }
                 else
                 {
-                    if (log.IsDebugEnabled)
-                        log.Debug("Ongoing Block2 completed, cleaning up " + keyUri + " for " + request);
+                    if (_Log.IsDebugEnabled)
+                        _Log.Debug("Ongoing Block2 completed, cleaning up " + keyUri + " for " + request);
                     Exchange exc;
                     _ongoingExchanges.TryRemove(keyUri, out exc);
                 }
@@ -220,8 +265,8 @@ namespace Com.AugustCellars.CoAP.Net
                     return exchange;
                 }
                 else {
-                    if (log.IsInfoEnabled) {
-                        log.Info("Duplicate request: " + request);
+                    if (_Log.IsInfoEnabled) {
+                        _Log.Info("Duplicate request: " + request);
                     }
                     request.Duplicate = true;
                     return previous;
@@ -238,16 +283,16 @@ namespace Com.AugustCellars.CoAP.Net
                 Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, request.Source);
 #endif
 
-                if (log.IsDebugEnabled) {
-                    log.Debug("Looking up ongoing exchange for " + keyUri);
+                if (_Log.IsDebugEnabled) {
+                    _Log.Debug("Looking up ongoing exchange for " + keyUri);
                 }
 
                 Exchange ongoing;
                 if (_ongoingExchanges.TryGetValue(keyUri, out ongoing)) {
                     Exchange prev = _deduplicator.FindPrevious(keyId, ongoing);
                     if (prev != null) {
-                        if (log.IsInfoEnabled) {
-                            log.Info("Duplicate ongoing request: " + request);
+                        if (_Log.IsInfoEnabled) {
+                            _Log.Info("Duplicate ongoing request: " + request);
                         }
                         request.Duplicate = true;
                     }
@@ -255,8 +300,8 @@ namespace Com.AugustCellars.CoAP.Net
                         // the exchange is continuing, we can (i.e., must) clean up the previous response
                         if (ongoing.CurrentResponse.Type != MessageType.ACK && !ongoing.CurrentResponse.HasOption(OptionType.Observe)) {
                             keyId = new Exchange.KeyID(ongoing.CurrentResponse.ID, null, ongoing.CurrentResponse.Session);
-                            if (log.IsDebugEnabled) {
-                                log.Debug("Ongoing exchange got new request, cleaning up " + keyId);
+                            if (_Log.IsDebugEnabled) {
+                                _Log.Debug("Ongoing exchange got new request, cleaning up " + keyId);
                             }
                             _exchangesByID.Remove(keyId);
                         }
@@ -276,16 +321,16 @@ namespace Com.AugustCellars.CoAP.Net
                     Exchange exchange = new Exchange(request, Origin.Remote);
                     Exchange previous = _deduplicator.FindPrevious(keyId, exchange);
                     if (previous == null) {
-                        if (log.IsDebugEnabled) {
-                            log.Debug("New ongoing request, storing " + keyUri + " for " + request);
+                        if (_Log.IsDebugEnabled) {
+                            _Log.Debug("New ongoing request, storing " + keyUri + " for " + request);
                         }
                         exchange.Completed += OnExchangeCompleted;
                         _ongoingExchanges[keyUri] = exchange;
                         return exchange;
                     }
                     else {
-                        if (log.IsInfoEnabled) {
-                            log.Info("Duplicate initial request: " + request);
+                        if (_Log.IsInfoEnabled) {
+                            _Log.Info("Duplicate initial request: " + request);
                         }
                         request.Duplicate = true;
                         return previous;
@@ -322,23 +367,23 @@ namespace Com.AugustCellars.CoAP.Net
                 if (prev != null)
                 {
                     // (and thus it holds: prev == exchange)
-                    if (log.IsInfoEnabled)
-                        log.Info("Duplicate response for open exchange: " + response);
+                    if (_Log.IsInfoEnabled)
+                        _Log.Info("Duplicate response for open exchange: " + response);
                     response.Duplicate = true;
                 }
                 else
                 {
                     keyId = new Exchange.KeyID(exchange.CurrentRequest.ID, null, response.Session);
-                    if (log.IsDebugEnabled)
-                        log.Debug("Exchange got response: Cleaning up " + keyId);
+                    if (_Log.IsDebugEnabled)
+                        _Log.Debug("Exchange got response: Cleaning up " + keyId);
                     _exchangesByID.Remove(keyId);
                 }
 
                 if (response.Type == MessageType.ACK && exchange.CurrentRequest.ID != response.ID)
                 {
                     // The token matches but not the MID. This is a response for an older exchange
-                    if (log.IsWarnEnabled)
-                        log.Warn("Possible MID reuse before lifetime end: " + response.TokenString + " expected MID " + exchange.CurrentRequest.ID + " but received " + response.ID);
+                    if (_Log.IsWarnEnabled)
+                        _Log.Warn("Possible MID reuse before lifetime end: " + response.TokenString + " expected MID " + exchange.CurrentRequest.ID + " but received " + response.ID);
                 }
 
                 return exchange;
@@ -352,16 +397,16 @@ namespace Com.AugustCellars.CoAP.Net
                     Exchange prev = _deduplicator.Find(keyId);
                     if (prev != null)
                     {
-                        if (log.IsInfoEnabled)
-                            log.Info("Duplicate response for completed exchange: " + response);
+                        if (_Log.IsInfoEnabled)
+                            _Log.Info("Duplicate response for completed exchange: " + response);
                         response.Duplicate = true;
                         return prev;
                     }
                 }
                 else
                 {
-                    if (log.IsInfoEnabled)
-                        log.Info("Ignoring unmatchable piggy-backed response from " + response.Source + ": " + response);
+                    if (_Log.IsInfoEnabled)
+                        _Log.Info("Ignoring unmatchable piggy-backed response from " + response.Source + ": " + response);
                 }
                 // ignore response
                 return null;
@@ -376,15 +421,15 @@ namespace Com.AugustCellars.CoAP.Net
             Exchange exchange;
             if (_exchangesByID.TryGetValue(keyID, out exchange))
             {
-                if (log.IsDebugEnabled)
-                    log.Debug("Exchange got reply: Cleaning up " + keyID);
+                if (_Log.IsDebugEnabled)
+                    _Log.Debug("Exchange got reply: Cleaning up " + keyID);
                 _exchangesByID.Remove(keyID);
                 return exchange;
             }
             else
             {
-                if (log.IsInfoEnabled)
-                    log.Info("Ignoring unmatchable empty message from " + message.Source + ": " + message);
+                if (_Log.IsInfoEnabled)
+                    _Log.Info("Ignoring unmatchable empty message from " + message.Source + ": " + message);
                 return null;
             }
         }
@@ -399,8 +444,8 @@ namespace Com.AugustCellars.CoAP.Net
 
         private void RemoveNotificatoinsOf(ObserveRelation relation)
         {
-            if (log.IsDebugEnabled)
-                log.Debug("Remove all remaining NON-notifications of observe relation");
+            if (_Log.IsDebugEnabled)
+                _Log.Debug("Remove all remaining NON-notifications of observe relation");
 
             foreach (Response previous in relation.ClearNotifications())
             {
@@ -425,8 +470,8 @@ namespace Com.AugustCellars.CoAP.Net
                 Exchange.KeyID keyID = new Exchange.KeyID(exchange.CurrentRequest.ID, null, null);
                 Exchange.KeyToken keyToken = new Exchange.KeyToken(exchange.CurrentRequest.Token);
 
-                if (log.IsDebugEnabled)
-                    log.Debug("Exchange completed: Cleaning up " + keyToken);
+                if (_Log.IsDebugEnabled)
+                    _Log.Debug("Exchange completed: Cleaning up " + keyToken);
 
                 _exchangesByToken.Remove(keyToken);
                 // in case an empty ACK was lost
@@ -458,8 +503,8 @@ namespace Com.AugustCellars.CoAP.Net
 #else
                     Exchange.KeyUri uriKey = new Exchange.KeyUri(request.URI, request.Source);
 #endif
-                    if (log.IsDebugEnabled)
-                        log.Debug("Remote ongoing completed, cleaning up " + uriKey);
+                    if (_Log.IsDebugEnabled)
+                        _Log.Debug("Remote ongoing completed, cleaning up " + uriKey);
                     Exchange exc;
                     _ongoingExchanges.TryRemove(uriKey, out exc);
                 }

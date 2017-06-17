@@ -9,11 +9,14 @@
  * Please see README for more information.
  */
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// Types of CoAP messages.
     /// </summary>
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     public enum MessageType
     {
         /// <summary>
@@ -23,6 +26,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Confirmable messages require an acknowledgement.
         /// </summary>
+        // ReSharper disable once InconsistentNaming
         CON = 0,
         /// <summary>
         /// Non-Confirmable messages do not require an acknowledgement.

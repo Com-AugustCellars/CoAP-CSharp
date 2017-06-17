@@ -30,7 +30,6 @@ namespace Com.AugustCellars.CoAP
         const Byte PayloadMarker = 0xFF;
 
         public static readonly String Name = "RFC 7252";
-        public static readonly Int32 DefaultPort = 5683;
 
         public static IMessageEncoder NewMessageEncoder()
         {
@@ -78,12 +77,9 @@ namespace Com.AugustCellars.CoAP
         /// <returns>the value calculated from the nibble and the extended option value</returns>
         private static Int32 GetValueFromOptionNibble(Int32 nibble, DatagramReader datagram)
         {
-            if (nibble < 13)
-                return nibble;
-            else if (nibble == 13)
-                return datagram.Read(8) + 13;
-            else if (nibble == 14)
-                return datagram.Read(16) + 269;
+            if (nibble < 13) return nibble;
+            else if (nibble == 13) return datagram.Read(8) + 13;
+            else if (nibble == 14) return datagram.Read(16) + 269;
             else
                 throw ThrowHelper.Argument("nibble", "Unsupported option delta " + nibble);
         }
@@ -107,9 +103,6 @@ namespace Com.AugustCellars.CoAP
 
                 foreach (Option opt in options)
                 {
-                    if (opt.Type == OptionType.Token)
-                        continue;
-
                     // write 4-bit option delta
                     Int32 optNum = (Int32)opt.Type;
                     Int32 optionDelta = optNum - lastOptionNumber;
@@ -186,42 +179,41 @@ namespace Com.AugustCellars.CoAP
             protected override void ParseMessage(Message msg)
             {
                 // read token
-                if (m_tokenLength > 0)
+                if (m_tokenLength > 0) {
                     msg.Token = m_reader.ReadBytes(m_tokenLength);
-                else
+                }
+                else {
                     msg.Token = CoapConstants.EmptyToken;
+                }
 
                 // read options
-                Int32 currentOption = 0;
-                while (m_reader.BytesAvailable)
-                {
-                    Byte nextByte = m_reader.ReadNextByte();
-                    if (nextByte == PayloadMarker)
-                    {
-                        if (!m_reader.BytesAvailable)
+                int currentOption = 0;
+                while (m_reader.BytesAvailable) {
+                    byte nextByte = m_reader.ReadNextByte();
+                    if (nextByte == PayloadMarker) {
+                        if (!m_reader.BytesAvailable) {
                             // the presence of a marker followed by a zero-length payload
                             // must be processed as a message format error
                             throw new InvalidOperationException();
+                        }
 
                         msg.Payload = m_reader.ReadBytesLeft();
                         break;
                     }
-                    else
-                    {
-                        // the first 4 bits of the byte represent the option delta
-                        Int32 optionDeltaNibble = (0xF0 & nextByte) >> 4;
-                        currentOption += GetValueFromOptionNibble(optionDeltaNibble, m_reader);
 
-                        // the second 4 bits represent the option length
-                        Int32 optionLengthNibble = (0x0F & nextByte);
-                        Int32 optionLength = GetValueFromOptionNibble(optionLengthNibble, m_reader);
+                    // the first 4 bits of the byte represent the option delta
+                    int optionDeltaNibble = (0xF0 & nextByte) >> 4;
+                    currentOption += GetValueFromOptionNibble(optionDeltaNibble, m_reader);
 
-                        // read option
-                        Option opt = Option.Create((OptionType)currentOption);
-                        opt.RawValue = m_reader.ReadBytes(optionLength);
+                    // the second 4 bits represent the option length
+                    int optionLengthNibble = (0x0F & nextByte);
+                    int optionLength = GetValueFromOptionNibble(optionLengthNibble, m_reader);
 
-                        msg.AddOption(opt);
-                    }
+                    // read option
+                    Option opt = Option.Create((OptionType)currentOption);
+                    opt.RawValue = m_reader.ReadBytes(optionLength);
+
+                    msg.AddOption(opt);
                 }
             }
         }
@@ -231,21 +223,18 @@ namespace Com.AugustCellars.CoAP
     {
         partial class EndPointManager
         {
-            private static IEndPoint _default;
+            private static IEndPoint _Default;
 
             private static IEndPoint GetDefaultEndPoint()
             {
-                if (_default == null)
-                {
-                    lock (typeof(EndPointManager))
-                    {
-                        if (_default == null)
-                        {
-                            _default = CreateEndPoint();
+                if (_Default == null) {
+                    lock (typeof(EndPointManager)) {
+                        if (_Default == null) {
+                            _Default = CreateEndPoint();
                         }
                     }
                 }
-                return _default;
+                return _Default;
             }
 
             private static IEndPoint CreateEndPoint()

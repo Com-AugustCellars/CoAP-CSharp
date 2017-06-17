@@ -17,12 +17,16 @@ using Com.AugustCellars.CoAP.Net;
 
 namespace Com.AugustCellars.CoAP.Deduplication
 {
-    class CropRotation : IDeduplicator, IDisposable
+
+    /// <summary>
+    /// Crop Rotation De-duplicator: 
+    /// </summary>
+    internal class CropRotation : IDeduplicator, IDisposable
     {
-        private ConcurrentDictionary<Exchange.KeyID, Exchange>[] _maps;
+        private readonly ConcurrentDictionary<Exchange.KeyID, Exchange>[] _maps;
         private Int32 _first;
         private Int32 _second;
-        private Timer _timer;
+        private readonly Timer _timer;
 
         public CropRotation(ICoapConfig config)
         {
@@ -92,8 +96,10 @@ namespace Com.AugustCellars.CoAP.Deduplication
         {
             Int32 f = _first, s = _second;
             Exchange prev;
-            if (_maps[f].TryGetValue(key, out prev) || f == s)
+            if (_maps[f].TryGetValue(key, out prev) || f == s) {
                 return prev;
+            }
+
             _maps[s].TryGetValue(key, out prev);
             return prev;
         }

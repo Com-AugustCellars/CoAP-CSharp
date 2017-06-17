@@ -13,19 +13,23 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Timers;
+#if LOG_SWEE_DEDUPLICATOR
 using Com.AugustCellars.CoAP.Log;
+#endif
 using Com.AugustCellars.CoAP.Net;
 
 namespace Com.AugustCellars.CoAP.Deduplication
 {
     class SweepDeduplicator : IDeduplicator
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(SweepDeduplicator));
+#if LOG_SWEEP_DEDUPLICATOR
+        static readonly ILogger _Log = LogManager.GetLogger(typeof(SweepDeduplicator));
+#endif
 
-        private ConcurrentDictionary<Exchange.KeyID, Exchange> _incommingMessages
+        private readonly ConcurrentDictionary<Exchange.KeyID, Exchange> _incommingMessages
             = new ConcurrentDictionary<Exchange.KeyID, Exchange>();
-        private Timer _timer;
-        private ICoapConfig _config;
+        private readonly Timer _timer;
+        private readonly ICoapConfig _config;
 
         public SweepDeduplicator(ICoapConfig config)
         {
@@ -36,25 +40,23 @@ namespace Com.AugustCellars.CoAP.Deduplication
 
         private void Sweep(Object sender, ElapsedEventArgs e)
         {
-            if (log.IsDebugEnabled)
-                log.Debug("Start Mark-And-Sweep with " + _incommingMessages.Count + " entries");
+#if LOG_SWEEP_DEDUPLICATOR
+            log.Debug(m => m("Start Mark-And-Sweep with {0} entries", _incommingMessages.Count));
+#endif
 
             DateTime oldestAllowed = DateTime.Now.AddMilliseconds(-_config.ExchangeLifetime);
             List<Exchange.KeyID> keysToRemove = new List<Exchange.KeyID>();
-            foreach (KeyValuePair<Exchange.KeyID, Exchange> pair in _incommingMessages)
-            {
-                if (pair.Value.Timestamp < oldestAllowed)
-                {
-                    if (log.IsDebugEnabled)
-                        log.Debug("Mark-And-Sweep removes " + pair.Key);
+            foreach (KeyValuePair<Exchange.KeyID, Exchange> pair in _incommingMessages) {
+                if (pair.Value.Timestamp < oldestAllowed) {
+#if LOG_SWEEP_DEDUPLICATOR
+                    log.Debug(m => m("Mark-And-Sweep removes {0}", pair.Key));
+#endif
                     keysToRemove.Add(pair.Key);
                 }
             }
-            if (keysToRemove.Count > 0)
-            {
+            if (keysToRemove.Count > 0) {
                 Exchange ex;
-                foreach (Exchange.KeyID key in keysToRemove)
-                {
+                foreach (Exchange.KeyID key in keysToRemove) {
                     _incommingMessages.TryRemove(key, out ex);
                 }
             }

@@ -16,7 +16,7 @@ namespace Com.AugustCellars.CoAP.Deduplication
 {
     static class DeduplicatorFactory
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(DeduplicatorFactory));
+        static readonly ILogger _Log = LogManager.GetLogger(typeof(DeduplicatorFactory));
         public const String MarkAndSweepDeduplicator = "MarkAndSweep";
         public const String CropRotationDeduplicator = "CropRotation";
         public const String NoopDeduplicator = "Noop";
@@ -25,17 +25,19 @@ namespace Com.AugustCellars.CoAP.Deduplication
         {
             String type = config.Deduplicator;
             if (String.Equals(MarkAndSweepDeduplicator, type, StringComparison.OrdinalIgnoreCase)
-                || String.Equals("DEDUPLICATOR_MARK_AND_SWEEP", type, StringComparison.OrdinalIgnoreCase))
+                || String.Equals("DEDUPLICATOR_MARK_AND_SWEEP", type, StringComparison.OrdinalIgnoreCase)) {
                 return new SweepDeduplicator(config);
-            else if (String.Equals(CropRotationDeduplicator, type, StringComparison.OrdinalIgnoreCase)
-                || String.Equals("DEDUPLICATOR_CROP_ROTATIO", type, StringComparison.OrdinalIgnoreCase))
-                return new CropRotation(config);
-            else if (!String.Equals(NoopDeduplicator, type, StringComparison.OrdinalIgnoreCase)
-                && !String.Equals("NO_DEDUPLICATOR", type, StringComparison.OrdinalIgnoreCase))
-            {
-                if (log.IsWarnEnabled)
-                    log.Warn("Unknown deduplicator type: " + type);
             }
+            else if (String.Equals(CropRotationDeduplicator, type, StringComparison.OrdinalIgnoreCase)
+                || String.Equals("DEDUPLICATOR_CROP_ROTATIO", type, StringComparison.OrdinalIgnoreCase)) {
+                return new CropRotation(config);
+            }
+            else if (!String.Equals(NoopDeduplicator, type, StringComparison.OrdinalIgnoreCase)
+                && !String.Equals("NO_DEDUPLICATOR", type, StringComparison.OrdinalIgnoreCase)) {
+                if (_Log.IsWarnEnabled)
+                    _Log.Warn("Unknown deduplicator type: " + type);
+            }
+
             return new NoopDeduplicator();
         }
     }

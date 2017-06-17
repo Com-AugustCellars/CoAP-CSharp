@@ -16,7 +16,7 @@ namespace Com.AugustCellars.CoAP
     /// <summary>
     /// Provides configuration for CoAP communication.
     /// </summary>
-    public partial interface ICoapConfig : System.ComponentModel.INotifyPropertyChanged
+    public interface ICoapConfig : System.ComponentModel.INotifyPropertyChanged
     {
         /// <summary>
         /// Gets the version of CoAP protocol.
@@ -48,6 +48,10 @@ namespace Com.AugustCellars.CoAP
         Int32 BlockwiseStatusLifetime { get; }
         Boolean UseRandomIDStart { get; }
         Boolean UseRandomTokenStart { get; }
+        /// <summary>
+        /// What should the token length be?
+        /// </summary>
+        int TokenLength { get; }
         
         Int64 NotificationMaxAge { get; }
         Int64 NotificationCheckIntervalTime { get; }

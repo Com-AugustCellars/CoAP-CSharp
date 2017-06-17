@@ -147,7 +147,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// </summary>
         /// <param name="data">Data to be sent</param>
         /// <param name="ep">Where to send it</param>
-        public void Send(byte[] data, System.Net.EndPoint ep)
+        public void Send(byte[] data, ISession sessionReceive, System.Net.EndPoint ep)
         {
             try {
                 //  We currently only support IP addresses with this channel.
@@ -165,6 +165,9 @@ namespace Com.AugustCellars.CoAP.DTLS
                     AddSession(session);
                     
                     session.Connect(_udpChannel);
+                }
+                else if (session != sessionReceive) {
+                    Console.WriteLine("Don't send because the sessions are different");
                 }
 
                 //  Queue the data onto the session.

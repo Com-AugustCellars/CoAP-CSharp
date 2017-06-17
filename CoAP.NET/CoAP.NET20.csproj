@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\NET20\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;COAPALL;INCLUDE_OSCOAP;OSCOAP_COMPRESS</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;COAPALL;INCLUDE_OSCOAP;OSCOAP_COMPRESS;LOG_UDP_CHANNEL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
