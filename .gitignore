@@ -12,10 +12,17 @@ project.lock.json
 *.suo
 *.user
 *.sln.docstates
+*.dev.csproj
+nuspec.bat
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
+
+# Visual Studio not saved
+.vs
+*.snk
+
 
 # NuGet Packages Directory
 packages/

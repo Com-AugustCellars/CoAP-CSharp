@@ -30,7 +30,6 @@ namespace Com.AugustCellars.CoAP
         const Byte PayloadMarker = 0xFF;
 
         public static readonly String Name = "RFC 7252";
-        public static readonly Int32 DefaultPort = 5683;
 
         public static IMessageEncoder NewMessageEncoder()
         {

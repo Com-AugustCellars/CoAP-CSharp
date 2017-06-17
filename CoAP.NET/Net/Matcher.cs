@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using Com.AugustCellars.CoAP.Deduplication;
 using Com.AugustCellars.CoAP.Log;
@@ -54,6 +55,16 @@ namespace Com.AugustCellars.CoAP.Net
                 _currentID = new Random().Next(1 << 16);
             }
             _tokenLength = config.TokenLength;
+
+            config.PropertyChanged += PropertyChanged;
+        }
+
+        private void PropertyChanged(object obj, PropertyChangedEventArgs eventArgs)
+        {
+            if (eventArgs.PropertyName == "TokenLength") {
+                ICoapConfig config = (ICoapConfig) obj;
+                _tokenLength = config.TokenLength;
+            }
         }
 
         /// <inheritdoc/>
