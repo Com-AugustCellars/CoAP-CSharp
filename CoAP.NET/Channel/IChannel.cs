@@ -41,5 +41,11 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <param name="session">what session to send this on</param>
         /// <param name="ep">the target endpoint</param>
         void Send(Byte[] data, ISession session, System.Net.EndPoint ep);
+        /// <summary>
+        /// Get the session that is going to be used to send to this endpoint.
+        /// </summary>
+        /// <param name="ep">the target endpoint</param>
+        /// <returns>The session object</returns>
+        ISession GetSession(System.Net.EndPoint ep);
     }
 }

@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
-using Com.AugustCellars.CoAP.Observe;
 
 namespace Com.AugustCellars.CoAP
 {
@@ -22,19 +21,16 @@ namespace Com.AugustCellars.CoAP
     /// </summary>
     public class CoapClient
     {
-        private static ILogger log = LogManager.GetLogger(typeof(CoapClient));
-        private static readonly IEnumerable<WebLink> EmptyLinks = new WebLink[0];
-        private Uri _uri;
-        private ICoapConfig _config;
-        private IEndPoint _endpoint;
+        private static ILogger _Log = LogManager.GetLogger(typeof(CoapClient));
+        private static readonly IEnumerable<WebLink> _EmptyLinks = new WebLink[0];
+        private readonly ICoapConfig _config;
         private MessageType _type = MessageType.CON;
-        private Int32 _blockwise;
-        private Int32 _timeout = System.Threading.Timeout.Infinite;
 
         /// <summary>
         /// Occurs when a response has arrived.
         /// </summary>
         public event EventHandler<ResponseEventArgs> Respond;
+
         /// <summary>
         /// Occurs if an exception is thrown while executing a request.
         /// </summary>
@@ -70,37 +66,34 @@ namespace Com.AugustCellars.CoAP
         /// <param name="config">the config</param>
         public CoapClient(Uri uri, ICoapConfig config)
         {
-            _uri = uri;
+            Uri = uri;
             _config = config ?? CoapConfig.Default;
         }
 
         /// <summary>
         /// Gets or sets the destination URI of this client.
         /// </summary>
-        public Uri Uri
-        {
-            get { return _uri; }
-            set { _uri = value; }
-        }
+        public Uri Uri { get; set; }
 
         /// <summary>
         /// Gets or sets the endpoint this client is supposed to use.
         /// </summary>
-        public IEndPoint EndPoint
-        {
-            get { return _endpoint; }
-            set { _endpoint = value; }
-        }
+        public IEndPoint EndPoint { get; set; }
 
         /// <summary>
         /// Gets or sets the timeout how long synchronous method calls will wait
         /// until they give up and return anyways. The default value is <see cref="System.Threading.Timeout.Infinite"/>.
         /// </summary>
-        public Int32 Timeout
-        {
-            get { return _timeout; }
-            set { _timeout = value; }
-        }
+        public Int32 Timeout { get; set; } = System.Threading.Timeout.Infinite;
+
+        /// <summary>
+        /// Gets or sets the current blockwise size.
+        /// 
+        /// If the value is zero, then no blockwise value is sent on a request.
+        /// Legal block sizes are (16, 32, 64, 128, 256, 512, or 1024).
+        /// If a non-legal value is given, then it will be rounded to a legal value.
+        /// </summary>
+        public int Blockwise { get; set; }
 
         /// <summary>
         /// Let the client use Confirmable requests.
@@ -127,7 +120,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public CoapClient UseEarlyNegotiation(Int32 size)
         {
-            _blockwise = size;
+            Blockwise = size;
             return this;
         }
 
@@ -136,7 +129,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public CoapClient UseLateNegotiation()
         {
-            _blockwise = 0;
+            Blockwise = 0;
             return this;
         }
 
@@ -146,7 +139,7 @@ namespace Com.AugustCellars.CoAP
         /// <returns>success of the ping</returns>
         public Boolean Ping()
         {
-            return Ping(_timeout);
+            return Ping(Timeout);
         }
 
         /// <summary>
@@ -156,16 +149,15 @@ namespace Com.AugustCellars.CoAP
         /// <returns>success of the ping</returns>
         public Boolean Ping(Int32 timeout)
         {
-            try
-            {
-                Request request = new Request(Code.Empty, true);
-                request.Token = CoapConstants.EmptyToken;
-                request.URI = Uri;
+            try {
+                Request request = new Request(Code.Empty, true) {
+                    Token = CoapConstants.EmptyToken,
+                    URI = Uri
+                };
                 request.Send().WaitForResponse(timeout);
                 return request.IsRejected;
             }
-            catch (System.Threading.ThreadInterruptedException)
-            {
+            catch (System.Threading.ThreadInterruptedException) {
                 /* ignore */
             }
             return false;
@@ -189,16 +181,21 @@ namespace Com.AugustCellars.CoAP
         {
             Request discover = Prepare(Request.NewGet());
             discover.ClearUriPath().ClearUriQuery().UriPath = CoapConstants.DefaultWellKnownURI;
-            if (!String.IsNullOrEmpty(query))
+            if (!String.IsNullOrEmpty(query)) {
                 discover.UriQuery = query;
-            Response links = discover.Send().WaitForResponse(_timeout);
-            if (links == null)
+            }
+
+            Response links = discover.Send().WaitForResponse(Timeout);
+            if (links == null) {
                 // if no response, return null (e.g., timeout)
                 return null;
-            else if (links.ContentFormat != MediaType.ApplicationLinkFormat)
-                return EmptyLinks;
-            else
+            }
+            else if (links.ContentFormat != MediaType.ApplicationLinkFormat) {
+                return _EmptyLinks;
+            }
+            else {
                 return LinkFormat.Parse(links.PayloadString);
+            }
         }
 
         /// <summary>
@@ -386,7 +383,7 @@ namespace Com.AugustCellars.CoAP
 
         public Response Send(Request request)
         {
-            return Prepare(request).Send().WaitForResponse(_timeout);
+            return Prepare(request).Send().WaitForResponse(Timeout);
         }
 
         public void SendAsync(Request request, Action<Response> done = null, Action<FailReason> fail = null)
@@ -406,10 +403,10 @@ namespace Com.AugustCellars.CoAP
         protected Request Prepare(Request request, IEndPoint endpoint)
         {
             request.Type = _type;
-            request.URI = _uri;
+            request.URI = Uri;
             
-            if (_blockwise != 0)
-                request.SetBlock2(BlockOption.EncodeSZX(_blockwise), false, 0);
+            if (Blockwise != 0)
+                request.SetBlock2(BlockOption.EncodeSZX(Blockwise), false, 0);
 
             if (endpoint != null)
                 request.EndPoint = endpoint;
@@ -423,8 +420,8 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         protected IEndPoint GetEffectiveEndpoint(Request request)
         {
-            if (_endpoint != null)
-                return _endpoint;
+            if (EndPoint != null)
+                return EndPoint;
             else
                 return EndPointManager.Default;
             // TODO secure coap
@@ -433,7 +430,7 @@ namespace Com.AugustCellars.CoAP
         private CoapObserveRelation Observe(Request request, Action<Response> notify, Action<FailReason> error)
         {
             CoapObserveRelation relation = ObserveAsync(request, notify, error);
-            Response response = relation.Request.WaitForResponse(_timeout);
+            Response response = relation.Request.WaitForResponse(Timeout);
             if (response == null || !response.HasOption(OptionType.Observe))
                 relation.Canceled = true;
             relation.Current = response;
@@ -457,8 +454,8 @@ namespace Com.AugustCellars.CoAP
                     }
                     else
                     {
-                        if (log.IsDebugEnabled)
-                            log.Debug("Dropping old notification: " + resp);
+                        if (_Log.IsDebugEnabled)
+                            _Log.Debug("Dropping old notification: " + resp);
                     }
                 }
             };
