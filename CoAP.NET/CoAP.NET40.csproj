@@ -54,7 +54,7 @@
       <HintPath>..\packages\Common.Logging.Core.3.0.0\lib\net40\Common.Logging.Core.dll</HintPath>
     </Reference>
     <Reference Include="COSE, Version=1.0.4.0, Culture=neutral, PublicKeyToken=feba232d7e8953ed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.5\lib\portable-net40+sl5+win+wpa81+wp8\COSE.dll</HintPath>
+      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.5.2\lib\portable-net40+sl5+win+wpa81+wp8\COSE.dll</HintPath>
     </Reference>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
       <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
