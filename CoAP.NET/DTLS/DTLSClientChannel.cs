@@ -143,6 +143,38 @@ namespace Com.AugustCellars.CoAP.DTLS
         }
 
         /// <summary>
+        /// Get an existing session.  If one does not exist then create it and try
+        /// to make a connection.
+        /// </summary>
+        /// <returns>session to use</returns>
+        public ISession GetSession(System.Net.EndPoint ep)
+        {
+            DTLSSession session = null;
+            try {
+                IPEndPoint ipEndPoint = (IPEndPoint) ep;
+
+                //  Do we already have a session setup for this?
+
+                session = FindSession(ipEndPoint);
+                if (session != null) return session;
+
+                //  No session - create a new one.
+
+                session = new DTLSSession(ipEndPoint, DataReceived, _userKey);
+                AddSession(session);
+
+
+                session.Connect(_udpChannel);
+            }
+            catch {
+                ;
+            }
+
+
+            return session;
+        }
+
+        /// <summary>
         /// Send data through the DTLS channel to other side
         /// </summary>
         /// <param name="data">Data to be sent</param>
@@ -158,7 +190,10 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                 DTLSSession session = FindSession(ipEndPoint);
                 if (session == null) {
-                    
+#if DEBUG
+                    Console.WriteLine("We should have already setup a session");
+#endif
+
                     //  Create a new session to send with if we don't already have one
 
                     session = new DTLSSession(ipEndPoint, DataReceived, _userKey);
@@ -167,7 +202,9 @@ namespace Com.AugustCellars.CoAP.DTLS
                     session.Connect(_udpChannel);
                 }
                 else if (session != sessionReceive) {
+#if DEBUG
                     Console.WriteLine("Don't send because the sessions are different");
+#endif
                 }
 
                 //  Queue the data onto the session.

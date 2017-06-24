@@ -207,6 +207,12 @@ namespace Com.AugustCellars.CoAP.Channel
             Stop();
         }
 
+        /// <inheritdoc/>
+        public ISession GetSession(System.Net.EndPoint ep)
+        {
+            return this;
+        }
+
         private void BeginReceive()
         {
 #if LOG_UDP_CHANNEL

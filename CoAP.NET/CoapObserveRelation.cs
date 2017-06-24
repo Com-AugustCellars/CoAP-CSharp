@@ -23,67 +23,68 @@ namespace Com.AugustCellars.CoAP
     public class CoapObserveRelation
     {
         readonly ICoapConfig _config;
-        readonly Request _request;
         readonly IEndPoint _endpoint;
-        private Boolean _canceled;
-        private Response _current;
-        private ObserveNotificationOrderer _orderer;
 
         public CoapObserveRelation(Request request, IEndPoint endpoint, ICoapConfig config)
         {
             _config = config;
-            _request = request;
+            Request = request;
             _endpoint = endpoint;
-            _orderer = new ObserveNotificationOrderer(config);
+            Orderer = new ObserveNotificationOrderer(config);
 
             request.Reregistering += OnReregister;
         }
 
-        public Request Request
-        {
-            get { return _request; }
-        }
+        /// <summary>
+        /// Return the original request that caused the observe relationship to be established.
+        /// </summary>
+        public Request Request { get; private set; }
 
-        public Response Current
-        {
-            get { return _current; }
-            set { _current = value; }
-        }
+        /// <summary>
+        /// Return the most recent response that was received from the observe relationship.
+        /// </summary>
+        public Response Current { get; set; }
 
-        public ObserveNotificationOrderer Orderer
-        {
-            get { return _orderer; }
-        }
+        /// <summary>
+        /// Return the orderer.  This is the filter function that is used to determine if
+        /// a new notification is really new or if it is a repeat or old data.
+        /// </summary>
+        public ObserveNotificationOrderer Orderer { get; private set; }
 
-        public Boolean Canceled
-        {
-            get { return _canceled; }
-            set { _canceled = value; }
-        }
+        /// <summary>
+        /// Is the observe relationship canceled?
+        /// 
+        /// Setting this property does not send a request to the server to remove the observation.
+        /// </summary>
+        public Boolean Canceled { get; set; }
 
         public void ReactiveCancel()
         {
-            _request.IsCancelled = true;
-            _canceled = true;
+            Request.IsCancelled = true;
+            Canceled = true;
         }
 
+        /// <summary>
+        /// Send a message to the resource being observed that we want to cancel
+        /// the observation.
+        /// </summary>
         public void ProactiveCancel()
         {
             Request cancel = Request.NewGet();
             // copy options, but set Observe to cancel
-            cancel.SetOptions(_request.GetOptions());
+            cancel.SetOptions(Request.GetOptions());
             cancel.MarkObserveCancel();
             // use same Token
-            cancel.Token = _request.Token;
-            cancel.Destination = _request.Destination;
+            cancel.Token = Request.Token;
+            cancel.Destination = Request.Destination;
 
             // dispatch final response to the same message observers
-            cancel.CopyEventHandler(_request);
+            cancel.CopyEventHandler(Request);
 
             cancel.Send(_endpoint);
             // cancel old ongoing request
-            _request.IsCancelled = true;
-            _canceled = true;
+            Request.IsCancelled = true;
+            Canceled = true;
         }
 
         private void OnReregister(Object sender, ReregisterEventArgs e)
@@ -92,7 +93,7 @@ namespace Com.AugustCellars.CoAP
             //_request = e.RefreshRequest;
 
             // reset orderer to accept any sequence number since server might have rebooted
-            _orderer = new ObserveNotificationOrderer(_config);
+            Orderer = new ObserveNotificationOrderer(_config);
         }
     }
 }

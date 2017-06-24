@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -19,6 +19,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
+    <IntermediateOutputPath>obj\Debug\NET45</IntermediateOutputPath>
     <OutputPath>bin\Debug\NET45\</OutputPath>
     <DefineConstants Condition=" '$(VisualStudioVersion)' == '' ">TRACE;DEBUG;COAPALL</DefineConstants>
     <DefineConstants Condition=" '$(VisualStudioVersion)' != '' ">TRACE;DEBUG;NETFX_CORE,COAPALL</DefineConstants>
@@ -29,6 +30,16 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
+    <IntermediateOutputPath>obj\Release\NET45</IntermediateOutputPath>
+    <OutputPath>bin\Release\NET45\</OutputPath>
+    <DefineConstants>TRACE;COAPALL</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <IntermediateOutputPath>obj\Deploy\NET45</IntermediateOutputPath>
     <OutputPath>bin\Release\NET45\</OutputPath>
     <DefineConstants>TRACE;COAPALL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -38,11 +49,11 @@
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
       <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
     </Reference>
-    <Reference Include="CBOR, Version=2.5.1.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
-      <HintPath>..\packages\PeterO.Cbor.2.5.1\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CBOR.dll</HintPath>
+    <Reference Include="CBOR, Version=2.5.2.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
+      <HintPath>..\packages\PeterO.Cbor.2.5.2\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CBOR.dll</HintPath>
     </Reference>
-    <Reference Include="COSE, Version=1.0.3.0, Culture=neutral, PublicKeyToken=feba232d7e8953ed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.3\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8\COSE.dll</HintPath>
+    <Reference Include="COSE, Version=1.0.4.0, Culture=neutral, PublicKeyToken=feba232d7e8953ed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.5\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp8\COSE.dll</HintPath>
     </Reference>
     <Reference Include="Numbers, Version=0.4.0.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
       <HintPath>..\packages\PeterO.Numbers.0.4.0\lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\Numbers.dll</HintPath>

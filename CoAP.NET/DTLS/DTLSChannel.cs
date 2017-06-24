@@ -125,6 +125,38 @@ namespace Com.AugustCellars.CoAP.DTLS
             _udpChannel.Dispose();
         }
 
+        /// <summary>
+        /// Get an existing session.  If one does not exist then create it and try
+        /// to make a connection.
+        /// </summary>
+        /// <returns>session to use</returns>
+        public ISession GetSession(System.Net.EndPoint ep)
+        {
+            DTLSSession session = null;
+            try {
+                IPEndPoint ipEndPoint = (IPEndPoint) ep;
+
+                //  Do we already have a session setup for this?
+
+                session = FindSession(ipEndPoint);
+                if (session != null)
+                    return session;
+
+                //  No session - create a new one.
+
+                session = new DTLSSession(ipEndPoint, DataReceived, _serverKeys, _userKeys);
+                AddSession(session);
+
+
+                session.Connect(_udpChannel);
+            }
+            catch {
+                ;
+            }
+
+            return session;
+        }
+
         public void Send(byte[] data, ISession sessionReceive, System.Net.EndPoint ep)
         {
             try {

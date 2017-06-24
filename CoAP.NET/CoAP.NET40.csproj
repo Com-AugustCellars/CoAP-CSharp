@@ -18,6 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
+    <IntermediateOutputPath>obj\Debug\NET40</IntermediateOutputPath>
     <OutputPath>bin\Debug\NET40\</OutputPath>
     <DefineConstants>TRACE;DEBUG;COAPALL;INCLUDE_OSCOAP;OSCOAP_COMPRESS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -26,16 +27,23 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
+    <IntermediateOutputPath>obj\Release\NET40</IntermediateOutputPath>
     <OutputPath>bin\Release\NET40\</OutputPath>
     <DefineConstants>TRACE;COAPALL;INCLUDE_OSCOAP;OSCOAP_COMPRESS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\NET40\CoAP.XML</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly>false</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <IntermediateOutputPath>obj\Deploy\NET40</IntermediateOutputPath>
+    <OutputPath>bin\Deploy\NET40\</OutputPath>
+    <DefineConstants>TRACE;COAPALL;INCLUDE_OSCOAP;OSCOAP_COMPRESS</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Deploy\NET40\CoAP.XML</DocumentationFile>
+    <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>coapnet.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
@@ -45,15 +53,15 @@
     <Reference Include="Common.Logging.Core">
       <HintPath>..\packages\Common.Logging.Core.3.0.0\lib\net40\Common.Logging.Core.dll</HintPath>
     </Reference>
-    <Reference Include="COSE, Version=1.0.3.0, Culture=neutral, PublicKeyToken=feba232d7e8953ed">
-      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.3\lib\portable-net40+sl5+win+wpa81+wp8\COSE.dll</HintPath>
+    <Reference Include="COSE, Version=1.0.4.0, Culture=neutral, PublicKeyToken=feba232d7e8953ed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Com.AugustCellars.COSE.1.0.5\lib\portable-net40+sl5+win+wpa81+wp8\COSE.dll</HintPath>
     </Reference>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
       <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="CBOR, Version=2.5.1.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
-      <HintPath>..\packages\PeterO.Cbor.2.5.1\lib\portable-net40+sl5+win+wpa81+wp80\CBOR.dll</HintPath>
+    <Reference Include="CBOR, Version=2.5.2.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
+      <HintPath>..\packages\PeterO.Cbor.2.5.2\lib\portable-net40+sl5+win+wpa81+wp80\CBOR.dll</HintPath>
     </Reference>
     <Reference Include="Numbers, Version=0.4.0.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
       <HintPath>..\packages\PeterO.Numbers.0.4.0\lib\portable-net40+sl5+win+wpa81+wp80\Numbers.dll</HintPath>

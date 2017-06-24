@@ -458,8 +458,12 @@ namespace Com.AugustCellars.CoAP.Net
 
             Fire(SendingRequest, request);
 
-            if (!request.IsCancelled)
+            if (!request.IsCancelled) {
+                if (request.Session == null) {
+                    request.Session = _channel.GetSession(request.Destination);
+                }
                 _channel.Send(Serialize(request), request.Session, request.Destination);
+            }
         }
 
         void IOutbox.SendResponse(Exchange exchange, Response response)

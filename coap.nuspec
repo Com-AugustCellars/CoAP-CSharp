@@ -14,9 +14,10 @@
         <releaseNotes>
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
 This project is NOT to be used for commercial purposes.  It is intented only for research and verification work.
+
 1.1.5
-  - Change to use random tokens rather than a counter.
-  - Define a new configuration parameter 'TokenLength'.  Defaults to 4.
+  - DTLS should now check sessions correct
+  - Remove some left over Console.Write statements
 1.1.4
   - Refer to strongly named assemblies.  These will become strongly named in the next version
   - Updates dealing with the internal logging system so it can be made to log to a file rather than the console
@@ -40,9 +41,9 @@ This project is NOT to be used for commercial purposes.  It is intented only for
         </frameworkAssemblies>
         <dependencies>
           <dependency id="BouncyCastle" version="1.8.1"/>
-          <dependency id="Com.AugustCellars.COSE" version="1.0.3"/>
-          <dependency id="PeterO.CBOR" version="2.5.1"/>
-          <dependency id="PeterO.Numbers" version="0.4.0"/>
+          <dependency id="Com.AugustCellars.COSE" version="1.0.4"/>
+          <dependency id="PeterO.CBOR" version="2.4.2"/>
+          <dependency id="PeterO.Numbers" version="0.2.2"/>
         </dependencies>
     </metadata>
     <files>
