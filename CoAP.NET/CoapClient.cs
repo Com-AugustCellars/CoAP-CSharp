@@ -21,7 +21,7 @@ namespace Com.AugustCellars.CoAP
     /// </summary>
     public class CoapClient
     {
-        private static ILogger _Log = LogManager.GetLogger(typeof(CoapClient));
+        private static readonly ILogger _Log = LogManager.GetLogger(typeof(CoapClient));
         private static readonly IEnumerable<WebLink> _EmptyLinks = new WebLink[0];
         private readonly ICoapConfig _config;
         private MessageType _type = MessageType.CON;
@@ -98,6 +98,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Let the client use Confirmable requests.
         /// </summary>
+        // ReSharper disable once InconsistentNaming
         public CoapClient UseCONs()
         {
             _type = MessageType.CON;
@@ -107,6 +108,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Let the client use Non-Confirmable requests.
         /// </summary>
+        // ReSharper disable once InconsistentNaming
         public CoapClient UseNONs()
         {
             _type = MessageType.NON;
@@ -239,98 +241,223 @@ namespace Com.AugustCellars.CoAP
             SendAsync(Accept(Request.NewGet(), accept), done, fail);
         }
 
+        /// <summary>
+        /// Sends a POST request with the specified payload
+        /// </summary>
+        /// <param name="payload">Text based payload to send</param>
+        /// <param name="format">Content format - defaults to plain text</param>
+        /// <returns>the CoAP response</returns>
         public Response Post(String payload, Int32 format = MediaType.TextPlain)
         {
             return Send((Request)Request.NewPost().SetPayload(payload, format));
         }
 
+        /// <summary>
+        /// Sends a POST request with the specified payload
+        /// </summary>
+        /// <param name="payload">Text based payload to send</param>
+        /// <param name="format">Content format - defaults to plain text</param>
+        /// <param name="accept">what content format is to be returned</param>
+        /// <returns>the CoAP response</returns>
         public Response Post(String payload, Int32 format, Int32 accept)
         {
             return Send(Accept((Request)Request.NewPost().SetPayload(payload, format), accept));
         }
 
+        /// <summary>
+        /// Sends a POST request with the specified payload
+        /// </summary>
+        /// <param name="payload">Binary payload to send</param>
+        /// <param name="format">Content format</param>
+        /// <returns>the CoAP response</returns>
         public Response Post(Byte[] payload, Int32 format)
         {
             return Send((Request)Request.NewPost().SetPayload(payload, format));
         }
 
+        /// <summary>
+        /// Sends a POST request with the specified payload
+        /// </summary>
+        /// <param name="payload">Binary payload to send</param>
+        /// <param name="format">Content format</param>
+        /// <param name="accept">what content format is to be returned</param>
+        /// <returns>the CoAP response</returns>
         public Response Post(Byte[] payload, Int32 format, Int32 accept)
         {
             return Send(Accept((Request)Request.NewPost().SetPayload(payload, format), accept));
         }
 
+        /// <summary>
+        /// Sends a POST request with the specified payload asynchnously
+        /// </summary>
+        /// <param name="payload">Text payload to send</param>
+        /// <param name="done">Action for a respone message</param>
+        /// <param name="fail">Action internal errors</param>
         public void PostAsync(String payload,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             PostAsync(payload, MediaType.TextPlain, done, fail);
         }
 
+        /// <summary>
+        /// Sends a POST request with the specified payload asynchnously
+        /// </summary>
+        /// <param name="payload">Text payload to send</param>
+        /// <param name="format">Content Format for the payload</param>
+        /// <param name="done">Action for a respone message</param>
+        /// <param name="fail">Action internal errors</param>
         public void PostAsync(String payload, Int32 format,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync((Request)Request.NewPost().SetPayload(payload, format), done, fail);
         }
 
+        /// <summary>
+        /// Sends a POST request with the specified payload asynchnously
+        /// </summary>
+        /// <param name="payload">Text payload to send</param>
+        /// <param name="format">Content Format for the payload</param>
+        /// <param name="accept">What return content format is acceptable</param>
+        /// <param name="done">Action for a respone message</param>
+        /// <param name="fail">Action internal errors</param>
         public void PostAsync(String payload, Int32 format, Int32 accept,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync(Accept((Request)Request.NewPost().SetPayload(payload, format), accept), done, fail);
         }
 
+        /// <summary>
+        /// Sends a POST request with the specified payload asynchnously
+        /// </summary>
+        /// <param name="payload">Binary payload to send</param>
+        /// <param name="format">Content Format for the payload</param>
+        /// <param name="done">Action for a respone message</param>
+        /// <param name="fail">Action internal errors</param>
         public void PostAsync(Byte[] payload, Int32 format,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync((Request)Request.NewPost().SetPayload(payload, format), done, fail);
         }
 
+        /// <summary>
+        /// Sends a POST request with the specified payload asynchnously
+        /// </summary>
+        /// <param name="payload">Binary payload to send</param>
+        /// <param name="format">Content Format for the payload</param>
+        /// <param name="accept">What return content format is acceptable</param>
+        /// <param name="done">Action for a respone message</param>
+        /// <param name="fail">Action internal errors</param>
         public void PostAsync(Byte[] payload, Int32 format, Int32 accept,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync(Accept((Request)Request.NewPost().SetPayload(payload, format), accept), done, fail);
         }
 
+        /// <summary>
+        /// Sends a PUT request with the specified payload
+        /// </summary>
+        /// <param name="payload">Text based payload to send</param>
+        /// <param name="format">Content format - defaults to plain text</param>
+        /// <returns>the CoAP response</returns>
         public Response Put(String payload, Int32 format = MediaType.TextPlain)
         {
             return Send((Request)Request.NewPut().SetPayload(payload, format));
         }
 
+        /// <summary>
+        /// Sends a PUT request with the specified payload
+        /// </summary>
+        /// <param name="payload">Binary payload to send</param>
+        /// <param name="format">Content format</param>
+        /// <param name="accept">What return content format is acceptable</param>
+        /// <returns>the CoAP response</returns>
         public Response Put(Byte[] payload, Int32 format, Int32 accept)
         {
             return Send(Accept((Request)Request.NewPut().SetPayload(payload, format), accept));
         }
 
+        /// <summary>
+        /// Sends a PUT request with the specified payload with an If-Match option
+        /// </summary>
+        /// <param name="payload">Text based payload to send</param>
+        /// <param name="format">Content format</param>
+        /// <param name="etags">ETags to match before doing update</param>
+        /// <returns>the CoAP response</returns>
         public Response PutIfMatch(String payload, Int32 format, params Byte[][] etags)
         {
             return Send(IfMatch((Request)Request.NewPut().SetPayload(payload, format), etags));
         }
 
+        /// <summary>
+        /// Sends a PUT request with the specified payload with an If-Match option
+        /// </summary>
+        /// <param name="payload">Binary payload to send</param>
+        /// <param name="format">Content format</param>
+        /// <param name="etags">ETags to match before doing update</param>
+        /// <returns>the CoAP response</returns>
         public Response PutIfMatch(Byte[] payload, Int32 format, params Byte[][] etags)
         {
             return Send(IfMatch((Request)Request.NewPut().SetPayload(payload, format), etags));
         }
 
+        /// <summary>
+        /// Sends a PUT request with the specified payload if target does not exist
+        /// </summary>
+        /// <param name="payload">Text based payload to send</param>
+        /// <param name="format">Content format</param>
+        /// <returns>the CoAP response</returns>
         public Response PutIfNoneMatch(String payload, Int32 format)
         {
             return Send(IfNoneMatch((Request)Request.NewPut().SetPayload(payload, format)));
         }
 
+        /// <summary>
+        /// Sends a PUT request with the specified payload if target does not exist
+        /// </summary>
+        /// <param name="payload">Binary payload to send</param>
+        /// <param name="format">Content format</param>
+        /// <returns>the CoAP response</returns>
         public Response PutIfNoneMatch(Byte[] payload, Int32 format)
         {
             return Send(IfNoneMatch((Request)Request.NewPut().SetPayload(payload, format)));
         }
 
+        /// <summary>
+        /// Sends a PUT request with the specified payload asynchronsly
+        /// </summary>
+        /// <param name="payload">Text based payload to send</param>
+        /// <param name="done">Action for a respone message</param>
+        /// <param name="fail">Action for internal errors</param>
+        /// <returns>the CoAP response</returns>
         public void PutAsync(String payload,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             PutAsync(payload, MediaType.TextPlain, done, fail);
         }
 
+        /// <summary>
+        /// Sends a PUT request with the specified payload asynchronsly
+        /// </summary>
+        /// <param name="payload">Text based payload to send</param>
+        /// <param name="format">Content format</param>
+        /// <param name="done">Action for a respone message</param>
+        /// <param name="fail">Action for internal errors</param>
+        /// <returns>the CoAP response</returns>
         public void PutAsync(String payload, Int32 format,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync((Request)Request.NewPut().SetPayload(payload, format), done, fail);
         }
 
+        /// <summary>
+        /// Sends a PUT request with the specified payload asynchronsly
+        /// </summary>
+        /// <param name="payload">Text based payload to send</param>
+        /// <param name="format">Content format</param>
+        /// <param name="accept">What return content format is acceptable</param>
+        /// <param name="done">Action for a respone message</param>
+        /// <param name="fail">Action for internal errors</param>
+        /// <returns>the CoAP response</returns>
         public void PutAsync(Byte[] payload, Int32 format, Int32 accept,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
@@ -356,36 +483,80 @@ namespace Com.AugustCellars.CoAP
             SendAsync(Request.NewDelete(), done, fail);
         }
 
+        /// <summary>
+        /// Send a GET request to see if one of the ETAG values matches
+        /// one of the currently valid contents
+        /// </summary>
+        /// <param name="etags">ETAG values to check as current content</param>
+        /// <returns>CoAP Response</returns>
         public Response Validate(params Byte[][] etags)
         {
             return Send(ETags(Request.NewGet(), etags));
         }
 
+        /// <summary>
+        /// Set a GET request with an observer option
+        /// </summary>
+        /// <param name="notify">Action to take for each notification</param>
+        /// <param name="error">Action to take on internal error</param>
+        /// <returns>New observe relation</returns>
         public CoapObserveRelation Observe(Action<Response> notify = null, Action<FailReason> error = null)
         {
             return Observe(Request.NewGet().MarkObserve(), notify, error);
         }
 
+        /// <summary>
+        /// Set a GET request with an observer option
+        /// </summary>
+        /// <param name="accept">Specify the content format to return</param>
+        /// <param name="notify">Action to take for each notification</param>
+        /// <param name="error">Action to take on internal error</param>
+        /// <returns>New observe relation</returns>
         public CoapObserveRelation Observe(Int32 accept, Action<Response> notify = null, Action<FailReason> error = null)
         {
             return Observe(Accept(Request.NewGet().MarkObserve(), accept), notify, error);
         }
 
+        /// <summary>
+        /// Set a GET request with an observer option asynchronously
+        /// </summary>
+        /// <param name="notify">Action to take for each notification</param>
+        /// <param name="error">Action to take on internal error</param>
+        /// <returns>New observe relation</returns>
         public CoapObserveRelation ObserveAsync(Action<Response> notify = null, Action<FailReason> error = null)
         {
             return ObserveAsync(Request.NewGet().MarkObserve(), notify, error);
         }
 
+        /// <summary>
+        /// Set a GET request with an observer option asynchronously
+        /// </summary>
+        /// <param name="accept">Specify the content format to return</param>
+        /// <param name="notify">Action to take for each notification</param>
+        /// <param name="error">Action to take on internal error</param>
+        /// <returns>New observe relation</returns>
         public CoapObserveRelation ObserveAsync(Int32 accept, Action<Response> notify = null, Action<FailReason> error = null)
         {
             return ObserveAsync(Accept(Request.NewGet().MarkObserve(), accept), notify, error);
         }
 
+        /// <summary>
+        /// Send a user created request to the server
+        /// </summary>
+        /// <param name="request">request to be sent</param>
+        /// <returns>CoAP response</returns>
         public Response Send(Request request)
         {
             return Prepare(request).Send().WaitForResponse(Timeout);
         }
 
+        /// <summary>
+        /// Send a user created request to the server
+        /// </summary>
+        /// <param name="request">request to be sent</param>
+        /// <param name="done">Action to take for each notification</param>
+        /// <param name="fail">Action to take on internal error</param>
+        /// <returns>CoAP response</returns>
         public void SendAsync(Request request, Action<Response> done = null, Action<FailReason> fail = null)
         {
             request.Respond += (o, e) => Deliver(done, e);
@@ -405,11 +576,13 @@ namespace Com.AugustCellars.CoAP
             request.Type = _type;
             request.URI = Uri;
             
-            if (Blockwise != 0)
+            if (Blockwise != 0) {
                 request.SetBlock2(BlockOption.EncodeSZX(Blockwise), false, 0);
+            }
 
-            if (endpoint != null)
+            if (endpoint != null) {
                 request.EndPoint = endpoint;
+            }
 
             return request;
         }
@@ -420,19 +593,17 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         protected IEndPoint GetEffectiveEndpoint(Request request)
         {
-            if (EndPoint != null)
-                return EndPoint;
-            else
-                return EndPointManager.Default;
-            // TODO secure coap
+            return EndPoint ?? EndPointManager.Default;
         }
 
         private CoapObserveRelation Observe(Request request, Action<Response> notify, Action<FailReason> error)
         {
             CoapObserveRelation relation = ObserveAsync(request, notify, error);
             Response response = relation.Request.WaitForResponse(Timeout);
-            if (response == null || !response.HasOption(OptionType.Observe))
+            if (response == null || !response.HasOption(OptionType.Observe)) {
                 relation.Canceled = true;
+            }
+
             relation.Current = response;
             return relation;
         }
@@ -445,17 +616,13 @@ namespace Com.AugustCellars.CoAP
             request.Respond += (o, e) =>
             {
                 Response resp = e.Response;
-                lock (relation)
-                {
-                    if (relation.Orderer.IsNew(resp))
-                    {
+                lock (relation) {
+                    if (relation.Orderer.IsNew(resp)) {
                         relation.Current = resp;
                         Deliver(notify, e);
                     }
-                    else
-                    {
-                        if (_Log.IsDebugEnabled)
-                            _Log.Debug("Dropping old notification: " + resp);
+                    else {
+                        _Log.Debug(m => m("Dropping old notification: {0}", resp));
                     }
                 }
             };
@@ -473,47 +640,51 @@ namespace Com.AugustCellars.CoAP
 
         private void Deliver(Action<Response> act, ResponseEventArgs e)
         {
-            if (act != null)
+            if (act != null) {
                 act(e.Response);
+            }
+
             EventHandler<ResponseEventArgs> h = Respond;
-            if (h != null)
+            if (h != null) {
                 h(this, e);
+            }
         }
 
         private void Fail(Action<FailReason> fail, FailReason reason)
         {
-            if (fail != null)
+            if (fail != null) {
                 fail(reason);
+            }
+
             EventHandler<ErrorEventArgs> h = Error;
-            if (h != null)
+            if (h != null) {
                 h(this, new ErrorEventArgs(reason));
+            }
         }
 
-        static Request Accept(Request request, Int32 accept)
+        private static Request Accept(Request request, Int32 accept)
         {
             request.Accept = accept;
             return request;
         }
 
-        static Request IfMatch(Request request, params Byte[][] etags)
+        private static Request IfMatch(Request request, params Byte[][] etags)
         {
-            foreach (Byte[] etag in etags)
-            {
+            foreach (Byte[] etag in etags) {
                 request.AddIfMatch(etag);
             }
             return request;
         }
 
-        static Request IfNoneMatch(Request request)
+        private static Request IfNoneMatch(Request request)
         {
             request.IfNoneMatch = true;
             return request;
         }
 
-        static Request ETags(Request request, params Byte[][] etags)
+        private static Request ETags(Request request, params Byte[][] etags)
         {
-            foreach (Byte[] etag in etags)
-            {
+            foreach (Byte[] etag in etags) {
                 request.AddETag(etag);
             }
             return request;
@@ -541,7 +712,7 @@ namespace Com.AugustCellars.CoAP
         {
             internal ErrorEventArgs(FailReason reason)
             {
-                this.Reason = reason;
+                Reason = reason;
             }
 
             /// <summary>

@@ -20,10 +20,6 @@ namespace Com.AugustCellars.CoAP
     /// </summary>
     public class Response : Message
     {
-        private readonly StatusCode _statusCode;
-        private Double _rtt;
-        private Boolean _last = true;
-
         /// <summary>
         /// Initializes a response message.
         /// </summary>
@@ -31,39 +27,29 @@ namespace Com.AugustCellars.CoAP
         public Response(StatusCode code)
             : base(MessageType.Unknown, (Int32)code)
         {
-            _statusCode = code;
+            StatusCode = code;
         }
 
         /// <summary>
         /// Gets the response status code.
         /// </summary>
-        public StatusCode StatusCode
-        {
-            get { return _statusCode; }
-        }
+        public StatusCode StatusCode { get; }
 
         /// <summary>
         /// Gets the Round-Trip Time of this response.
         /// </summary>
-        public Double RTT
-        {
-            get { return _rtt; }
-            set { _rtt = value; }
-        }
+        // ReSharper disable once InconsistentNaming
+        public Double RTT { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this response is the last response of an exchange.
         /// </summary>
-        public Boolean Last
-        {
-            get { return _last; }
-            set { _last = value; }
-        }
+        public Boolean Last { get; set; } = true;
 
-        public String ResponseText
-        {
-            get { return this.PayloadString; }
-        }
+        /// <summary>
+        /// Get the payload as a string
+        /// </summary>
+        public String ResponseText => PayloadString;
 
         /// <summary>
         /// Creates a response to the specified request with the specified response code.
@@ -73,12 +59,16 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public static Response CreateResponse(Request request, StatusCode code)
         {
-            Response response = new Response(code);
-            response.Destination = request.Source;
-            response.Token = request.Token;
+            Response response = new Response(code) {
+                Destination = request.Source,
+                Token = request.Token
+            };
             return response;
         }
 
+        /// <summary>
+        /// Return underlying session
+        /// </summary>
         public ISession Session { get; set; }
     }
 }
