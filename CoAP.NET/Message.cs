@@ -25,33 +25,18 @@ namespace Com.AugustCellars.CoAP
     public class Message
     {
         /// <summary>
-        /// Invalid message ID.
-        /// </summary>
-        [Obsolete("Use Message.None instead.")]
-        public const Int32 InvalidID = None;
-        /// <summary>
         /// Indicates that no ID has been set.
         /// </summary>
         public const Int32 None = -1;
 
-        private MessageType _type = MessageType.Unknown;
-        private Int32 _code;
-        private Int32 _id = None;
         private Byte[] _token;
         private Byte[] _payload;
         private String _payloadString;
         private SortedDictionary<OptionType, LinkedList<Option>> _optionMap = new SortedDictionary<OptionType, LinkedList<Option>>();
-        private System.Net.EndPoint _source;
-        private System.Net.EndPoint _destination;
         private Boolean _acknowledged;
         private Boolean _rejected;
         private Boolean _cancelled;
         private Boolean _timedOut;
-        private Boolean _duplicate;
-        private Byte[] _bytes;
-        private DateTime _timestamp;
-        private Int32 _maxRetransmit;
-        private Int32 _ackTimeout;
 
         /// <summary>
         /// Occurs when this message is retransmitting.
@@ -91,7 +76,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="type">the message type</param>
         public Message(MessageType type)
         {
-            _type = type;
+            Type = type;
         }
 
         /// <summary>
@@ -101,42 +86,31 @@ namespace Com.AugustCellars.CoAP
         /// <param name="code">the message code</param>
         public Message(MessageType type, Int32 code)
         {
-            _type = type;
-            _code = code;
+            Type = type;
+            Code = code;
         }
 
         /// <summary>
         /// Gets or sets the type of this CoAP message.
         /// </summary>
-        public MessageType Type
-        {
-            get { return _type; }
-            set { _type = value; }
-        }
+        public MessageType Type { get; set; } = MessageType.Unknown;
 
         /// <summary>
         /// Gets or sets the ID of this CoAP message.
         /// </summary>
-        public Int32 ID
-        {
-            get { return _id; }
-            set { _id = value; }
-        }
+        public Int32 ID { get; set; } = None;
 
         /// <summary>
         /// Gets the code of this CoAP message.
         /// </summary>
-        public Int32 Code
-        {
-            get { return _code; }
-        }
+        public Int32 Code { get; }
 
         /// <summary>
         /// Gets the code's string representation of this CoAP message.
         /// </summary>
         public String CodeString
         {
-            get { return CoAP.Code.ToString(_code); }
+            get => CoAP.Code.ToString(Code);
         }
 
         /// <summary>
@@ -144,7 +118,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Boolean IsRequest
         {
-            get { return CoAP.Code.IsRequest(_code); }
+            get => CoAP.Code.IsRequest(Code);
         }
 
         /// <summary>
@@ -152,7 +126,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Boolean IsResponse
         {
-            get { return CoAP.Code.IsResponse(_code); }
+            get => CoAP.Code.IsResponse(Code);
         }
 
         /// <summary>
@@ -160,11 +134,13 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Byte[] Token
         {
-            get { return _token; }
+            get => _token;
             set
             {
-                if (value != null && value.Length > 8)
+                if (value != null && value.Length > 8) {
                     throw new ArgumentException("Token length must be between 0 and 8 inclusive.", "value");
+                }
+
                 _token = value;
             }
         }
@@ -174,38 +150,31 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public String TokenString
         {
-            get { return _token == null ? null : ByteArrayUtils.ToHexString(_token); }
+            get => _token == null ? null : ByteArrayUtils.ToHexString(_token);
         }
 
         /// <summary>
         /// Gets or sets the destination endpoint.
         /// </summary>
-        public System.Net.EndPoint Destination
-        {
-            get { return _destination; }
-            set { _destination = value; }
-        }
+        public System.Net.EndPoint Destination { get; set; }
 
         /// <summary>
         /// Gets or sets the source endpoint.
         /// </summary>
-        public System.Net.EndPoint Source
-        {
-            get { return _source; }
-            set { _source = value; }
-        }
+        public System.Net.EndPoint Source { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this message has been acknowledged.
         /// </summary>
         public Boolean IsAcknowledged
         {
-            get { return _acknowledged; }
+            get => _acknowledged;
             set
             {
                 _acknowledged = value;
-                if (value)
+                if (value) {
                     OnAcknowledged();
+                }
             }
         }
 
@@ -214,12 +183,13 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Boolean IsRejected
         {
-            get { return _rejected; }
+            get => _rejected;
             set
             {
                 _rejected = value;
-                if (value)
+                if (value) {
                     OnRejected();
+                }
             }
         }
 
@@ -229,12 +199,13 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Boolean IsTimedOut
         {
-            get { return _timedOut; }
+            get => _timedOut;
             set
             {
                 _timedOut = value;
-                if (value)
+                if (value) {
                     OnTimedOut();
+                }
             }
         }
 
@@ -243,42 +214,31 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Boolean IsCancelled
         {
-            get { return _cancelled; }
+            get => _cancelled;
             set
             {
                 _cancelled = value;
-                if (value)
+                if (value) {
                     OnCanceled();
+                }
             }
         }
 
         /// <summary>
         /// Gets or sets a value indicating whether this message is a duplicate.
         /// </summary>
-        public Boolean Duplicate
-        {
-            get { return _duplicate; }
-            set { _duplicate = value; }
-        }
+        public Boolean Duplicate { get; set; }
 
         /// <summary>
         /// Gets or sets the serialized message as byte array, or null if not serialized yet.
         /// </summary>
-        public Byte[] Bytes
-        {
-            get { return _bytes; }
-            set { _bytes = value; }
-        }
+        public Byte[] Bytes { get; set; }
 
         /// <summary>
         /// Gets or sets the timestamp when this message has been received or sent,
         /// or <see cref="DateTime.MinValue"/> if neither has happened yet.
         /// </summary>
-        public DateTime Timestamp
-        {
-            get { return _timestamp; }
-            set { _timestamp = value; }
-        }
+        public DateTime Timestamp { get; set; }
 
         /// <summary>
         /// Gets or sets the max times this message should be retransmitted if no ACK received.
@@ -286,29 +246,21 @@ namespace Com.AugustCellars.CoAP
         /// shoud be taken into account, while a negative means NO retransmission.
         /// The default value is 0.
         /// </summary>
-        public Int32 MaxRetransmit
-        {
-            get { return _maxRetransmit; }
-            set { _maxRetransmit = value; }
-        }
+        public Int32 MaxRetransmit { get; set; }
 
         /// <summary>
         /// Gets or sets the amount of time in milliseconds after which this message will time out.
         /// A value of 0 indicates that the time should be decided automatically,
         /// while a negative that never time out. The default value is 0.
         /// </summary>
-        public Int32 AckTimeout
-        {
-            get { return _ackTimeout; }
-            set { _ackTimeout = value; }
-        }
+        public Int32 AckTimeout { get; set; }
 
         /// <summary>
         /// Gets the size of the payload of this CoAP message.
         /// </summary>
         public Int32 PayloadSize
         {
-            get { return (null == _payload) ? 0 : _payload.Length; }
+            get => (null == _payload) ? 0 : _payload.Length;
         }
 
         /// <summary>
@@ -316,7 +268,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Byte[] Payload
         {
-            get { return _payload; }
+            get => _payload;
             set { _payload = value; _payloadString = null; }
         }
 
@@ -327,13 +279,16 @@ namespace Com.AugustCellars.CoAP
         {
             get
             {
-                if (_payload == null)
+                if (_payload == null) {
                     return null;
-                else if (_payloadString == null)
+                }
+                else if (_payloadString == null) {
                     _payloadString = System.Text.Encoding.UTF8.GetString(_payload);
+                }
+
                 return _payloadString;
             }
-            set { SetPayload(value, MediaType.TextPlain); }
+            set => SetPayload(value, MediaType.TextPlain);
         }
 
         /// <summary>
@@ -342,9 +297,12 @@ namespace Com.AugustCellars.CoAP
         /// <param name="payload">The string representation of the payload</param>
         public Message SetPayload(String payload)
         {
-            if (payload == null)
+            if (payload == null) {
                 payload = String.Empty;
+            }
+
             Payload = System.Text.Encoding.UTF8.GetBytes(payload);
+            _payloadString = payload;
             return this;
         }
 
@@ -355,9 +313,12 @@ namespace Com.AugustCellars.CoAP
         /// <param name="mediaType">The content-type of the payload</param>
         public Message SetPayload(String payload, Int32 mediaType)
         {
-            if (payload == null)
+            if (payload == null) {
                 payload = String.Empty;
+            }
+
             Payload = System.Text.Encoding.UTF8.GetBytes(payload);
+            _payloadString = payload;
             ContentType = mediaType;
             return this;
         }
@@ -431,24 +392,26 @@ namespace Com.AugustCellars.CoAP
         public override String ToString()
         {
             String payload = PayloadString;
-            if (payload == null)
-            {
+            if (payload == null) {
                 payload = "[no payload]";
             }
-            else
-            {
+            else {
                 Int32 len = payload.Length, nl = payload.IndexOf('\n');
-                if (nl >= 0)
+                if (nl >= 0) {
                     payload = payload.Substring(0, nl);
-                if (payload.Length > 24)
+                }
+
+                if (payload.Length > 24) {
                     payload = payload.Substring(0, 24);
+                }
+
                 payload = "\"" + payload + "\"";
-                if (payload.Length != len + 2)
+                if (payload.Length != len + 2) {
                     payload += "... " + PayloadSize + " bytes";
+                }
             }
 
-            return String.Format("{0}-{1} ID={2}, Token={3}, Options=[{4}], {5}",
-                Type, CoAP.Code.ToString(_code), ID, TokenString, Utils.OptionsToString(this), payload);
+            return $"{Type}-{CoAP.Code.ToString(Code)} ID={ID}, Token={TokenString}, Options=[{Utils.OptionsToString(this)}], {payload}";
         }
 
         /// <summary>
@@ -456,28 +419,20 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public override Boolean Equals(Object obj)
         {
-            if (obj == null)
-                return false;
-            if (Object.ReferenceEquals(this, obj))
-                return true;
-            if (this.GetType() != obj.GetType())
-                return false;
+            if (obj == null) return false;
+            if (Object.ReferenceEquals(this, obj)) return true;
+            if (this.GetType() != obj.GetType()) return false;
+
             Message other = (Message)obj;
-            if (_type != other._type)
-                return false;
-            if (_code != other._code)
-                return false;
-            if (_id != other._id)
-                return false;
-            if (_optionMap == null)
-            {
-                if (other._optionMap != null)
-                    return false;
+            if (Type != other.Type) return false;
+            if (Code != other.Code) return false;
+            if (ID != other.ID) return false;
+            if (_optionMap == null) {
+                if (other._optionMap != null) return false;
             }
-            else if (!_optionMap.Equals(other._optionMap))
-                return false;
-            if (!Utils.AreSequenceEqualTo(_payload, other._payload))
-                return false;
+            else if (!_optionMap.Equals(other._optionMap))  return false;
+
+            if (!Utils.AreSequenceEqualTo(_payload, other._payload)) return false;
             return true;
         }
 
@@ -500,10 +455,11 @@ namespace Com.AugustCellars.CoAP
 
         internal static void ForEach(EventHandler src, Action<EventHandler> action)
         {
-            if (src == null)
+            if (src == null) {
                 return;
-            foreach (Delegate item in src.GetInvocationList())
-            {
+            }
+
+            foreach (Delegate item in src.GetInvocationList()) {
                 action((EventHandler)item);
             }
         }
@@ -511,10 +467,8 @@ namespace Com.AugustCellars.CoAP
         internal static void ForEach<TEventArgs>(EventHandler<TEventArgs> src,
             Action<EventHandler<TEventArgs>> action) where TEventArgs : EventArgs
         {
-            if (src == null)
-                return;
-            foreach (Delegate item in src.GetInvocationList())
-            {
+            if (src == null) return;
+            foreach (Delegate item in src.GetInvocationList()) {
                 action((EventHandler<TEventArgs>)item);
             }
         }
@@ -526,101 +480,161 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public IEnumerable<Byte[]> IfMatches
         {
-            get { return SelectOptions(OptionType.IfMatch, o => o.RawValue); }
+            get => SelectOptions(OptionType.IfMatch, o => o.RawValue);
         }
 
+        /// <summary>
+        /// Checks if a value is matched by the IfMatch options.
+        /// If no IfMatch options exist, then return true.
+        /// </summary>
+        /// <param name="what">ETag value to check</param>
+        /// <returns>what is in the IfMatch list</returns>
         public Boolean IsIfMatch(Byte[] what)
         {
             IEnumerable<Option> ifmatches = GetOptions(OptionType.IfMatch);
-            if (ifmatches == null)
+            if (ifmatches == null) {
                 return true;
-            using (IEnumerator<Option> it = ifmatches.GetEnumerator())
-            {
-                if (!it.MoveNext())
+            }
+
+            using (IEnumerator<Option> it = ifmatches.GetEnumerator()) {
+                if (!it.MoveNext()) {
                     return true;
-                do
-                {
-                    if (Utils.AreSequenceEqualTo(what, it.Current.RawValue))
+                }
+
+                do {
+                    if (Utils.AreSequenceEqualTo(what, it.Current.RawValue)) {
                         return true;
+                    }
                 } while (it.MoveNext());
             }
             return false;
         }
 
+        /// <summary>
+        /// Add an If-Match option with an ETag
+        /// </summary>
+        /// <param name="opaque">ETag to add</param>
+        /// <returns>Current mesage</returns>
         public Message AddIfMatch(Byte[] opaque)
         {
-            if (opaque == null)
+            if (opaque == null) {
                 throw ThrowHelper.ArgumentNull("opaque");
-            if (opaque.Length > 8)
+            }
+
+            if (opaque.Length > 8) {
                 throw ThrowHelper.Argument("opaque", "Content of If-Match option is too large: " + ByteArrayUtils.ToHexString(opaque));
+            }
+
             return AddOption(Option.Create(OptionType.IfMatch, opaque));
         }
 
+        /// <summary>
+        /// Remove an If-Match option from the message
+        /// </summary>
+        /// <param name="opaque">ETag value to remove</param>
+        /// <returns>Current message</returns>
         public Message RemoveIfMatch(Byte[] opaque)
         {
             LinkedList<Option> list = GetOptions(OptionType.IfMatch) as LinkedList<Option>;
-            if (list != null)
-            {
+            if (list != null) {
                 Option opt = Utils.FirstOrDefault(list, o => Utils.AreSequenceEqualTo(opaque, o.RawValue));
-                if (opt != null)
+                if (opt != null) {
                     list.Remove(opt);
+                }
             }
             return this;
         }
 
+        /// <summary>
+        /// Remvoe all If-Match options from the message
+        /// </summary>
+        /// <returns>Current message</returns>
         public Message ClearIfMatches()
         {
             RemoveOptions(OptionType.IfMatch);
             return this;
         }
 
+        /// <summary>
+        /// Return all ETags on the message
+        /// </summary>
         public IEnumerable<Byte[]> ETags
         {
             get { return SelectOptions(OptionType.ETag, o => o.RawValue); }
         }
 
+        /// <summary>
+        /// Does the message contain a specific ETag option value?
+        /// </summary>
+        /// <param name="what">EETag value to check for</param>
+        /// <returns>true if present</returns>
         public Boolean ContainsETag(Byte[] what)
         {
             return Utils.Contains(GetOptions(OptionType.ETag), o => Utils.AreSequenceEqualTo(what, o.RawValue));
         }
 
+        /// <summary>
+        /// Add an ETag option to the message
+        /// </summary>
+        /// <param name="opaque">ETag to add</param>
+        /// <returns>Current Message</returns>
         public Message AddETag(Byte[] opaque)
         {
-            if (opaque == null)
+            if (opaque == null) {
                 throw ThrowHelper.ArgumentNull("opaque");
+            }
+
             return AddOption(Option.Create(OptionType.ETag, opaque));
         }
 
+        /// <summary>
+        /// Remove an ETag option from a message
+        /// </summary>
+        /// <param name="opaque">ETag to be removed</param>
+        /// <returns>Current message</returns>
         public Message RemoveETag(Byte[] opaque)
         {
             LinkedList<Option> list = GetOptions(OptionType.ETag) as LinkedList<Option>;
-            if (list != null)
-            {
+            if (list != null) {
                 Option opt = Utils.FirstOrDefault(list, o => Utils.AreSequenceEqualTo(opaque, o.RawValue));
-                if (opt != null)
+                if (opt != null) {
                     list.Remove(opt);
+                }
             }
             return this;
         }
-
+        
+        /// <summary>
+        /// Clear all ETags from a message
+        /// </summary>
+        /// <returns>Current message</returns>
         public Message ClearETags()
         {
             RemoveOptions(OptionType.ETag);
             return this;
         }
 
+        /// <summary>
+        /// Get - Does the message have an IfNoneMatch option?
+        /// Set - Set or clear IfNoneMatch option to value
+        /// </summary>
         public Boolean IfNoneMatch
         {
-            get { return HasOption(OptionType.IfNoneMatch); }
+            get => HasOption(OptionType.IfNoneMatch);
             set
             {
-                if (value)
+                if (value) {
                     SetOption(Option.Create(OptionType.IfNoneMatch));
-                else
+                }
+                else {
                     RemoveOptions(OptionType.IfNoneMatch);
+                }
             }
         }
 
+        /// <summary>
+        /// Get/Set URI host option
+        /// </summary>
         public String UriHost
         {
             get
@@ -630,117 +644,167 @@ namespace Com.AugustCellars.CoAP
             }
             set
             {
-                if (value == null)
-                    throw new ArgumentNullException("value");
-                else if (value.Length < 1 || value.Length > 255)
-                    throw new ArgumentException("URI-Host option's length must be between 1 and 255 inclusive", "value");
+                if (value == null) {
+                    throw new ArgumentNullException(nameof(value));
+                }
+                else if (value.Length < 1 || value.Length > 255) {
+                    throw new ArgumentException("URI-Host option's length must be between 1 and 255 inclusive", nameof(value));
+                }
+
                 SetOption(Option.Create(OptionType.UriHost, value));
             }
         }
 
+        /// <summary>
+        /// Get/Set the UriPath options
+        /// </summary>
         public String UriPath
         {
             get { return "/" + Option.Join(GetOptions(OptionType.UriPath), "/"); }
             set { SetOptions(Option.Split(OptionType.UriPath, value, "/")); }
         }
 
+        /// <summary>
+        /// Get the UriPath as an enumeration
+        /// </summary>
         public IEnumerable<String> UriPaths
         {
             get
             {
                 IEnumerable<Option> opts = GetOptions(OptionType.UriPath);
-                if (opts != null)
-                {
-                    foreach (Option opt in opts)
-                    {
+                if (opts != null) {
+                    foreach (Option opt in opts) {
                         yield return opt.StringValue;
                     }
                 }
-                yield break;
             }
         }
 
+        /// <summary>
+        /// Add Uri Path element corresponding to the path given
+        /// </summary>
+        /// <param name="path">Path element</param>
+        /// <returns>Current Message</returns>
         public Message AddUriPath(String path)
         {
-            if (path == null)
+            if (path == null) {
                 throw ThrowHelper.ArgumentNull("path");
-            if (path.Length > 255)
+            }
+
+            if (path.Length > 255) {
                 throw ThrowHelper.Argument("path", "Uri Path option's length must be between 0 and 255 inclusive");
+            }
+
             return AddOption(Option.Create(OptionType.UriPath, path));
         }
 
+        /// <summary>
+        /// Remove path element from options
+        /// </summary>
+        /// <param name="path">Current message</param>
+        /// <returns></returns>
         public Message RemoveUriPath(String path)
         {
             LinkedList<Option> list = GetOptions(OptionType.UriPath) as LinkedList<Option>;
-            if (list != null)
-            {
+            if (list != null) {
                 Option opt = Utils.FirstOrDefault(list, o => String.Equals(path, o.StringValue));
-                if (opt != null)
+                if (opt != null) {
                     list.Remove(opt);
+                }
             }
             return this;
         }
 
+        /// <summary>
+        /// Remove all Uri Path options
+        /// </summary>
+        /// <returns>Current message</returns>
         public Message ClearUriPath()
         {
             RemoveOptions(OptionType.UriPath);
             return this;
         }
 
+        /// <summary>
+        /// Get/Set UriQuery properties
+        /// </summary>
         public String UriQuery
         {
-            get { return Option.Join(GetOptions(OptionType.UriQuery), "&"); }
+            get => Option.Join(GetOptions(OptionType.UriQuery), "&");
             set
             {
-                if (!String.IsNullOrEmpty(value) && value.StartsWith("?"))
+                if (!String.IsNullOrEmpty(value) && value.StartsWith("?")) {
                     value = value.Substring(1);
+                }
+
                 SetOptions(Option.Split(OptionType.UriQuery, value, "&"));
             }
         }
 
+        /// <summary>
+        /// Get enumeration of all UriQuery properties
+        /// </summary>
         public IEnumerable<String> UriQueries
         {
             get
             {
                 IEnumerable<Option> opts = GetOptions(OptionType.UriQuery);
-                if (opts != null)
-                {
-                    foreach (Option opt in opts)
-                    {
+                if (opts != null) {
+                    foreach (Option opt in opts) {
                         yield return opt.StringValue;
                     }
                 }
-                yield break;
             }
         }
 
+        /// <summary>
+        /// Add one Uri Query option
+        /// </summary>
+        /// <param name="query">query to add</param>
+        /// <returns>Current Message</returns>
         public Message AddUriQuery(String query)
         {
-            if (query == null)
+            if (query == null) {
                 throw ThrowHelper.ArgumentNull("query");
-            if (query.Length > 255)
+            }
+
+            if (query.Length > 255) {
                 throw ThrowHelper.Argument("query", "Uri Query option's length must be between 0 and 255 inclusive");
+            }
+
             return AddOption(Option.Create(OptionType.UriQuery, query));
         }
 
+        /// <summary>
+        /// Remove first occurance of URI Query
+        /// </summary>
+        /// <param name="query">Query to remove</param>
+        /// <returns>Current message</returns>
         public Message RemoveUriQuery(String query)
         {
             LinkedList<Option> list = GetOptions(OptionType.UriQuery) as LinkedList<Option>;
-            if (list != null)
-            {
+            if (list != null) {
                 Option opt = Utils.FirstOrDefault(list, o => String.Equals(query, o.StringValue));
-                if (opt != null)
+                if (opt != null) {
                     list.Remove(opt);
+                }
             }
             return this;
         }
 
+        /// <summary>
+        /// Remove all Uri Query options
+        /// </summary>
+        /// <returns>Current message</returns>
         public Message ClearUriQuery()
         {
             RemoveOptions(OptionType.UriQuery);
             return this;
         }
 
+        /// <summary>
+        /// Get/Set the UriPort option
+        /// </summary>
         public Int32 UriPort
         {
             get
@@ -750,20 +814,27 @@ namespace Com.AugustCellars.CoAP
             }
             set
             {
-                if (value == 0)
+                if (value == 0) {
                     RemoveOptions(OptionType.UriPort);
-                else
+                }
+                else {
                     SetOption(Option.Create(OptionType.UriPort, value));
+                }
             }
         }
 
+        /// <summary>
+        /// Return location path and query options
+        /// </summary>
         public String Location
         {
             get
             {
                 String path = "/" + LocationPath, query = LocationQuery;
-                if (!String.IsNullOrEmpty(query))
+                if (!String.IsNullOrEmpty(query)) {
                     path += "?" + query;
+                }
+
                 return path;
             }
         }
@@ -773,29 +844,45 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public String LocationPath
         {
-            get { return Option.Join(GetOptions(OptionType.LocationPath), "/"); }
-            set { SetOptions(Option.Split(OptionType.LocationPath, value, "/")); }
+            get => Option.Join(GetOptions(OptionType.LocationPath), "/");
+            set => SetOptions(Option.Split(OptionType.LocationPath, value, "/"));
         }
 
+        /// <summary>
+        /// Return enumeration of all Location Path options
+        /// </summary>
         public IEnumerable<String> LocationPaths
         {
             get { return SelectOptions(OptionType.LocationPath, o => o.StringValue); }
         }
 
+        /// <summary>
+        /// Add a Location Path option
+        /// </summary>
+        /// <param name="path">option to add</param>
+        /// <returns>Current message</returns>
         public Message AddLocationPath(String path)
         {
-            if (path == null)
+            if (path == null) {
                 throw ThrowHelper.ArgumentNull("path");
-            if (path.Length > 255)
+            }
+
+            if (path.Length > 255) {
                 throw ThrowHelper.Argument("path", "Location Path option's length must be between 0 and 255 inclusive");
+            }
+
             return AddOption(Option.Create(OptionType.LocationPath, path));
         }
 
+        /// <summary>
+        /// Remove specified location path element
+        /// </summary>
+        /// <param name="path">Element to remove</param>
+        /// <returns>Current message</returns>
         public Message RemoveLocationPath(String path)
         {
             LinkedList<Option> list = GetOptions(OptionType.LocationPath) as LinkedList<Option>;
-            if (list != null)
-            {
+            if (list != null) {
                 Option opt = Utils.FirstOrDefault(list, o => String.Equals(path, o.StringValue));
                 if (opt != null)
                     list.Remove(opt);
@@ -803,49 +890,79 @@ namespace Com.AugustCellars.CoAP
             return this;
         }
 
+        /// <summary>
+        /// Clear all Location-Path options from the message
+        /// </summary>
+        /// <returns>Current Message</returns>
         public Message ClearLocationPath()
         {
             RemoveOptions(OptionType.LocationPath);
             return this;
         }
 
+        /// <summary>
+        /// Return all Location-Query options
+        /// </summary>
         public String LocationQuery
         {
-            get { return Option.Join(GetOptions(OptionType.LocationQuery), "&"); }
+            get => Option.Join(GetOptions(OptionType.LocationQuery), "&");
             set
             {
-                if (!String.IsNullOrEmpty(value) && value.StartsWith("?"))
+                if (!String.IsNullOrEmpty(value) && value.StartsWith("?")) {
                     value = value.Substring(1);
+                }
+
                 SetOptions(Option.Split(OptionType.LocationQuery, value, "&"));
             }
         }
 
+        /// <summary>
+        /// Return enumerator of all Location-Query options
+        /// </summary>
         public IEnumerable<String> LocationQueries
         {
-            get { return SelectOptions(OptionType.LocationQuery, o => o.StringValue); }
+            get => SelectOptions(OptionType.LocationQuery, o => o.StringValue);
         }
 
+        /// <summary>
+        /// Add a Location-Query option
+        /// </summary>
+        /// <param name="query">query element to add</param>
+        /// <returns>Current message</returns>
         public Message AddLocationQuery(String query)
         {
-            if (query == null)
+            if (query == null) {
                 throw ThrowHelper.ArgumentNull("query");
-            if (query.Length > 255)
+            }
+
+            if (query.Length > 255) {
                 throw ThrowHelper.Argument("query", "Location Query option's length must be between 0 and 255 inclusive");
+            }
+
             return AddOption(Option.Create(OptionType.LocationQuery, query));
         }
 
+        /// <summary>
+        /// Remove a given Location-Query from the message
+        /// </summary>
+        /// <param name="query">query to remove</param>
+        /// <returns>Current message</returns>
         public Message RemoveLocationQuery(String query)
         {
             LinkedList<Option> list = GetOptions(OptionType.LocationQuery) as LinkedList<Option>;
-            if (list != null)
-            {
+            if (list != null) {
                 Option opt = Utils.FirstOrDefault(list, o => String.Equals(query, o.StringValue));
-                if (opt != null)
+                if (opt != null) {
                     list.Remove(opt);
+                }
             }
             return this;
         }
 
+        /// <summary>
+        /// Remove all Location-Query options
+        /// </summary>
+        /// <returns>Current message</returns>
         public Message ClearLocationQuery()
         {
             RemoveOptions(OptionType.LocationQuery);
@@ -864,10 +981,12 @@ namespace Com.AugustCellars.CoAP
             }
             set
             {
-                if (value == MediaType.Undefined)
+                if (value == MediaType.Undefined) {
                     RemoveOptions(OptionType.ContentType);
-                else
+                }
+                else {
                     SetOption(Option.Create(OptionType.ContentType, value));
+                }
             }
         }
 
@@ -877,8 +996,8 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Int32 ContentFormat
         {
-            get { return ContentType; }
-            set { ContentType = value; }
+            get => ContentType;
+            set => ContentType = value;
         }
 
         /// <summary>
@@ -893,12 +1012,18 @@ namespace Com.AugustCellars.CoAP
             }
             set
             {
-                if (value < 0 || value > UInt32.MaxValue)
+                if (value < 0 || value > uint.MaxValue) {
                     throw ThrowHelper.Argument("value", "Max-Age option must be between 0 and " + UInt32.MaxValue + " (4 bytes) inclusive");
+                }
+
                 SetOption(Option.Create(OptionType.MaxAge, value));
             }
         }
 
+        /// <summary>
+        /// Get first Accept option
+        /// Set - add additional options or remove all for MediaType.Undefined
+        /// </summary>
         public Int32 Accept
         {
             get
@@ -908,13 +1033,18 @@ namespace Com.AugustCellars.CoAP
             }
             set
             {
-                if (value == MediaType.Undefined)
+                if (value == MediaType.Undefined) {
                     RemoveOptions(OptionType.Accept);
-                else
+                }
+                else {
                     SetOption(Option.Create(OptionType.Accept, value));
+                }
             }
         }
 
+        /// <summary>
+        /// Get/Set the Proxy-Uri option
+        /// </summary>
         public Uri ProxyUri
         {
             get
@@ -924,22 +1054,29 @@ namespace Com.AugustCellars.CoAP
                     return null;
 
                 String proxyUriString = Uri.UnescapeDataString(opt.StringValue);
-                // TODO URLDecode
-                if (!proxyUriString.StartsWith("coap://") && !proxyUriString.StartsWith("coaps://")
-                    && !proxyUriString.StartsWith("http://") && !proxyUriString.StartsWith("https://"))
+                // All proxies that we support are going to require a "://" sequence as
+                // the schema and host are needed.  
+                int pos = proxyUriString.IndexOf("://", StringComparison.OrdinalIgnoreCase);
+                if (pos == -1) {
                     proxyUriString = "coap://" + proxyUriString;
+                }
 
                 return new Uri(proxyUriString);
             }
             set
             {
-                if (value == null)
+                if (value == null) {
                     RemoveOptions(OptionType.ProxyUri);
-                else
+                }
+                else {
                     SetOption(Option.Create(OptionType.ProxyUri, value.ToString()));
+                }
             }
         }
 
+        /// <summary>
+        /// Get/Set the ProxySchema option on a message
+        /// </summary>
         public String ProxyScheme
         {
             get
@@ -949,31 +1086,41 @@ namespace Com.AugustCellars.CoAP
             }
             set
             {
-                if (value == null)
+                if (value == null) {
                     RemoveOptions(OptionType.ProxyScheme);
-                else
-                    SetOption(Option.Create(OptionType.ProxyScheme, value.ToString()));
+                }
+                else {
+                    SetOption(Option.Create(OptionType.ProxyScheme, value));
+                }
             }
         }
 
+        /// <summary>
+        /// Get/Set the observe option value
+        /// </summary>
         public Int32? Observe
         {
             get
             {
                 Option opt = GetFirstOption(OptionType.Observe);
-                if (opt == null)
+                if (opt == null) {
                     return null;
-                else
+                }
+                else {
                     return opt.IntValue;
+                }
             }
             set
             {
-                if (value == null)
+                if (value == null) {
                     RemoveOptions(OptionType.Observe);
-                else if (value < 0 || ((1 << 24) - 1) < value)
+                }
+                else if (value < 0 || ((1 << 24) - 1) < value) {
                     throw ThrowHelper.Argument("value", "Observe option must be between 0 and " + ((1 << 24) - 1) + " (3 bytes) inclusive but was " + value);
-                else
+                }
+                else {
                     SetOption(Option.Create(OptionType.Observe, value.Value));
+                }
             }
         }
 
@@ -989,10 +1136,12 @@ namespace Com.AugustCellars.CoAP
             }
             set
             {
-                if (value.HasValue)
+                if (value.HasValue) {
                     SetOption(Option.Create(OptionType.Size1, value.Value));
-                else
+                }
+                else {
                     RemoveOptions(OptionType.Size1);
+                }
             }
         }
 
@@ -1008,51 +1157,78 @@ namespace Com.AugustCellars.CoAP
             }
             set
             {
-                if (value.HasValue)
+                if (value.HasValue) {
                     SetOption(Option.Create(OptionType.Size2, value.Value));
-                else
+                }
+                else {
                     RemoveOptions(OptionType.Size2);
+                }
             }
         }
 
+        /// <summary>
+        /// Get/Set the Block1 option
+        /// </summary>
         public BlockOption Block1
         {
-            get { return GetFirstOption(OptionType.Block1) as BlockOption; }
+            get => GetFirstOption(OptionType.Block1) as BlockOption;
             set
             {
-                if (value == null)
+                if (value == null) {
                     RemoveOptions(OptionType.Block1);
-                else
+                }
+                else {
                     SetOption(value);
+                }
             }
         }
 
+        /// <summary>
+        /// Create a Block1 option and add it to the message
+        /// </summary>
+        /// <param name="szx">Size of blocks to use</param>
+        /// <param name="m">more data?</param>
+        /// <param name="num">block index</param>
         public void SetBlock1(Int32 szx, Boolean m, Int32 num)
         {
             SetOption(new BlockOption(OptionType.Block1, num, szx, m));
         }
 
+        /// <summary>
+        /// Get/Set the Block1 option
+        /// </summary>
         public BlockOption Block2
         {
-            get { return GetFirstOption(OptionType.Block2) as BlockOption; }
+            get => GetFirstOption(OptionType.Block2) as BlockOption;
             set
             {
-                if (value == null)
+                if (value == null) {
                     RemoveOptions(OptionType.Block2);
-                else
+                }
+                else {
                     SetOption(value);
+                }
             }
         }
 
+        /// <summary>
+        /// Create a Block2 option and add it to the message
+        /// </summary>
+        /// <param name="szx">Size of blocks to use</param>
+        /// <param name="m">more data?</param>
+        /// <param name="num">block index</param>
         public void SetBlock2(Int32 szx, Boolean m, Int32 num)
         {
             SetOption(new BlockOption(OptionType.Block2, num, szx, m));
         }
 
 #if INCLUDE_OSCOAP
+        /// <summary>
+        /// Get/Set the OSCOAP option value
+        /// </summary>
         public OSCOAP.OscoapOption Oscoap
         {
-            get { return GetFirstOption(OptionType.Oscoap) as OSCOAP.OscoapOption; }
+            get => GetFirstOption(OptionType.Oscoap) as OSCOAP.OscoapOption;
             set
             {
                 if (value == null) RemoveOptions(OptionType.Oscoap);
@@ -1064,14 +1240,11 @@ namespace Com.AugustCellars.CoAP
         private IEnumerable<T> SelectOptions<T>(OptionType optionType, Func<Option, T> func)
         {
             IEnumerable<Option> opts = GetOptions(optionType);
-            if (opts != null)
-            {
-                foreach (Option opt in opts)
-                {
+            if (opts != null) {
+                foreach (Option opt in opts) {
                     yield return func(opt);
                 }
             }
-            yield break;
         }
 
         /// <summary>
@@ -1080,12 +1253,12 @@ namespace Com.AugustCellars.CoAP
         /// <param name="option">the option to add</param>
         public Message AddOption(Option option)
         {
-            if (option == null)
-                throw new ArgumentNullException("opt");
+            if (option == null) {
+                throw new ArgumentNullException(nameof(option));
+            }
 
             LinkedList<Option> list;
-            if (!_optionMap.TryGetValue(option.Type, out list))
-            {
+            if (!_optionMap.TryGetValue(option.Type, out list)) {
                 list = new LinkedList<Option>();
                 _optionMap[option.Type] = list;
             }
@@ -1132,8 +1305,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="opt">the option to set</param>
         public void SetOption(Option opt)
         {
-            if (null != opt)
-            {
+            if (null != opt) {
                 RemoveOptions(opt.Type);
                 AddOption(opt);
             }
@@ -1145,10 +1317,11 @@ namespace Com.AugustCellars.CoAP
         /// <param name="options">the options to set</param>
         public void SetOptions(IEnumerable<Option> options)
         {
-            if (options == null)
+            if (options == null) {
                 return;
-            foreach (Option opt in options)
-            {
+            }
+
+            foreach (Option opt in options) {
                 RemoveOptions(opt.Type);
             }
             AddOptions(options);
@@ -1172,10 +1345,10 @@ namespace Com.AugustCellars.CoAP
         public Option GetFirstOption(OptionType optionType)
         {
             LinkedList<Option> list;
-            if (_optionMap.TryGetValue(optionType, out list))
+            if (_optionMap.TryGetValue(optionType, out list)) {
                 return list.Count > 0 ? list.First.Value : null;
-            else
-                return null;
+            }
+            return null;
         }
 
         /// <summary>
@@ -1185,10 +1358,10 @@ namespace Com.AugustCellars.CoAP
         public IEnumerable<Option> GetOptions()
         {
             List<Option> list = new List<Option>();
-            foreach (ICollection<Option> opts in _optionMap.Values)
-            {
-                if (opts.Count > 0)
+            foreach (ICollection<Option> opts in _optionMap.Values) {
+                if (opts.Count > 0) {
                     list.AddRange(opts);
+                }
             }
             return list;
         }

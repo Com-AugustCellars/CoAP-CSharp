@@ -1,5 +1,6 @@
 # CoAP.NET - A CoAP framework in C#
 
+[![NuGet Status](https://img.shields.io/nuget/v/Com.AugustCellars.CoAP.png)](https://www.nuget.org/packages/Com.AugustCellars.CoAP)
 [![Build Status](https://api.travis-ci.org/jimsch/CoAP-CSharp.png)](https://travis-ci.org/jimsch/CoAP-CSharp)
 
 The Constrained Application Protocol (CoAP) (https://datatracker.ietf.org/doc/draft-ietf-core-coap/)
@@ -18,6 +19,17 @@ SmeshLink Technology Co.
 - [Build](#build)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
+
+## How to Install
+
+The C# implementation is available in the NuGet Package Gallery under the name [Com.AugustCellars.CoAP](https://www.nuget.org/packages/Com.AugustCellars.CoAP).
+To install this library as a NuGet package, enter 'Install-Package Com.AugustCellars.CoAP' in the NuGet Package Manager Console.
+
+## Documentation
+
+Documentation can be found in two places.
+First an XML file is installed as part of the package for inline documentation.
+Additionally, I have started working on the [Wiki](https://github.com/jimsch/CoAP-CSharp/wiki) associated with this project.
 
 ## Quick Start
 
