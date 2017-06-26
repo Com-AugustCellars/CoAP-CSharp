@@ -597,7 +597,7 @@ namespace Com.AugustCellars.CoAP
             }
 
             if (UriQuery != null) {
-                request.AddUriQuery(UriQuery);
+                request.UriQuery = UriQuery;
             }
             
             if (Blockwise != 0) {

@@ -229,6 +229,10 @@ namespace Com.AugustCellars.CoAP
 
             Response r = client.Get();
             Assert.AreEqual("/abc?upper_case", r.PayloadString);
+
+            client.UriQuery = "upper_case&lower_case";
+            r = client.Get();
+            Assert.AreEqual("/abc?upper_case&lower_case", r.PayloadString);
         }
 
         private void Fail(CoapClient.FailReason reason)
