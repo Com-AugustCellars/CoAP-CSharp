@@ -76,6 +76,16 @@ namespace Com.AugustCellars.CoAP
         public Uri Uri { get; set; }
 
         /// <summary>
+        /// Path elements to be added to the URI as Uri-Path options
+        /// </summary>
+        public String UriPath { get; set; }
+
+        /// <summary>
+        /// Query elements to be added tothe URI as Uri-Query options
+        /// </summary>
+        public String UriQuery { get; set; }
+
+        /// <summary>
         /// Gets or sets the endpoint this client is supposed to use.
         /// </summary>
         public IEndPoint EndPoint { get; set; }
@@ -94,6 +104,11 @@ namespace Com.AugustCellars.CoAP
         /// If a non-legal value is given, then it will be rounded to a legal value.
         /// </summary>
         public int Blockwise { get; set; }
+
+        /// <summary>
+        /// OSCOAP context to use for the message
+        /// </summary>
+        public OSCOAP.OscoapOption Oscoap { get; set; }
 
         /// <summary>
         /// Let the client use Confirmable requests.
@@ -575,6 +590,15 @@ namespace Com.AugustCellars.CoAP
         {
             request.Type = _type;
             request.URI = Uri;
+            request.Oscoap = Oscoap;
+
+            if (UriPath != null) {
+                request.UriPath = UriPath;
+            }
+
+            if (UriQuery != null) {
+                request.AddUriQuery(UriQuery);
+            }
             
             if (Blockwise != 0) {
                 request.SetBlock2(BlockOption.EncodeSZX(Blockwise), false, 0);

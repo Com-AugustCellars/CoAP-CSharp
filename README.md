@@ -13,6 +13,7 @@ Reviews and suggestions would be appreciated.
 Copyright (c) 2011-2015, Longxiang He <longxianghe@gmail.com>,
 SmeshLink Technology Co.
 
+
 ## Content
 
 - [Quick Start](#quick-start)
@@ -63,16 +64,17 @@ To receive responses asynchronously, register a event handler to
 the event <code>request.Respond</code> before executing.
 
 > #### Parsing Link Format
-> Use <code>LinkFormat.Parse(String)</code> to parse a link-format
+Use <code>LinkFormat.Parse(String)</code> to parse a link-format
   response. The returned enumeration of <code>WebLink</code>
   contains all resources stated in the given link-format string.
-> ```csharp
+  
+```csharp
   Request request = new Request(Method.GET);
   request.URI = new Uri("coap://[::1]/.well-known/core");
   request.Send();
   Response response = request.WaitForResponse();
   IEnumerable<WebLink> links = LinkFormat.Parse(response.PayloadString);
-  ```
+```
 
 See [CoAP Example Client](CoAP.Client) for more.
 

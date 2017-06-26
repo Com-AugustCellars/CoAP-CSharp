@@ -196,6 +196,41 @@ namespace Com.AugustCellars.CoAP
             Assert.IsFalse(_failed);
         }
 
+        [TestMethod]
+        public void TestCoapClient_UriPath()
+        {
+            Uri uri = new Uri("coap://localhost:" + _serverPort + "/");
+            CoapClient client = new CoapClient(uri);
+
+            IEnumerable<WebLink> resources = client.Discover();
+            Assert.AreEqual(4, resources.Count());
+
+            client.UriPath = "abc";
+
+            Response r = client.Get();
+            Assert.AreEqual("/abc", r.PayloadString);
+
+            client.UriPath = "/abc/def";
+            r = client.Get();
+            Assert.AreEqual("/abc/def", r.PayloadString);
+        }
+
+        [TestMethod]
+        public void TestCoapClient_UriQuery()
+        {
+            Uri uri = new Uri("coap://localhost:" + _serverPort + "/");
+            CoapClient client = new CoapClient(uri);
+
+            IEnumerable<WebLink> resources = client.Discover();
+            Assert.AreEqual(4, resources.Count());
+
+            client.UriPath = "abc";
+            client.UriQuery = "upper_case";
+
+            Response r = client.Get();
+            Assert.AreEqual("/abc?upper_case", r.PayloadString);
+        }
+
         private void Fail(CoapClient.FailReason reason)
         {
             _failed = true;
@@ -212,6 +247,11 @@ namespace Com.AugustCellars.CoAP
             _server.AddEndPoint(endpoint);
             _server.Start();
             _serverPort = ((System.Net.IPEndPoint)endpoint.LocalEndPoint).Port;
+
+            Resource r2 = new EchoLocation("abc");
+            _server.Add(r2);
+
+            r2.Add(new EchoLocation("def"));
         }
 
         class StorageResource : Resource
@@ -244,5 +284,28 @@ namespace Com.AugustCellars.CoAP
                 Changed();
             }
         }
+
+        class EchoLocation : Resource
+        {
+
+            public EchoLocation(String name)
+                : base(name)
+            {
+                Observable = true;
+            }
+
+            protected override void DoGet(CoapExchange exchange)
+            {
+                String c = this.Uri;
+                String querys = exchange.Request.UriQuery;
+                if (querys != "") {
+                    c += "?" + querys;
+                }
+
+                exchange.Respond(c);
+            }
+        }
+
+
     }
 }
