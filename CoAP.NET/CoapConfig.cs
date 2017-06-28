@@ -28,6 +28,9 @@ namespace Com.AugustCellars.CoAP
 
         private static ICoapConfig _Default;
 
+        /// <summary>
+        /// Return a standard default configuration for use
+        /// </summary>
         public static ICoapConfig Default
         {
             get
@@ -267,18 +270,29 @@ namespace Com.AugustCellars.CoAP
             set => SetValue("OSCOAP_BlockwiseStatusLifetime", value);
         }
 
+        /// <inheritdoc/>
         public bool OSCOAP_ReplayWindow {
             get => GetBool("OSCOAP_ReplayWindow", Default_Oscoap_ReplayWindow);
             set => SetValue("OSCOAP_ReplayWindow", value);
         }
 #endif
 
+        /// <summary>
+        /// Return the configuration value for a key
+        /// </summary>
+        /// <param name="valueName">Key to retrive</param>
+        /// <returns>Value if one can be found</returns>
         public bool GetValue(string valueName)
         {
             bool x = GetBoolean(_values, valueName, null, false);
             return x;
         }
 
+        /// <summary>
+        /// Set a value in the configuration object for a key
+        /// </summary>
+        /// <param name="valueName">key to use for the value</param>
+        /// <param name="newValue">value to be saved</param>
         public void SetValue(string valueName, string newValue)
         {
             string oldValue = _values[valueName];
@@ -288,21 +302,41 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
+        /// <summary>
+        /// Set a value in the configuration object for a key
+        /// </summary>
+        /// <param name="valueName">key to use for the value</param>
+        /// <param name="newValue">value to be saved</param>
         public void SetValue(string valueName, bool newValue)
         {
             SetValue(valueName, newValue.ToString());
         }
 
+        /// <summary>
+        /// Set a value in the configuration object for a key
+        /// </summary>
+        /// <param name="valueName">key to use for the value</param>
+        /// <param name="newValue">value to be saved</param>
         public void SetValue(string valueName, int newValue)
         {
             SetValue(valueName, newValue.ToString());
         }
 
+        /// <summary>
+        /// Set a value in the configuration object for a key
+        /// </summary>
+        /// <param name="valueName">key to use for the value</param>
+        /// <param name="newValue">value to be saved</param>
         public void SetValue(string valueName, Int64 newValue)
         {
             SetValue(valueName, newValue.ToString());
         }
 
+        /// <summary>
+        /// Set a value in the configuration object for a key
+        /// </summary>
+        /// <param name="valueName">key to use for the value</param>
+        /// <param name="newValue">value to be saved</param>
         public void SetValue(string valueName, double newValue)
         {
             string value = _values[valueName];
@@ -342,6 +376,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
+        /// <inheritdoc/>
         public string GetString(string key, string defaultValue)
         {
             return _values[key] ?? defaultValue;
@@ -352,6 +387,7 @@ namespace Com.AugustCellars.CoAP
             return nvc[key1] ?? nvc[key2] ?? defaultValue;
         }
 
+        /// <inheritdoc/>
         public int GetInt(String key, int defaultValue)
         {
             string value = GetString(key, null);
@@ -359,6 +395,7 @@ namespace Com.AugustCellars.CoAP
             return !string.IsNullOrEmpty(value) && int.TryParse(value, out result) ? result : defaultValue;
         }
 
+        /// <inheritdoc/>
         public Int64 GetInt64(String key, long defaultValue)
         {
             string value = _values[key];
@@ -366,6 +403,7 @@ namespace Com.AugustCellars.CoAP
             return !string.IsNullOrEmpty(value) && Int64.TryParse(value, out result) ? result : defaultValue;
         }
 
+        /// <inheritdoc/>
         public double GetDouble(string key, double defaultValue)
         {
             string value = _values[key];
@@ -380,6 +418,7 @@ namespace Com.AugustCellars.CoAP
             return !String.IsNullOrEmpty(value) && Boolean.TryParse(value, out result) ? result : defaultValue;
         }
 
+        /// <inheritdoc/>
         public bool GetBool(String key, bool defaultValue)
         {
             string value = GetString(key, null);

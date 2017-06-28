@@ -581,11 +581,22 @@ namespace Com.AugustCellars.CoAP
             Prepare(request).Send();
         }
 
+        /// <summary>
+        /// Set properties on the request that are based on properties on this object
+        /// </summary>
+        /// <param name="request">Request we are going to send</param>
+        /// <returns>Request passed in</returns>
         protected Request Prepare(Request request)
         {
             return Prepare(request, GetEffectiveEndpoint(request));
         }
 
+        /// <summary>
+        /// Set properties on the request that are based on properties on this object
+        /// </summary>
+        /// <param name="request">Request we are going to send</param>
+        /// <param name="endpoint">Endpoint to use sending the message</param>
+        /// <returns>Request passed in</returns>
         protected Request Prepare(Request request, IEndPoint endpoint)
         {
             request.Type = _type;
@@ -742,7 +753,7 @@ namespace Com.AugustCellars.CoAP
             /// <summary>
             /// Gets the reason why failed.
             /// </summary>
-            public FailReason Reason { get; private set; }
+            public FailReason Reason { get; }
         }
     }
 }
