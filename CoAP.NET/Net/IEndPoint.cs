@@ -72,6 +72,9 @@ namespace Com.AugustCellars.CoAP.Net
         /// Stops this endpoint and all its components
         /// </summary>
         void Stop();
+        /// <summary>
+        /// Remove all entries from the matching cache
+        /// </summary>
         void Clear();
         /// <summary>
         /// Sends the specified request.

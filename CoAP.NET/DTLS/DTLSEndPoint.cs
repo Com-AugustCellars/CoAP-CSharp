@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 using Com.AugustCellars.COSE;
-using Com.AugustCellars.CoAP;
 using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Net;
 
 namespace Com.AugustCellars.CoAP.DTLS
 {
+    /// <summary>
+    /// This class is used to support the use of DTLS for servers.
+    /// This class supports both client and server sides of a DTLS connection.
+    /// </summary>
     public class DTLSEndPoint : CoAPEndPoint
     {
         /// <inheritdoc/>
@@ -28,24 +27,25 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
         }
 
-        public DTLSEndPoint(KeySet keyServer, KeySet keysUser, int port, ICoapConfig config) : this (new DTLSChannel(keysUser, keysUser, port), config)
+        /// <inheritdoc/>
+        public DTLSEndPoint(KeySet keyServer, KeySet keysUser, int port, ICoapConfig config) : this (new DTLSChannel(keyServer, keysUser, port), config)
         { }
 
         /// <inheritdoc/>
-        public DTLSEndPoint(KeySet keysServer, KeySet keysUser, System.Net.EndPoint localEP) : this(keysServer, keysUser, localEP, CoapConfig.Default)
+        public DTLSEndPoint(KeySet keysServer, KeySet keysUser, System.Net.EndPoint localEndPoint) : this(keysServer, keysUser, localEndPoint, CoapConfig.Default)
         {
         }
 
         /// <inheritdoc/>
-        public DTLSEndPoint(KeySet keysServer, KeySet keysUser, System.Net.EndPoint localEP, ICoapConfig config) : this(new DTLSChannel(keysServer, keysUser, localEP), config)
+        public DTLSEndPoint(KeySet keysServer, KeySet keysUser, System.Net.EndPoint localEndPoint, ICoapConfig config) : this(new DTLSChannel(keysServer, keysUser, localEndPoint), config)
         {
         }
 
         /// <summary>
         /// Instantiates a new DTLS endpoint with the specific channel and configuration
         /// </summary>
-        /// <param name="channel"></param>
-        /// <param name="config"></param>
+        /// <param name="channel">The DTLS Channel object to use for low level transmission</param>
+        /// <param name="config">Configuration interface</param>
         public DTLSEndPoint(DTLSChannel channel, ICoapConfig config) : base(channel, config)
         {
             Stack.Remove(Stack.Get("Reliability"));

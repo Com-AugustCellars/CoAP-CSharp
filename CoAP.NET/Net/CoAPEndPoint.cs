@@ -21,26 +21,30 @@ namespace Com.AugustCellars.CoAP.Net
     /// <summary>
     /// EndPoint encapsulates the stack that executes the CoAP protocol.
     /// </summary>
-    public partial class CoAPEndPoint : IEndPoint, IOutbox
+    // ReSharper disable once InconsistentNaming
+    public class CoAPEndPoint : IEndPoint, IOutbox
     {
         static readonly ILogger _Log = LogManager.GetLogger(typeof(CoAPEndPoint));
 
+        /// <summary>
+        /// Function that will create and return a message encoder
+        /// </summary>
+        /// <returns>Message encoder object</returns>
         public delegate IMessageEncoder FindMessageEncoder();
 
+        /// <summary>
+        /// Funtion that will create and return a message decoder
+        /// </summary>
+        /// <param name="data">data to be decoded</param>
+        /// <returns>Message decoder object</returns>
         public delegate IMessageDecoder FindMessageDecoder(byte[] data);
 
-        readonly ICoapConfig _config;
         readonly IChannel _channel;
         readonly CoapStack _coapStack;
         private IMessageDeliverer _deliverer;
-        private IMatcher _matcher;
+        private readonly IMatcher _matcher;
         private Int32 _running;
-        private System.Net.EndPoint _localEP;
         private IExecutor _executor;
-        private String _endpointSchema;
-
-        private FindMessageEncoder _messageEncoder = Spec.NewMessageEncoder;
-        private FindMessageDecoder _messageDecoder = Spec.NewMessageDecoder;
 
         /// <inheritdoc/>
         public event EventHandler<MessageEventArgs<Request>> SendingRequest;
@@ -80,8 +84,8 @@ namespace Com.AugustCellars.CoAP.Net
         /// Instantiates a new endpoint with the
         /// specified <see cref="System.Net.EndPoint"/>.
         /// </summary>
-        public CoAPEndPoint(System.Net.EndPoint localEP)
-            : this(localEP, CoapConfig.Default)
+        public CoAPEndPoint(System.Net.EndPoint localEndPointP)
+            : this(localEndPointP, CoapConfig.Default)
         { }
 
         /// <summary>
@@ -96,8 +100,8 @@ namespace Com.AugustCellars.CoAP.Net
         /// Instantiates a new endpoint with the
         /// specified <see cref="System.Net.EndPoint"/> and configuration.
         /// </summary>
-        public CoAPEndPoint(System.Net.EndPoint localEP, ICoapConfig config)
-            : this(NewUDPChannel(localEP, config), config)
+        public CoAPEndPoint(System.Net.EndPoint localEndPoint, ICoapConfig config)
+            : this(NewUDPChannel(localEndPoint, config), config)
         { }
 
         /// <summary>
@@ -106,23 +110,23 @@ namespace Com.AugustCellars.CoAP.Net
         /// </summary>
         public CoAPEndPoint(IChannel channel, ICoapConfig config)
         {
-            _config = config;
+            Config = config;
             _channel = channel;
             _matcher = new Matcher(config);
             _coapStack = new CoapStack(config);
             _channel.DataReceived += ReceiveData;
-            _endpointSchema = "coap";
+            EndpointSchema = "coap";
         }
 
         /// <inheritdoc/>
-        public ICoapConfig Config
-        {
-            get { return _config; }
-        }
+        public ICoapConfig Config { get; }
 
+        /// <summary>
+        /// What execute is used by this endpoint.
+        /// </summary>
         public IExecutor Executor
         {
-            get { return _executor; }
+            get => _executor;
             set
             {
                 _executor = value ?? Executors.NoThreading;
@@ -130,51 +134,38 @@ namespace Com.AugustCellars.CoAP.Net
             }
         }
 
-        public String EndpointSchema
-        {
-            get => _endpointSchema;
-            set => _endpointSchema = value;
-        }
+        /// <summary>
+        /// What is the endpoint schema supported by this endpoint
+        /// </summary>
+        public String EndpointSchema { get; set; }
 
         /// <inheritdoc/>
-        public System.Net.EndPoint LocalEndPoint
-        {
-            get { return _localEP; }
-        }
+        public System.Net.EndPoint LocalEndPoint { get; private set; }
 
         /// <inheritdoc/>
         public IMessageDeliverer MessageDeliverer
         {
-            set { _deliverer = value; }
-            get
-            {
-                if (_deliverer == null)
-                    _deliverer = new ClientMessageDeliverer();
-                return _deliverer;
-            }
+            set => _deliverer = value;
+            get => _deliverer ?? (_deliverer = new ClientMessageDeliverer());
         }
 
-        public FindMessageDecoder MessageDecoder
-        {
-            set { _messageDecoder = value; }
-            get { return _messageDecoder;  }
-        }
+        /// <summary>
+        /// Return the message decoder to use with the end point
+        /// </summary>
+        public FindMessageDecoder MessageDecoder { set; get; } = Spec.NewMessageDecoder;
 
-        public FindMessageEncoder MessageEncoder {
-            set { _messageEncoder = value; }
-            get { return _messageEncoder; }
-        }
+        /// <summary>
+        /// Return the message encoder to use with the end point
+        /// </summary>
+        public FindMessageEncoder MessageEncoder { set; get; } = Spec.NewMessageEncoder;
 
         /// <inheritdoc/>
-        public IOutbox Outbox
-        {
-            get { return this; }
-        }
+        public IOutbox Outbox => this;
 
         /// <inheritdoc/>
         public Boolean Running
         {
-            get { return _running > 0; }
+            get => _running > 0;
         }
 
         /// <summary>
@@ -182,43 +173,42 @@ namespace Com.AugustCellars.CoAP.Net
         /// </summary>
         public CoapStack Stack
         {
-            get { return _coapStack; }
+            get => _coapStack;
         }
 
         /// <inheritdoc/>
         public void Start()
         {
-            if (System.Threading.Interlocked.CompareExchange(ref _running, 1, 0) > 0)
+            if (System.Threading.Interlocked.CompareExchange(ref _running, 1, 0) > 0) {
                 return;
+            }
 
-            if (_executor == null)
+            if (_executor == null) {
                 Executor = Executors.Default;
+            }
 
-            _localEP = _channel.LocalEndPoint;
-            try
-            {
+            LocalEndPoint = _channel.LocalEndPoint;
+            try {
                 _matcher.Start();
                 _channel.Start();
-                _localEP = _channel.LocalEndPoint;
+                LocalEndPoint = _channel.LocalEndPoint;
             }
-            catch
-            {
-                if (_Log.IsWarnEnabled)
-                    _Log.Warn("Cannot start endpoint at " + _localEP);
+            catch {
+                _Log.Warn(m => m("Cannot start endpoint at {0}", LocalEndPoint));
                 Stop();
                 throw;
             }
-            if (_Log.IsDebugEnabled)
-                _Log.Debug("Starting endpoint bound to " + _localEP);
+            _Log.Debug(m => m("Starting endpoint bound to {0}", LocalEndPoint));
         }
 
         /// <inheritdoc/>
         public void Stop()
         {
-            if (System.Threading.Interlocked.Exchange(ref _running, 0) == 0)
+            if (System.Threading.Interlocked.Exchange(ref _running, 0) == 0) {
                 return;
-            if (_Log.IsDebugEnabled)
-                _Log.Debug("Stopping endpoint bound to " + _localEP);
+            }
+
+            _Log.Debug(m => m("Stopping endpoint bound to {0}", LocalEndPoint));
             _channel.Stop();
             _matcher.Stop();
             _matcher.Clear();
@@ -233,18 +223,21 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public void Dispose()
         {
-            if (Running)
+            if (Running) {
                 Stop();
+            }
+
             _channel.Dispose();
             IDisposable d = _matcher as IDisposable;
-            if (d != null)
+            if (d != null) {
                 d.Dispose();
+            }
         }
 
         /// <inheritdoc/>
         public void SendRequest(Request request)
         {
-            if (request.URI.Scheme != _endpointSchema) throw new Exception("Schema is incorrect for the end point");
+            if (request.URI.Scheme != EndpointSchema) throw new Exception("Schema is incorrect for the end point");
             _executor.Start(() => _coapStack.SendRequest(request));
         }
 
@@ -272,7 +265,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <param name="e"></param>
         private void ReceiveData(DataReceivedEventArgs e)
         {
-            IMessageDecoder decoder = _messageDecoder(e.Data);
+            IMessageDecoder decoder = MessageDecoder(e.Data);
 
             if (decoder.IsRequest) {
                 Request request;
@@ -283,9 +276,7 @@ namespace Com.AugustCellars.CoAP.Net
                 catch (Exception) {
 
                     if (decoder.IsReply) {
-                        if (_Log.IsWarnEnabled) {
-                            _Log.Warn("Message format error caused by " + e.EndPoint);
-                        }
+                        _Log.Warn(m => m("Message format error caused by {0}", e.EndPoint));
                     }
                     else {
                         // manually build RST from raw information
@@ -298,9 +289,7 @@ namespace Com.AugustCellars.CoAP.Net
 
                         _channel.Send(Serialize(rst), e.Session, rst.Destination);
 
-                        if (_Log.IsWarnEnabled) {
-                            _Log.Warn("Message format error caused by " + e.EndPoint + " and reseted.");
-                        }
+                        _Log.Warn(m => m("Message format error caused by {0} and reseted.", e.EndPoint));
                     }
                     return;
                 }
@@ -312,8 +301,7 @@ namespace Com.AugustCellars.CoAP.Net
 
                 if (!request.IsCancelled) {
                     Exchange exchange = _matcher.ReceiveRequest(request);
-                    if (exchange != null)
-                    {
+                    if (exchange != null) {
                         exchange.EndPoint = this;
                         _coapStack.ReceiveRequest(exchange, request);
                     }
@@ -343,14 +331,12 @@ namespace Com.AugustCellars.CoAP.Net
                         _coapStack.ReceiveResponse(exchange, response);
                     }
                     else if (response.Type != MessageType.ACK) {
-                        if (_Log.IsDebugEnabled) {
-                            _Log.Debug("Rejecting unmatchable response from " + e.EndPoint);
-                        }
+                        _Log.Debug(m => m("Rejecting unmatchable response from {0}", e.EndPoint));
                         Reject(response);
                     }
                 }
             }
-            else if (decoder.IsEmpty) { 
+            else if (decoder.IsEmpty) {
                 EmptyMessage message;
 
                 try {
@@ -368,9 +354,7 @@ namespace Com.AugustCellars.CoAP.Net
                 if (!message.IsCancelled) {
                     // CoAP Ping
                     if (message.Type == MessageType.CON || message.Type == MessageType.NON) {
-                        if (_Log.IsDebugEnabled) {
-                            _Log.Debug("Responding to ping by " + e.EndPoint);
-                        }
+                        _Log.Debug(m => m("Responding to ping by {0}", e.EndPoint));
                         Reject(message);
                     }
                     else {
@@ -382,8 +366,8 @@ namespace Com.AugustCellars.CoAP.Net
                     }
                 }
             }
-            else if (_Log.IsDebugEnabled) {
-                _Log.Debug("Silently ignoring non-CoAP message from " + e.EndPoint);
+            else {
+                _Log.Debug(m => m("Silently ignoring non-CoAP message from {0}", e.EndPoint));
             }
         }
 
@@ -401,7 +385,7 @@ namespace Com.AugustCellars.CoAP.Net
         {
             Byte[] bytes = message.Bytes;
             if (bytes == null) {
-                bytes = _messageEncoder().Encode(message);  //  Spec.NewMessageEncoder().Encode(message);
+                bytes = MessageEncoder().Encode(message);  //  Spec.NewMessageEncoder().Encode(message);
                 message.Bytes = bytes;
             }
             return bytes;
@@ -411,7 +395,7 @@ namespace Com.AugustCellars.CoAP.Net
         {
             Byte[] bytes = request.Bytes;
             if (bytes == null) {
-                bytes = _messageEncoder().Encode(request); //  Spec.NewMessageEncoder().Encode(request);
+                bytes = MessageEncoder().Encode(request); //  Spec.NewMessageEncoder().Encode(request);
                 request.Bytes = bytes;
             }
             return bytes;
@@ -420,9 +404,8 @@ namespace Com.AugustCellars.CoAP.Net
         private Byte[] Serialize(Response response)
         {
             Byte[] bytes = response.Bytes;
-            if (bytes == null)
-            {
-                bytes = _messageEncoder().Encode(response); // Spec.NewMessageEncoder().Encode(response);
+            if (bytes == null) {
+                bytes = MessageEncoder().Encode(response); // Spec.NewMessageEncoder().Encode(response);
                 response.Bytes = bytes;
             }
             return bytes;
@@ -430,25 +413,28 @@ namespace Com.AugustCellars.CoAP.Net
 
         private void Fire<T>(EventHandler<MessageEventArgs<T>> handler, T msg) where T : Message
         {
-            if (handler != null)
+            if (handler != null) {
                 handler(this, new MessageEventArgs<T>(msg));
+            }
         }
 
         static IChannel NewUDPChannel(Int32 port, ICoapConfig config)
         {
-            UDPChannel channel = new UDPChannel(port);
-            channel.ReceiveBufferSize = config.ChannelReceiveBufferSize;
-            channel.SendBufferSize = config.ChannelSendBufferSize;
-            channel.ReceivePacketSize = config.ChannelReceivePacketSize;
+            UDPChannel channel = new UDPChannel(port) {
+                ReceiveBufferSize = config.ChannelReceiveBufferSize,
+                SendBufferSize = config.ChannelSendBufferSize,
+                ReceivePacketSize = config.ChannelReceivePacketSize
+            };
             return channel;
         }
 
-        static IChannel NewUDPChannel(System.Net.EndPoint localEP, ICoapConfig config)
+        static IChannel NewUDPChannel(System.Net.EndPoint localEndPoint, ICoapConfig config)
         {
-            UDPChannel channel = new UDPChannel(localEP);
-            channel.ReceiveBufferSize = config.ChannelReceiveBufferSize;
-            channel.SendBufferSize = config.ChannelSendBufferSize;
-            channel.ReceivePacketSize = config.ChannelReceivePacketSize;
+            UDPChannel channel = new UDPChannel(localEndPoint) {
+                ReceiveBufferSize = config.ChannelReceiveBufferSize,
+                SendBufferSize = config.ChannelSendBufferSize,
+                ReceivePacketSize = config.ChannelReceivePacketSize
+            };
             return channel;
         }
 
@@ -472,8 +458,9 @@ namespace Com.AugustCellars.CoAP.Net
 
             Fire(SendingResponse, response);
 
-            if (!response.IsCancelled)
+            if (!response.IsCancelled) {
                 _channel.Send(Serialize(response), response.Session, response.Destination);
+            }
         }
 
         void IOutbox.SendEmptyMessage(Exchange exchange, EmptyMessage message)
@@ -482,8 +469,9 @@ namespace Com.AugustCellars.CoAP.Net
 
             Fire(SendingEmptyMessage, message);
 
-            if (!message.IsCancelled)
+            if (!message.IsCancelled) {
                 _channel.Send(Serialize(message), null /*  exchange.Session */, message.Destination);
+            }
         }
     }
 }
