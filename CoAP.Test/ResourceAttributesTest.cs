@@ -64,7 +64,7 @@ namespace Com.AugustCellars.CoAP
             String expected = "</sensors/light>;if=\"sensor\";rt=\"light-lux\"";
 
             Request request = Request.NewGet();
-            request.SetUri("/.well-known/core?rt=light-lux");
+            request.SetUri("coap://localhost/.well-known/core?rt=light-lux");
 
             DiscoveryResource discovery = new DiscoveryResource(_root);
             String serialized = LinkFormat.Serialize(_root, request.UriQueries);

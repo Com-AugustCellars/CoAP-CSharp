@@ -51,7 +51,7 @@ namespace Com.AugustCellars.CoAP
         {
             // send request
             Request req2acc = new Request(Method.POST, false);
-            req2acc.SetUri("localhost:" + _serverPort + "/" + ACC_RESOURCE);
+            req2acc.SetUri("coap://localhost:" + _serverPort + "/" + ACC_RESOURCE);
             req2acc.SetPayload("client says hi");
             req2acc.Send();
 
@@ -78,7 +78,7 @@ namespace Com.AugustCellars.CoAP
         {
             // send request
             Request req2acc = new Request(Method.POST, true);
-            req2acc.SetUri("localhost:" + _serverPort + "/" + ACC_RESOURCE);
+            req2acc.SetUri("coap://localhost:" + _serverPort + "/" + ACC_RESOURCE);
             req2acc.SetPayload("client says hi");
             req2acc.Send();
 

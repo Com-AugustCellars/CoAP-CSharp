@@ -82,7 +82,7 @@ namespace Com.AugustCellars.CoAP
         {
             Thread.Sleep(100);
             Request request = Request.NewGet();
-            request.SetUri("localhost:" + _serverPort + "/ress");
+            request.SetUri("coap://localhost:" + _serverPort + "/ress");
             String response = request.Send().WaitForResponse(1000).PayloadString;
             Assert.AreEqual(expected, response);
         }
