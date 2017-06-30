@@ -10,7 +10,6 @@
  */
 
 using System;
-using Com.AugustCellars.CoAP.Stack;
 
 namespace Com.AugustCellars.CoAP.Net
 {

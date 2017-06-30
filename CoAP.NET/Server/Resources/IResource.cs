@@ -17,6 +17,9 @@ using Com.AugustCellars.CoAP.Threading;
 
 namespace Com.AugustCellars.CoAP.Server.Resources
 {
+    /// <summary>
+    /// Interface for server resource objects
+    /// </summary>
     public interface IResource
     {
         /// <summary>
@@ -28,6 +31,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// resource under the correct new URI when another request arrives.
         /// </summary>
         String Name { get; set; }
+
         /// <summary>
         /// Gets or sets the path to the resource which is equal to
         /// the URI of its parent plus a slash.

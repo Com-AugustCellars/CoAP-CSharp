@@ -25,12 +25,10 @@ namespace Com.AugustCellars.CoAP.Server.Resources
     /// </summary>
     public class Resource : IResource
     {
-        static readonly IEnumerable<IEndPoint> EmptyEndPoints = new IEndPoint[0];
-        static readonly ILogger log = LogManager.GetLogger(typeof(Resource));
-        readonly ResourceAttributes _attributes = new ResourceAttributes();
+        static readonly IEnumerable<IEndPoint> _EmptyEndPoints = new IEndPoint[0];
+        static readonly ILogger _Log = LogManager.GetLogger(typeof(Resource));
         private String _name;
         private String _path = String.Empty;
-        private Boolean _visible;
         private Boolean _observable;
         private MessageType _observeType = MessageType.Unknown;
         private IResource _parent;
@@ -40,10 +38,6 @@ namespace Com.AugustCellars.CoAP.Server.Resources
             = new ConcurrentDictionary<String, ObserveRelation>();
         private ObserveNotificationOrderer _notificationOrderer
             = new ObserveNotificationOrderer();
-#if INCLUDE_OSCOAP
-        private Boolean _requireSecurity = false;
-        private String _requireSecurityErrorText = null;
-#endif
 
         /// <summary>
         /// Constructs a new resource with the specified name.
@@ -62,28 +56,26 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         public Resource(String name, Boolean visible)
         {
             _name = name;
-            _visible = visible;
+            Visible = visible;
         }
 
         /// <inheritdoc/>
         public String Name
         {
-            get { return _name; }
+            get => _name;
             set
             {
-                if (value == null)
+                if (value == null) {
                     throw new ArgumentNullException("value");
-                lock (this)
-                {
+                }
+
+                lock (this) {
                     IResource parent = _parent;
-					if (parent == null)
-					{
+					if (parent == null) {
 						_name = value;
 					}
-					else
-					{
-                        lock (parent)
-                        {
+					else {
+                        lock (parent) {
                             parent.Remove(this);
                             _name = value;
                             parent.Add(this);
@@ -94,21 +86,23 @@ namespace Com.AugustCellars.CoAP.Server.Resources
             }
         }
 
-        [Obsolete("Use Attributes.Title instead.")]
+        /// <summary>
+        /// Get the title of the resource - don't use this use Attributes.Title instead.
+        /// This will be disappearing soon.
+        /// </summary>
+        [Obsolete("Use Attributes.Title instead.  To be removed in version 1.7")]
         public String Title
         {
-            get { return Attributes.Title; }
-            set { Attributes.Title = value; }
+            get => Attributes.Title;
+            set => Attributes.Title = value;
         }
 
         /// <inheritdoc/>
         public String Path
         {
-            get { return _path; }
-            set
-            {
-                lock (this)
-                {
+            get => _path;
+            set {
+                lock (this) {
                     _path = value;
                     AdjustChildrenPath();
                 }
@@ -118,22 +112,18 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// <inheritdoc/>
         public String Uri
         {
-            get { return Path + Name; }
+            get => Path + Name;
         }
 
         /// <summary>
         /// Gets or sets a value indicating if the resource is visible to remote CoAP clients.
         /// </summary>
-        public Boolean Visible
-        {
-            get { return _visible; }
-            set { _visible = value; }
-        }
+        public Boolean Visible { get; set; }
 
         /// <inheritdoc/>
         public virtual Boolean Cachable
         {
-            get { return true; }
+            get => true;
         }
 
         /// <summary>
@@ -141,7 +131,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public Boolean Observable
         {
-            get { return _observable; }
+            get => _observable;
             set
             {
                 _observable = value;
@@ -154,69 +144,62 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public MessageType ObserveType
         {
-            get { return _observeType; }
+            get => _observeType;
             set
             {
-                if (value == MessageType.ACK || value == MessageType.RST)
+                if (value == MessageType.ACK || value == MessageType.RST) {
                     throw new ArgumentException(
                         "Only CON and NON notifications are allowed or Unknown for no changes by the framework", "value");
+                }
+
                 _observeType = value;
             }
         }
 
-#if INCLUDE_OSCOAP
         /// <summary>
         /// Does the resource require that security be on in order to process.
         /// Security can be in the form of either OSCOAP or DTLS.
         /// </summary>
-        public Boolean RequireSecurity {
-            get { return _requireSecurity; }
-            set { _requireSecurity = value; }
-        }
+        public Boolean RequireSecurity { get; set; } = false;
 
         /// <summary>
         /// Get or Set the text that is returned in the event that security is requiried
         /// but is not provided.
         /// </summary>
-        public String RequireSecurityErrorText {
-            get { return _requireSecurityErrorText; }
-            set { _requireSecurityErrorText = value; }
-        }
-#endif
+        public String RequireSecurityErrorText { get; set; } = null;
 
         /// <inheritdoc/>
-        public ResourceAttributes Attributes
-        {
-            get { return _attributes; }
-        }
+        public ResourceAttributes Attributes { get; } = new ResourceAttributes();
 
         /// <inheritdoc/>
         public virtual IExecutor Executor
         {
-            get { return _parent != null ? _parent.Executor : null; }
+            get => _parent != null ? _parent.Executor : null;
         }
 
         /// <inheritdoc/>
         public IEnumerable<IEndPoint> EndPoints
         {
-            get { return _parent == null ? EmptyEndPoints : _parent.EndPoints; }
+            get => _parent == null ? _EmptyEndPoints : _parent.EndPoints;
         }
 
         /// <inheritdoc/>
         public IResource Parent
         {
-            get { return _parent; }
+            get => _parent;
             set
             {
-                if (_parent != value)
-                {
-                    lock (this)
-                    {
-                        if (_parent != null)
+                if (_parent != value) {
+                    lock (this) {
+                        if (_parent != null) {
                             _parent.Remove(this);
+                        }
+
                         _parent = value;
-                        if (value != null)
+                        if (value != null) {
                             _path = value.Path + value.Name + "/";
+                        }
+
                         AdjustChildrenPath();
                     }
                 }
@@ -226,25 +209,30 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// <inheritdoc/>
         public IEnumerable<IResource> Children
         {
-            get { return _children.Values; }
+            get => _children.Values;
         }
 
         /// <inheritdoc/>
         public void Add(IResource child)
         {
-            if (child.Name == null)
-                throw new ArgumentException("Child must have a name", "child");
-            lock (this)
-            {
+            if (child.Name == null) {
+                throw new ArgumentException("Child must have a name", nameof(child));
+            }
+
+            lock (this) {
                 _children[child.Name] = child;
                 child.Parent = this;
             }
         }
 
+        /// <summary>
+        /// Add a resource as a child of this resource
+        /// </summary>
+        /// <param name="child">resource to add</param>
+        /// <returns>this resource</returns>
         public Resource Add(Resource child)
         {
-            lock (this)
-            {
+            lock (this) {
                 Add((IResource)child);
             }
             return this;
@@ -255,17 +243,14 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         {
             IResource toRemove;
             if (_children.TryGetValue(child.Name, out toRemove)
-                && toRemove == child)
-            {
+                && toRemove == child) {
                 _children.Remove(child.Name);
                 child.Parent = null;
                 child.Path = null;
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
         /// <inheritdoc/>
@@ -276,15 +261,23 @@ namespace Com.AugustCellars.CoAP.Server.Resources
             return child;
         }
 
+        /// <summary>
+        /// Remove this resource from it's parent and clear all relationships
+        /// associated with this resoure and it's descendants.
+        /// </summary>
         public void Delete()
         {
-            lock (this)
-            {
+            lock (this) {
                 IResource parent = Parent;
-                if (parent != null)
+                if (parent != null) {
                     parent.Remove(this);
-                if (Observable)
+                }
+
+                if (Observable) {
                     ClearAndNotifyObserveRelations(StatusCode.NotFound);
+                }
+
+                // M00BUG - Remove observe relations on all children
             }
         }
 
@@ -298,16 +291,12 @@ namespace Com.AugustCellars.CoAP.Server.Resources
                 return relation;
             });
 
-            if (old != null)
-            {
+            if (old != null) {
                 old.Cancel();
-                if (log.IsDebugEnabled)
-                    log.Debug("Replacing observe relation between " + relation.Key + " and resource " + Uri);
+                _Log.Debug(m => m("Replacing observe relation between {0} and resource {1}", relation.Key, Uri));
             }
-            else
-            {
-                if (log.IsDebugEnabled)
-                    log.Debug("Successfully established observe relation between " + relation.Key + " and resource " + Uri);
+            else {
+                _Log.Debug(m => m("Successfully established observe relation between {0} and resource {1}", relation.Key, Uri));
             }
         }
 
@@ -322,8 +311,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public void ClearObserveRelations()
         {
-            foreach (ObserveRelation relation in _observeRelations.Values)
-            {
+            foreach (ObserveRelation relation in _observeRelations.Values) {
                 relation.Cancel();
             }
         }
@@ -343,8 +331,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
              * from the list of observers.
              * This method is called, when the resource is deleted.
              */
-            foreach (ObserveRelation relation in _observeRelations.Values)
-            {
+            foreach (ObserveRelation relation in _observeRelations.Values) {
                 relation.Cancel();
                 relation.Exchange.SendResponse(new Response(code));
             }
@@ -354,18 +341,15 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         public virtual void HandleRequest(Exchange exchange)
         {
             CoapExchange ce = new CoapExchange(exchange, this);
-#if INCLUDE_OSCOAP
-            if (RequireSecurity)
-            {
-                if (exchange.OscoapContext == null)
-                {
-                    ce.Respond(CoAP.StatusCode.Unauthorized, RequireSecurityErrorText);
+
+            if (RequireSecurity) {
+                if ((exchange.OscoapContext == null) && (null == (ISecureSession) exchange.Request.Session )) {
+                    ce.Respond(StatusCode.Unauthorized, RequireSecurityErrorText);
                     return;
                 }
             }
-#endif
-            switch (exchange.Request.Method)
-            {
+
+            switch (exchange.Request.Method) {
                 case Method.GET:
                     DoGet(ce);
                     break;
@@ -379,6 +363,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
                     DoDelete(ce);
                     break;
                 default:
+                    ce.Respond(StatusCode.BadRequest);
                     break;
             }
         }
@@ -453,11 +438,13 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// or <code>null</code> if all clients should be notified</param>
         public void Changed(Func<ObserveRelation, Boolean> filter)
         {
-            IExecutor executor = this.Executor;
-            if (executor != null)
+            IExecutor executor = Executor;
+            if (executor != null) {
                 executor.Start(() => NotifyObserverRelations(filter));
-            else
+            }
+            else {
                 NotifyObserverRelations(filter);
+            }
         }
 
         /// <summary>
@@ -470,10 +457,10 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         protected void NotifyObserverRelations(Func<ObserveRelation, Boolean> filter)
         {
             _notificationOrderer.GetNextObserveNumber();
-            foreach (ObserveRelation relation in _observeRelations.Values)
-            {
-                if (filter == null || filter(relation))
+            foreach (ObserveRelation relation in _observeRelations.Values) {
+                if (filter == null || filter(relation)) {
                     relation.NotifyObservers();
+                }
             }
         }
 
@@ -513,8 +500,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         private void AdjustChildrenPath()
         {
             String childpath = _path + _name + "/";
-            foreach (IResource child in _children.Values)
-            {
+            foreach (IResource child in _children.Values) {
                 child.Path = childpath;
             }
         }

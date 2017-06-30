@@ -18,8 +18,12 @@ namespace Com.AugustCellars.CoAP.Server.Resources
     /// </summary>
     public class DiscoveryResource : Resource
     {
+        /// <summary>
+        /// String that represents the name of this resource.
+        /// </summary>
+        /// Why is this public?
         public static readonly String Core = "core";
-        readonly IResource _root;
+        private readonly IResource _root;
 
         /// <summary>
         /// Instantiates a new discovery resource.

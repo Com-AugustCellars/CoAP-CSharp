@@ -114,6 +114,10 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public const Int32 ApplicationXObixBinary = 51;
         /// <summary>
+        /// application/cbor - [RFC 7049]
+        /// </summary>
+        public const int ApplicationCbor = 60;
+        /// <summary>
         /// any
         /// </summary>
         public const Int32 Any = 0xFF;

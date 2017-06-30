@@ -25,8 +25,8 @@ namespace Com.AugustCellars.CoAP.Server.Resources
     /// </summary>
     public class ResourceAttributes
     {
-        static readonly IEnumerable<String> Empty = new String[0];
-        readonly ConcurrentDictionary<String, ICollection<String>> _attributes
+        private static readonly IEnumerable<String> _Empty = new String[0];
+        private readonly ConcurrentDictionary<String, ICollection<String>> _attributes
             = new ConcurrentDictionary<String, ICollection<String>>();
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public Int32 Count
         {
-            get { return _attributes.Count; }
+            get => _attributes.Count;
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public IEnumerable<String> Keys
         {
-            get { return _attributes.Keys; }
+            get => _attributes.Keys;
         }
 
         /// <summary>
@@ -50,8 +50,8 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public String Title
         {
-            get { return FirstOrDefault(GetValues(LinkFormat.Title)); }
-            set { Set(LinkFormat.Title, value); }
+            get => FirstOrDefault(GetValues(LinkFormat.Title));
+            set => Set(LinkFormat.Title, value);
         }
 
         /// <summary>
@@ -59,8 +59,16 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public Boolean Observable
         {
-            get { return !IsEmpty(GetValues(LinkFormat.Observable)); }
-            set { Set(LinkFormat.Observable, String.Empty); }
+            get => !IsEmpty(GetValues(LinkFormat.Observable));
+            set
+            {
+                if (value) {
+                    Set(LinkFormat.Observable, String.Empty);
+                }
+                else {
+                    Clear(LinkFormat.Observable);
+                }
+            }
         }
 
         /// <summary>
@@ -73,7 +81,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
                 String value = MaximumSizeEstimateString;
                 return String.IsNullOrEmpty(value) ? 0 : Int32.Parse(value);
             }
-            set { MaximumSizeEstimateString = value.ToString(); }
+            set => MaximumSizeEstimateString = value.ToString();
         }
 
         /// <summary>
@@ -81,8 +89,8 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public String MaximumSizeEstimateString
         {
-            get { return FirstOrDefault(GetValues(LinkFormat.MaxSizeEstimate)); }
-            set { Set(LinkFormat.MaxSizeEstimate, value); }
+            get => FirstOrDefault(GetValues(LinkFormat.MaxSizeEstimate));
+            set => Set(LinkFormat.MaxSizeEstimate, value);
         }
 
         /// <summary>
@@ -196,7 +204,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         public IEnumerable<String> GetValues(String name)
         {
             ICollection<String> values;
-            return _attributes.TryGetValue(name, out values) ? values : Empty;
+            return _attributes.TryGetValue(name, out values) ? values : _Empty;
         }
 
         /// <summary>
@@ -223,8 +231,8 @@ namespace Com.AugustCellars.CoAP.Server.Resources
 
         static Boolean IsEmpty(IEnumerable<String> values)
         {
-            foreach (String item in values)
-            {
+            // ReSharper disable once UnusedVariable
+            foreach (String item in values) {
                 return false;
             }
             return true;
@@ -232,8 +240,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
 
         static String FirstOrDefault(IEnumerable<String> values)
         {
-            foreach (String item in values)
-            {
+            foreach (String item in values) {
                 return item;
             }
             return null;
@@ -241,11 +248,11 @@ namespace Com.AugustCellars.CoAP.Server.Resources
 
         static void SetOnly(ICollection<String> values, String value)
         {
-            lock (((ICollection)values).SyncRoot)
-            {
+            lock (((ICollection)values).SyncRoot) {
                 values.Clear();
-                if (values != null)
+                if (value != null) {
                     values.Add(value);
+                }
             }
         }
     }

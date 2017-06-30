@@ -21,13 +21,8 @@ namespace Com.AugustCellars.CoAP.Server.Resources
     /// </summary>
     public class CoapExchange
     {
-        readonly Exchange _exchange;
-        readonly Resource _resource;
-
-        private String _locationPath;
-        private String _locationQuery;
-        private Int32 _maxAge = 60;
-        private Byte[] _eTag;
+        private readonly Exchange _exchange;
+        private readonly Resource _resource;
 
         /// <summary>
         /// Constructs a new CoAP Exchange object representing
@@ -44,44 +39,28 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public Request Request
         {
-            get { return _exchange.Request; }
+            get => _exchange.Request;
         }
 
         /// <summary>
         /// Gets or sets the Location-Path for the response.
         /// </summary>
-        public String LocationPath
-        {
-            get { return _locationPath; }
-            set { _locationPath = value; }
-        }
+        public String LocationPath { get; set; }
 
         /// <summary>
         /// Gets or sets the Location-Query for the response.
         /// </summary>
-        public String LocationQuery
-        {
-            get { return _locationQuery; }
-            set { _locationQuery = value; }
-        }
+        public String LocationQuery { get; set; }
 
         /// <summary>
         /// Gets or sets the Max-Age for the response body.
         /// </summary>
-        public Int32 MaxAge
-        {
-            get { return _maxAge; }
-            set { _maxAge = value; }
-        }
+        public Int32 MaxAge { get; set; } = 60;
 
         /// <summary>
         /// Gets or sets the ETag for the response.
         /// </summary>
-        public Byte[] ETag
-        {
-            get { return _eTag; }
-            set { _eTag = value; }
-        }
+        public Byte[] ETag { get; set; }
 
         /// <summary>
         /// Accepts the exchange.
@@ -130,8 +109,9 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public void Respond(StatusCode code, Byte[] payload)
         {
-            Response response = new Response(code);
-            response.Payload = payload;
+            Response response = new Response(code) {
+                Payload = payload
+            };
             Respond(response);
         }
 
@@ -140,9 +120,10 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public void Respond(StatusCode code, Byte[] payload, Int32 contentType)
         {
-            Response response = new Response(code);
-            response.Payload = payload;
-            response.ContentType = contentType;
+            Response response = new Response(code) {
+                Payload = payload,
+                ContentType = contentType
+            };
             Respond(response);
         }
 
@@ -161,18 +142,26 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// </summary>
         public void Respond(Response response)
         {
-            if (response == null)
-                throw new ArgumentNullException("response");
+            if (response == null) {
+                throw new ArgumentNullException(nameof(response));
+            }
 
             // set the response options configured through the CoapExchange API
-            if (_locationPath != null)
-                response.LocationPath = _locationPath;
-            if (_locationQuery != null)
-                response.LocationQuery = _locationQuery;
-            if (_maxAge != 60)
-                response.MaxAge = _maxAge;
-            if (_eTag != null)
-                response.SetOption(Option.Create(OptionType.ETag, _eTag));
+            if (LocationPath != null) {
+                response.LocationPath = LocationPath;
+            }
+
+            if (LocationQuery != null) {
+                response.LocationQuery = LocationQuery;
+            }
+
+            if (MaxAge != 60) {
+                response.MaxAge = MaxAge;
+            }
+
+            if (ETag != null) {
+                response.SetOption(Option.Create(OptionType.ETag, ETag));
+            }
 
             response.Session = _exchange.Request.Session;
 
