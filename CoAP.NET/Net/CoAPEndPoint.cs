@@ -470,7 +470,7 @@ namespace Com.AugustCellars.CoAP.Net
             Fire(SendingEmptyMessage, message);
 
             if (!message.IsCancelled) {
-                _channel.Send(Serialize(message), null /*  exchange.Session */, message.Destination);
+                _channel.Send(Serialize(message), exchange.Request.Session, message.Destination);
             }
         }
     }
