@@ -40,7 +40,7 @@ namespace Com.AugustCellars.CoAP
         /// Instantiates with default config.
         /// </summary>
         public CoapClient()
-            : this(null, null)
+            : this((System.Uri)null, null)
         { }
 
         /// <summary>
@@ -54,10 +54,28 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Instantiates.
         /// </summary>
+        /// <param name="uri">URI to connect to</param>
+        public CoapClient(string uri) : this(new Uri(uri), null)
+        {
+            
+        }
+
+        /// <summary>
+        /// Instantiates.
+        /// </summary>
         /// <param name="config">the config</param>
         public CoapClient(ICoapConfig config)
-            : this(null, config)
+            : this((System.Uri) null, config)
         { }
+
+        /// <summary>
+        /// Instantiates.
+        /// </summary>
+        /// <param name="uri">the Uri of remote resource</param>
+        /// <param name="config">the config</param>
+        public CoapClient(string uri, ICoapConfig config) : this(new Uri(uri), config)
+        {
+        }
 
         /// <summary>
         /// Instantiates.
