@@ -186,7 +186,7 @@ namespace Com.AugustCellars.CoAP
         /// Should we attempt to reconnect to keep an observe relationship fresh
         /// in the event the MAX-AGE expires on the current value?
         /// </summary>
-        public Boolean ObserveReconnect { get; set; }
+        public Boolean ObserveReconnect { get; set; } = true;
 
         /// <summary>
         /// Sets CoAP's observe option. If the target resource of this request
