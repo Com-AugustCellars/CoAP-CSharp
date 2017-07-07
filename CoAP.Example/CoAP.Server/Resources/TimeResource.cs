@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using Com.AugustCellars.CoAP.Server.Resources;
+#if false
 using PeterO.Cbor;
+#endif
 
 namespace Com.AugustCellars.CoAP.Examples.Resources
 {
