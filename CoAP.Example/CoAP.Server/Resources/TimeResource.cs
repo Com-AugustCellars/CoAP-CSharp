@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Com.AugustCellars.CoAP.Server.Resources;
+using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP.Examples.Resources
 {
@@ -27,7 +29,63 @@ namespace Com.AugustCellars.CoAP.Examples.Resources
 
         protected override void DoGet(CoapExchange exchange)
         {
+#if true
             exchange.Respond(StatusCode.Content, _now.ToString(), MediaType.TextPlain);
+#else
+            Request request = exchange.Request;
+
+            IEnumerable<Option> options =  request.GetOptions(OptionType.Accept);
+            int useAccept = MediaType.Undefined;
+            bool acceptFound = false;
+
+            foreach (var acccept in options) {
+                switch (acccept.IntValue) {
+                case MediaType.TextPlain:
+                case MediaType.ApplicationCbor:
+                    useAccept = acccept.IntValue;
+                    break;
+
+                default:
+                    acceptFound = true;
+                    break;
+                    
+                }
+
+                if (useAccept != MediaType.Undefined) break;
+            }
+
+            if (useAccept == MediaType.Undefined) {
+                if (acceptFound) {
+                    exchange.Respond(StatusCode.UnsupportedMediaType);
+                    return;
+                }
+                useAccept = MediaType.TextPlain;
+            }
+
+            Response response = Response.CreateResponse(request, StatusCode.Content);
+
+            switch (useAccept) {
+                case MediaType.TextPlain:
+                    string x = request.GetParameter("format");
+                    if (String.IsNullOrEmpty(x)) {
+                        response.PayloadString = _now.ToShortTimeString();
+
+                    }
+                    else {
+                        response.PayloadString = _now.ToString(x);
+                    }
+                    request.ContentType = useAccept;
+                    break;
+
+                case MediaType.ApplicationCbor:
+                    CBORObject obj = CBORObject.FromObject(_now);
+                    request.Payload = obj.EncodeToBytes();
+                    request.ContentType = useAccept;
+                    break;
+            }
+
+            exchange.Respond(response);
+#endif
         }
     }
 }

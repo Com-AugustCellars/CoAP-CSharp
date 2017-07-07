@@ -4,6 +4,7 @@
 lib
 .svn
 Apps
+cov-int
 
 # DNX project file with a complete list of resolved dependencies
 project.lock.json
