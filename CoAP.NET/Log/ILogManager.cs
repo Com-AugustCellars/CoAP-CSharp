@@ -22,6 +22,7 @@ namespace Com.AugustCellars.CoAP.Log
         /// Gets a logger of the given type.
         /// </summary>
         ILogger GetLogger(Type type);
+
         /// <summary>
         /// Gets a named logger.
         /// </summary>

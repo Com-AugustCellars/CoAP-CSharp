@@ -98,6 +98,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets the ID of this CoAP message.
         /// </summary>
+        // ReSharper disable once InconsistentNaming
         public Int32 ID { get; set; } = None;
 
         /// <summary>
@@ -421,7 +422,7 @@ namespace Com.AugustCellars.CoAP
         {
             if (obj == null) return false;
             if (Object.ReferenceEquals(this, obj)) return true;
-            if (this.GetType() != obj.GetType()) return false;
+            if (GetType() != obj.GetType()) return false;
 
             Message other = (Message)obj;
             if (Type != other.Type) return false;
@@ -1321,10 +1322,12 @@ namespace Com.AugustCellars.CoAP
                 return;
             }
 
+            List<Option> toAdd = new List<Option>();
             foreach (Option opt in options) {
                 RemoveOptions(opt.Type);
+                toAdd.Add(opt);
             }
-            AddOptions(options);
+            AddOptions(toAdd);
         }
 
         /// <summary>

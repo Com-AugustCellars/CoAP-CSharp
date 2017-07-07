@@ -109,6 +109,7 @@
     <Compile Include="LinkFormat.cs" />
     <Compile Include="Log\CommonLoggingManager.cs" />
     <Compile Include="Log\ConsoleLogManager.cs" />
+    <Compile Include="Log\FileLogManager.cs" />
     <Compile Include="Log\ILogger.cs" />
     <Compile Include="Log\ILogManager.cs" />
     <Compile Include="Log\LogManager.cs" />

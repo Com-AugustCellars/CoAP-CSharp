@@ -54,17 +54,7 @@ namespace Com.AugustCellars.CoAP.Log
             }
         }
 
-
-        private static System.IO.TextWriter _Writer;
-
-        /// <summary>
-        /// Provide a way to stream to someplace else
-        /// </summary>
-        public static System.IO.TextWriter LogStream
-        {
-            get => _Writer;
-            set => _Writer = value;
-        }
+        private readonly System.IO.TextWriter _Writer;
 
         private readonly String _logName;
 
@@ -237,7 +227,9 @@ namespace Com.AugustCellars.CoAP.Log
         /// <inheritdoc/>
         public void Warn(Object message, Exception exception)
         {
-            Log("Warn", message, exception);
+            if (IsWarnEnabled) {
+                Log("Warn", message, exception);
+            }
         }
 
         /// <inheritdoc/>

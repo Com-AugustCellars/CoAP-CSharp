@@ -1,6 +1,5 @@
 ﻿using System;
 
-using Com.AugustCellars.CoAP;
 using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Net;
 

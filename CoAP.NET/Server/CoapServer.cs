@@ -23,18 +23,18 @@ namespace Com.AugustCellars.CoAP.Server
     /// </summary>
     public class CoapServer : IServer
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(CoapServer));
-        readonly IResource _root;
-        readonly List<IEndPoint> _endpoints = new List<IEndPoint>();
-        readonly ICoapConfig _config;
+        private static readonly ILogger _Log = LogManager.GetLogger(typeof(CoapServer));
+        private readonly IResource _root;
+        private readonly List<IEndPoint> _endpoints = new List<IEndPoint>();
         private IMessageDeliverer _deliverer;
 
         /// <summary>
         /// Constructs a server with default configuration.
         /// </summary>
         public CoapServer()
-            : this((ICoapConfig)null)
-        { }
+            : this((ICoapConfig) null)
+        {
+        }
 
         /// <summary>
         /// Constructs a server that listens to the specified port(s).
@@ -42,7 +42,8 @@ namespace Com.AugustCellars.CoAP.Server
         /// <param name="ports">the ports to bind to</param>
         public CoapServer(params Int32[] ports)
             : this(null, ports)
-        { }
+        {
+        }
 
         /// <summary>
         /// Constructs a server with the specified configuration that
@@ -52,45 +53,46 @@ namespace Com.AugustCellars.CoAP.Server
         /// <param name="ports">the ports to bind to</param>
         public CoapServer(ICoapConfig config, params Int32[] ports)
         {
-            _config = config ?? CoapConfig.Default;
+            Config = config ?? CoapConfig.Default;
             _root = new RootResource(this);
-            _deliverer = new ServerMessageDeliverer(_config, _root);
+            _deliverer = new ServerMessageDeliverer(Config, _root);
 
             Resource wellKnown = new Resource(".well-known", false);
             wellKnown.Add(new DiscoveryResource(_root));
             _root.Add(wellKnown);
 
-            foreach (Int32 port in ports)
-            {
+            foreach (Int32 port in ports) {
                 Bind(port);
             }
         }
 
-        public ICoapConfig Config
-        {
-            get { return _config; }
-        }
+        /// <summary>
+        /// Return the configuration interface used by the server.
+        /// </summary>
+        public ICoapConfig Config { get; }
 
         private void Bind(Int32 port)
         {
-            AddEndPoint(new CoAPEndPoint(port, _config));
+            AddEndPoint(new CoAPEndPoint(port, Config));
         }
 
         /// <inheritdoc/>
         public IEnumerable<IEndPoint> EndPoints
         {
-            get { return _endpoints; }
+            get => _endpoints;
         }
 
+        /// <summary>
+        /// Get/Set the message deliverer object to use.
+        /// </summary>
         public IMessageDeliverer MessageDeliverer
         {
-            get { return _deliverer; }
+            get => _deliverer;
             set
             {
                 _deliverer = value;
-                foreach (IEndPoint endpoint in _endpoints)
-                {
-                   endpoint.MessageDeliverer = value;
+                foreach (IEndPoint endpoint in _endpoints) {
+                    endpoint.MessageDeliverer = value;
                 }
             }
         }
@@ -105,22 +107,22 @@ namespace Com.AugustCellars.CoAP.Server
         /// <inheritdoc/>
         public void AddEndPoint(IPEndPoint ep)
         {
-            AddEndPoint(new CoAPEndPoint(ep, _config));
+            AddEndPoint(new CoAPEndPoint(ep, Config));
         }
 
         /// <inheritdoc/>
         public void AddEndPoint(IPAddress address, Int32 port)
         {
-            AddEndPoint(new CoAPEndPoint(new IPEndPoint(address, port), _config));
+            AddEndPoint(new CoAPEndPoint(new IPEndPoint(address, port), Config));
         }
 
         /// <inheritdoc/>
         public IEndPoint FindEndPoint(System.Net.EndPoint ep)
         {
-            foreach (IEndPoint endpoint in _endpoints)
-            {
-                if (endpoint.LocalEndPoint.Equals(ep))
+            foreach (IEndPoint endpoint in _endpoints) {
+                if (endpoint.LocalEndPoint.Equals(ep)) {
                     return endpoint;
+                }
             }
             return null;
         }
@@ -128,10 +130,10 @@ namespace Com.AugustCellars.CoAP.Server
         /// <inheritdoc/>
         public IEndPoint FindEndPoint(Int32 port)
         {
-            foreach (IEndPoint endpoint in _endpoints)
-            {
-                if (((System.Net.IPEndPoint)endpoint.LocalEndPoint).Port == port)
+            foreach (IEndPoint endpoint in _endpoints) {
+                if (((IPEndPoint) endpoint.LocalEndPoint).Port == port) {
                     return endpoint;
+                }
             }
             return null;
         }
@@ -143,14 +145,67 @@ namespace Com.AugustCellars.CoAP.Server
             return this;
         }
 
+        /// <summary>
+        /// Add a resource using the path node as the parent
+        /// </summary>
+        /// <param name="resourcePath">path to parent node</param>
+        /// <param name="resource">resource to add</param>
+        /// <returns>current server</returns>
+        public IServer Add(string resourcePath, IResource resource)
+        {
+            IResource parent = FindResource(resourcePath);
+            if (parent == null) throw new ArgumentException("resource path not found", nameof(resourcePath));
+
+            parent.Add(resource);
+            return this;
+        }
+
         /// <inheritdoc/>
         public IServer Add(params IResource[] resources)
         {
-            foreach (IResource resource in resources)
-            {
+            foreach (IResource resource in resources) {
                 _root.Add(resource);
             }
             return this;
+        }
+
+        /// <summary>
+        /// Add resources as children of the given path
+        /// </summary>
+        /// <param name="resourcePath">path of parent</param>
+        /// <param name="resources">Array of resources to be added</param>
+        /// <returns>the server</returns>
+        public IServer Add(string resourcePath, IResource[] resources)
+        {
+            IResource parent = FindResource(resourcePath);
+            if (parent == null) {
+                throw new ArgumentException("resource path not found", nameof(resourcePath));
+            }
+
+            foreach (IResource resource in resources) {
+                parent.Add(resource);
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Return a resource from the server given a path to the resource
+        /// </summary>
+        /// <param name="resourcePath">path to follow</param>
+        /// <returns>interface to resource</returns>
+        public IResource FindResource(string resourcePath)
+        {
+            string[] pathStrings = resourcePath.Split(',');
+            IResource resource = _root;
+
+            foreach (string path in pathStrings) {
+                if (string.IsNullOrEmpty(path)) continue;
+                resource = _root.GetChild(path);
+                if (resource == null) return null;
+            }
+
+            return resource;
         }
 
         /// <inheritdoc/>
@@ -162,38 +217,33 @@ namespace Com.AugustCellars.CoAP.Server
         /// <inheritdoc/>
         public void Start()
         {
-            if (log.IsDebugEnabled)
-                log.Debug("Starting CoAP server");
-            
-            if (_endpoints.Count == 0)
-            {
-                Bind(_config.DefaultPort);
+            _Log.Debug("Starting CoAP server");
+
+            if (_endpoints.Count == 0) {
+                Bind(Config.DefaultPort);
             }
 
             Int32 started = 0;
-            foreach (IEndPoint endpoint in _endpoints)
-            {
-                try
-                {
+            foreach (IEndPoint endpoint in _endpoints) {
+                try {
                     endpoint.Start();
                     started++;
                 }
-                catch (Exception e)
-                {
-                    if (log.IsWarnEnabled)
-                        log.Warn("Could not start endpoint " + endpoint.LocalEndPoint, e);
+                catch (Exception e) {
+                    if (_Log.IsWarnEnabled) _Log.Warn("Could not start endpoint " + endpoint.LocalEndPoint, e);
                 }
             }
 
-            if (started == 0)
+            if (started == 0) {
                 throw new InvalidOperationException("None of the server's endpoints could be started");
+            }
         }
 
         /// <inheritdoc/>
         public void Stop()
         {
-            if (log.IsDebugEnabled)
-                log.Debug("Starting CoAP server");
+            _Log.Debug("Stopping CoAP server");
+
             _endpoints.ForEach(ep => ep.Stop());
         }
 

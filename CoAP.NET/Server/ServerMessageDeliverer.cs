@@ -26,7 +26,8 @@ namespace Com.AugustCellars.CoAP.Server
     /// </summary>
     public class ServerMessageDeliverer : IMessageDeliverer
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(ServerMessageDeliverer));
+        static readonly ILogger _Log = LogManager.GetLogger(typeof(ServerMessageDeliverer));
+
         readonly ICoapConfig _config;
         readonly IResource _root;
         private readonly ObserveManager _observeManager = new ObserveManager();
@@ -78,16 +79,13 @@ namespace Com.AugustCellars.CoAP.Server
         private IResource FindResource(IEnumerable<String> paths)
         {
             IResource current = _root;
-            using (IEnumerator<String> ie = paths.GetEnumerator())
-            {
-                while (ie.MoveNext() && current != null)
-                {
+            using (IEnumerator<String> ie = paths.GetEnumerator()) {
+                while (ie.MoveNext() && current != null) {
                     current = current.GetChild(ie.Current);
                 }
             }
             return current;
         }
-
         private void CheckForObserveOption(Exchange exchange, IResource resource)
         {
             Request request = exchange.Request;
@@ -100,8 +98,8 @@ namespace Com.AugustCellars.CoAP.Server
             if (obs.HasValue && resource.Observable) {
                 if (obs == 0) {
                     // Requests wants to observe and resource allows it :-)
-                    if (log.IsDebugEnabled) {
-                        log.Debug("Initiate an observe relation between " + source + " and resource " + resource.Uri);
+                    if (_Log.IsDebugEnabled) {
+                        _Log.Debug("Initiate an observe relation between " + source + " and resource " + resource.Uri);
                     }
                     ObservingEndpoint remote = _observeManager.FindObservingEndpoint(source);
                     ObserveRelation relation = new ObserveRelation(_config, remote, resource, exchange);

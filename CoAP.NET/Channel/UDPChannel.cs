@@ -339,8 +339,10 @@ namespace Com.AugustCellars.CoAP.Channel
             public System.Net.EndPoint EndPoint;
         }
 
+        /// <inheritdoc/>
         public event EventHandler<SessionEventArgs> SessionEvent;
 
+        /// <inheritdoc/>
         public bool IsReliable
         {
             get => false;

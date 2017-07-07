@@ -10,6 +10,7 @@
  */
 
 using System;
+using System.Linq;
 
 namespace Com.AugustCellars.CoAP.Log
 {
@@ -18,51 +19,72 @@ namespace Com.AugustCellars.CoAP.Log
     /// </summary>
     public static class LogManager
     {
-        static LogLevel _level = LogLevel.None;
-        static ILogManager _manager;
+        static ILogManager _Manager;
+
+        private static readonly string[] _LoggingIncludeDefault = null;
+        private static readonly string[] _LoggingExcludeDefault = new string[] {
+            "UDPChannel"
+        };
 
         static LogManager()
         {
             Type test;
-            try
-            {
+            try {
                 test = Type.GetType("Common.Logging.LogManager, Common.Logging");
             }
-            catch
-            {
+            catch {
                 test = null;
             }
 
-            if (test == null)
-                _manager = new ConsoleLogManager();
-            else
-                _manager = new CommonLoggingManager();
+            if (test == null) {
+                _Manager = new ConsoleLogManager();
+            }
+            else {
+                _Manager = new CommonLoggingManager();
+            }
         }
 
         /// <summary>
         /// Gets or sets the global log level.
         /// </summary>
-        public static LogLevel Level
-        {
-            get { return _level; }
-            set { _level = value; }
-        }
+        public static LogLevel Level { get; set; } = LogLevel.None;
 
         /// <summary>
         /// Gets or sets the <see cref="ILogManager"/> to provide loggers.
         /// </summary>
         public static ILogManager Instance
         {
-            get { return _manager; }
-            set { _manager = value ?? NopLogManager.Instance; }
+            get => _Manager;
+            set => _Manager = value ?? NopLogManager.Instance;
         }
+
+        /// <summary>
+        /// Filter of loggers to be allocated.
+        /// Any logger which is not in the filter will be given an NOP logger.
+        /// </summary>
+        public static string[] LoggingInclude { get; set; } = _LoggingIncludeDefault;
+
+        /// <summary>
+        /// Filter of loggers to be allocated.
+        /// Any logger which is not in the filter will be given an NOP logger.
+        /// If set to null, then EVERYTHING is logged.
+        /// </summary>
+        public static string[] LoggingExclude { get; set; } = _LoggingExcludeDefault;
 
         /// <summary>
         /// Gets a logger for the given type.
         /// </summary>
         public static ILogger GetLogger(Type type)
         {
-            return _manager.GetLogger(type);
+            //  Explicit to include
+            if ((LoggingInclude != null) && LoggingInclude.Contains(type.FullName)) {
+                return _Manager.GetLogger(type);
+            }
+            //  Explicit to exclude
+            if ((LoggingExclude != null) && LoggingExclude.Contains(type.FullName)) {
+                return NopLogManager.Instance.GetLogger(type);
+            }
+            return LoggingInclude == null ? _Manager.GetLogger(type) : NopLogManager.Instance.GetLogger(type);
         }
 
         /// <summary>
@@ -70,7 +92,15 @@ namespace Com.AugustCellars.CoAP.Log
         /// </summary>
         public static ILogger GetLogger(String name)
         {
-            return _manager.GetLogger(name);
+            //  Explicit to include
+            if ((LoggingInclude != null) && LoggingInclude.Contains(name)) {
+                return _Manager.GetLogger(name);
+            }
+            //  Explicit to exclude
+            if ((LoggingExclude != null) && LoggingExclude.Contains(name)) {
+                return NopLogManager.Instance.GetLogger(name);
+            }
+            return LoggingInclude == null ? _Manager.GetLogger(name) : NopLogManager.Instance.GetLogger(name);
         }
     }
 

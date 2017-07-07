@@ -17,45 +17,37 @@ namespace Com.AugustCellars.CoAP
 {
     /// <summary>
     /// Class for linkformat attributes.
+    /// 
     /// </summary>
     public class LinkAttribute : IComparable<LinkAttribute>
     {
-        private static readonly ILogger log = LogManager.GetLogger(typeof(LinkAttribute));
-
-        private String _name;
-        private Object _value;
+        private static readonly ILogger _Log = LogManager.GetLogger(typeof(LinkAttribute));
 
         /// <summary>
         /// Initializes an attribute.
         /// </summary>
         public LinkAttribute(String name, Object value)
         {
-            _name = name;
-            _value = value;
+            Name = name;
+            Value = value;
         }
 
         /// <summary>
         /// Gets the name of this attribute.
         /// </summary>
-        public String Name
-        {
-            get { return _name; }
-        }
+        public String Name { get; }
 
         /// <summary>
         /// Gets the value of this attribute.
         /// </summary>
-        public Object Value
-        {
-            get { return _value; }
-        }
+        public Object Value { get; }
 
         /// <summary>
         /// Gets the int value of this attribute.
         /// </summary>
         public Int32 IntValue
         {
-            get { return (_value is Int32) ? (Int32)_value : -1; }
+            get => (Value is Int32) ? (Int32) Value : -1;
         }
 
         /// <summary>
@@ -63,7 +55,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public String StringValue
         {
-            get { return (_value is String) ? (String)_value : null; }
+            get => (Value is String) ? (String)Value : null;
         }
 
         /// <summary>
@@ -73,33 +65,27 @@ namespace Com.AugustCellars.CoAP
         public void Serialize(StringBuilder builder)
         {
             // check if there's something to write
-            if (_name != null && _value != null)
-            {
-                if (_value is Boolean)
-                {
+            if (Name != null && Value != null) {
+                if (Value is Boolean) {
                     // flag attribute
-                    if ((Boolean)_value)
-                        builder.Append(_name);
+                    if ((Boolean) Value) {
+                        builder.Append(Name);
+                    }
                 }
-                else
-                {
+                else {
                     // name-value-pair
-                    builder.Append(_name);
+                    builder.Append(Name);
                     builder.Append('=');
-                    if (_value is String)
-                    {
+                    if (Value is String) {
                         builder.Append('"');
-                        builder.Append((String)_value);
+                        builder.Append((String) Value);
                         builder.Append('"');
                     }
-                    else if (_value is Int32)
-                    {
-                        builder.Append(((Int32)_value));
+                    else if (Value is Int32) {
+                        builder.Append(((Int32) Value));
                     }
-                    else
-                    {
-                        if (log.IsErrorEnabled)
-                            log.Error(String.Format("Serializing attribute of unexpected type: {0} ({1})", _name, _value.GetType().Name));
+                    else {
+                        _Log.Error(m => m("Serializing attribute of unexpected type: {0} ({1})", Name, Value.GetType().Name));
                     }
                 }
             }
@@ -108,19 +94,20 @@ namespace Com.AugustCellars.CoAP
         /// <inheritdoc/>
         public override String ToString()
         {
-            return String.Format("name: {0} value: {1}", _name, _value);
+            return String.Format("name: {0} value: {1}", Name, Value);
         }
 
         /// <inheritdoc/>
         public Int32 CompareTo(LinkAttribute other)
         {
-            Int32 ret = _name.CompareTo(other.Name);
-            if (ret == 0)
-            {
-                if (_value is String)
-                    return StringValue.CompareTo(other.StringValue);
-                else if (_value is Int32)
+            Int32 ret = String.Compare(Name, other.Name, StringComparison.Ordinal);
+            if (ret == 0) {
+                if (Value is String) {
+                    return String.Compare(StringValue, other.StringValue, StringComparison.Ordinal);
+                }
+                else if (Value is Int32) {
                     return IntValue.CompareTo(other.IntValue);
+                }
             }
             return ret;
         }

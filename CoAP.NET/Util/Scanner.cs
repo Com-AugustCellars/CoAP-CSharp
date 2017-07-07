@@ -25,6 +25,22 @@ namespace Com.AugustCellars.CoAP.Util
             _position = 0;
         }
 
+        public bool EndOfString
+        {
+            get => _position >= _s.Length;
+        }
+
+        public void Advance()
+        {
+            _position += 1;
+        }
+
+        public bool CharIs(char ch)
+        {
+            if (EndOfString) return false;
+            return ch == _s[_position];
+        }
+
         public String Find(Regex regex)
         {
             return Find(regex, -1);
@@ -32,11 +48,9 @@ namespace Com.AugustCellars.CoAP.Util
 
         public String Find(Regex regex, Int32 horizon)
         {
-            if (_position < _s.Length)
-            {
+            if (_position < _s.Length) {
                 Match m = horizon < 0 ? regex.Match(_s, _position) : regex.Match(_s, _position, horizon);
-                if (m.Success)
-                {
+                if (m.Success) {
                     _position = m.Index + m.Length;
                     return m.Value;
                 }
