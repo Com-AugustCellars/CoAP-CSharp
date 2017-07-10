@@ -56,20 +56,30 @@ namespace Com.AugustCellars.CoAP
         /// Default block size used for block-wise transfers
         /// </summary>
         public const Int32 DefaultBlockSize = 512;
-        public const Int32 MessageCacheSize = 32;
-        public const Int32 ReceiveBufferSize = 4096;
-        public const Int32 DefaultOverallTimeout = 100000;
+        // public const Int32 MessageCacheSize = 32;
+        // public const Int32 ReceiveBufferSize = 4096;
+        // public const Int32 DefaultOverallTimeout = 100000;
+
         /// <summary>
         /// Default URI for wellknown resource
         /// </summary>
         public const String DefaultWellKnownURI = "/.well-known/core";
-        public const Int32 TokenLength = 8;
+
+        //        public const Int32 TokenLength = 8;
+
+        /// <summary>
+        /// Max Age value to use if not on message
+        /// </summary>
         public const Int32 DefaultMaxAge = 60;
+
         /// <summary>
         /// The number of notifications until a CON notification will be used.
         /// </summary>
         public const Int32 ObservingRefreshInterval = 10;
 
+        /// <summary>
+        /// EmptyToken value to use if no token provided.
+        /// </summary>
         public static readonly Byte[] EmptyToken = new Byte[0];
 
         /// <summary>

@@ -19,10 +19,24 @@ namespace Com.AugustCellars.CoAP
     /// </summary>
     public class Code
     {
+        /// <summary>
+        /// Undefined
+        /// </summary>
         public const Int32 Empty = 0;
 
+        /// <summary>
+        /// Indicate client request was successfully processed.
+        /// </summary>
+        /// 
         public const Int32 SuccessCode = 2;
+        /// <summary>
+        /// Indicate a client request had an error of some type.
+        /// </summary>
         public const Int32 ClientErrorCode = 4;
+
+        /// <summary>
+        /// Indicate a server error while processing request
+        /// </summary>
         public const Int32 ServerErrorCode = 5;
 
         #region Method Codes
@@ -143,6 +157,11 @@ namespace Com.AugustCellars.CoAP
 
         #endregion
 
+        /// <summary>
+        /// Return the class of code from the message.
+        /// </summary>
+        /// <param name="code">code to be checked</param>
+        /// <returns>class in range of 0-7</returns>
         public static Int32 GetResponseClass(Int32 code)
         {
             return (code >> 5) & 0x7;
