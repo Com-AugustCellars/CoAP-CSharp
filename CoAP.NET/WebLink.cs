@@ -20,56 +20,75 @@ namespace Com.AugustCellars.CoAP
     /// </summary>
     public class WebLink : IComparable<WebLink>
     {
-        readonly String _uri;
-        readonly ResourceAttributes _attributes = new ResourceAttributes();
-
         /// <summary>
         /// Instantiates.
         /// </summary>
         /// <param name="uri">the uri of this resource.</param>
         public WebLink(String uri)
         {
-            _uri = uri;
+            Uri = uri;
         }
 
         /// <summary>
         /// Gets the uri of this resource.
         /// </summary>
-        public String Uri { get { return _uri; } }
+        public String Uri { get; }
 
         /// <summary>
         /// Gets the attributes of this resource.
         /// </summary>
-        public ResourceAttributes Attributes { get { return _attributes; } }
+        public ResourceAttributes Attributes { get; } = new ResourceAttributes();
 
         /// <inheritdoc/>
         public Int32 CompareTo(WebLink other)
         {
-            if (other == null)
+            if (other == null) {
                 throw ThrowHelper.ArgumentNull("other");
-            return _uri.CompareTo(other._uri);
+            }
+
+            return string.Compare(Uri, other.Uri, StringComparison.Ordinal);
         }
 
         /// <inheritdoc/>
         public override String ToString()
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            sb.Append('<').Append(_uri).Append('>')
-                .Append(' ').Append(_attributes.Title);
-            if (_attributes.Contains(LinkFormat.ResourceType))
+            sb.Append('<').Append(Uri).Append('>')
+                .Append(' ').Append(Attributes.Title);
+            if (Attributes.Contains(LinkFormat.ResourceType)) {
                 sb.Append("\n\t").Append(LinkFormat.ResourceType)
-                    .Append(":\t").Append(_attributes.GetResourceTypes());
-            if (_attributes.Contains(LinkFormat.InterfaceDescription))
+                    .Append(":\t");
+                foreach (string s in Attributes.GetResourceTypes()) {
+                    sb.Append(s).Append(' ');
+                }
+            }
+
+            if (Attributes.Contains(LinkFormat.InterfaceDescription))
+            {
                 sb.Append("\n\t").Append(LinkFormat.InterfaceDescription)
-                    .Append(":\t").Append(_attributes.GetInterfaceDescriptions());
-            if (_attributes.Contains(LinkFormat.ContentType))
+                    .Append(":\t");
+                foreach (string s in Attributes.GetInterfaceDescriptions()) {
+                    sb.Append(s).Append(' ');
+                }
+            }
+
+            if (Attributes.Contains(LinkFormat.ContentType)) {
                 sb.Append("\n\t").Append(LinkFormat.ContentType)
-                    .Append(":\t").Append(_attributes.GetContentTypes());
-            if (_attributes.Contains(LinkFormat.MaxSizeEstimate))
+                    .Append(":\t");
+                foreach (string s in Attributes.GetContentTypes()) {
+                    sb.Append(s).Append(' ');
+                }
+            }
+
+            if (Attributes.Contains(LinkFormat.MaxSizeEstimate)) {
                 sb.Append("\n\t").Append(LinkFormat.MaxSizeEstimate)
-                    .Append(":\t").Append(_attributes.MaximumSizeEstimate);
-            if (_attributes.Observable)
+                    .Append(":\t").Append(Attributes.MaximumSizeEstimate);
+            }
+
+            if (Attributes.Observable) {
                 sb.Append("\n\t").Append(LinkFormat.Observable);
+            }
+
             return sb.ToString();
         }
     }
