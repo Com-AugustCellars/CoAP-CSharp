@@ -7,39 +7,40 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto;
+#pragma warning disable 1591
 
 namespace Com.AugustCellars.CoAP.OSCOAP
 {
 #if INCLUDE_OSCOAP
-    /**
-    * HMAC-based Extract-and-Expand Key Derivation Function (HKDF) implemented
-    * according to IETF RFC 5869, May 2010 as specified by H. Krawczyk, IBM
-    * Research &amp; P. Eronen, Nokia. It uses a HMac internally to compute de OKM
-    * (output keying material) and is likely to have better security properties
-    * than KDF's based on just a hash function.
-    */
+    /// <summary>
+    /// HMAC-based Extract-and-Expand Key Derivation Function(HKDF) implemented
+    /// according to IETF RFC 5869, May 2010 as specified by H.Krawczyk, IBM
+    /// Research &amp; P.Eronen, Nokia.It uses a HMac internally to compute de OKM
+    /// (output keying material) and is likely to have better security properties
+    /// than KDF's based on just a hash function.
+    /// </summary>
     public class HkdfBytesGenerator
         : IDerivationFunction
     {
-        private HMac hMacHash;
-        private int hashLen;
+        private readonly HMac _hMacHash;
+        private readonly int _hashLen;
 
-        private byte[] info;
-        private byte[] currentT;
+        private byte[] _info;
+        private byte[] _currentT;
 
-        private int generatedBytes;
+        private int _generatedBytes;
 
-        /**
-         * Creates a HKDFBytesGenerator based on the given hash function.
-         *
-         * @param hash the digest to be used as the source of generatedBytes bytes
-         */
+        /// <summary>
+        /// Creates a HKDFBytesGenerator based on the given hash function.
+        /// </summary>
+        /// <param name="hash">the digest to be used as the source of generatedBytes bytes</param>
         public HkdfBytesGenerator(IDigest hash)
         {
-            this.hMacHash = new HMac(hash);
-            this.hashLen = hash.GetDigestSize();
+            this._hMacHash = new HMac(hash);
+            this._hashLen = hash.GetDigestSize();
         }
 
+        /// <inheritdoc/>
         public virtual void Init(IDerivationParameters parameters)
         {
             if (!(parameters is HkdfParameters))
@@ -48,16 +49,16 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             HkdfParameters hkdfParameters = (HkdfParameters)parameters;
             if (hkdfParameters.SkipExtract) {
                 // use IKM directly as PRK
-                hMacHash.Init(new KeyParameter(hkdfParameters.GetIkm()));
+                _hMacHash.Init(new KeyParameter(hkdfParameters.GetIkm()));
             }
             else {
-                hMacHash.Init(Extract(hkdfParameters.GetSalt(), hkdfParameters.GetIkm()));
+                _hMacHash.Init(Extract(hkdfParameters.GetSalt(), hkdfParameters.GetIkm()));
             }
 
-            info = hkdfParameters.GetInfo();
+            _info = hkdfParameters.GetInfo();
 
-            generatedBytes = 0;
-            currentT = new byte[hashLen];
+            _generatedBytes = 0;
+            _currentT = new byte[_hashLen];
         }
 
         /**
@@ -69,19 +70,19 @@ namespace Com.AugustCellars.CoAP.OSCOAP
          */
         private KeyParameter Extract(byte[] salt, byte[] ikm)
         {
-            hMacHash.Init(new KeyParameter(ikm));
+            _hMacHash.Init(new KeyParameter(ikm));
             if (salt == null) {
                 // TODO check if hashLen is indeed same as HMAC size
-                hMacHash.Init(new KeyParameter(new byte[hashLen]));
+                _hMacHash.Init(new KeyParameter(new byte[_hashLen]));
             }
             else {
-                hMacHash.Init(new KeyParameter(salt));
+                _hMacHash.Init(new KeyParameter(salt));
             }
 
-            hMacHash.BlockUpdate(ikm, 0, ikm.Length);
+            _hMacHash.BlockUpdate(ikm, 0, ikm.Length);
 
-            byte[] prk = new byte[hashLen];
-            hMacHash.DoFinal(prk, 0);
+            byte[] prk = new byte[_hashLen];
+            _hMacHash.DoFinal(prk, 0);
             return new KeyParameter(prk);
         }
 
@@ -94,50 +95,60 @@ namespace Com.AugustCellars.CoAP.OSCOAP
          */
         private void ExpandNext()
         {
-            int n = generatedBytes / hashLen + 1;
+            int n = _generatedBytes / _hashLen + 1;
             if (n >= 256) {
                 throw new DataLengthException(
                     "HKDF cannot generate more than 255 blocks of HashLen size");
             }
             // special case for T(0): T(0) is empty, so no update
-            if (generatedBytes != 0) {
-                hMacHash.BlockUpdate(currentT, 0, hashLen);
+            if (_generatedBytes != 0) {
+                _hMacHash.BlockUpdate(_currentT, 0, _hashLen);
             }
-            hMacHash.BlockUpdate(info, 0, info.Length);
-            hMacHash.Update((byte)n);
-            hMacHash.DoFinal(currentT, 0);
+            _hMacHash.BlockUpdate(_info, 0, _info.Length);
+            _hMacHash.Update((byte)n);
+            _hMacHash.DoFinal(_currentT, 0);
         }
 
+        /// <summary>
+        /// Get the digest function
+        /// </summary>
         public virtual IDigest Digest {
-            get { return hMacHash.GetUnderlyingDigest(); }
+            get { return _hMacHash.GetUnderlyingDigest(); }
         }
 
+        /// <summary>
+        /// Generate bytes
+        /// </summary>
+        /// <param name="output">destination</param>
+        /// <param name="outOff">diestination offset</param>
+        /// <param name="len">count of bytes</param>
+        /// <returns>count of bytes</returns>
         public virtual int GenerateBytes(byte[] output, int outOff, int len)
         {
-            if (generatedBytes + len > 255 * hashLen) {
+            if (_generatedBytes + len > 255 * _hashLen) {
                 throw new DataLengthException(
                     "HKDF may only be used for 255 * HashLen bytes of output");
             }
 
-            if (generatedBytes % hashLen == 0) {
+            if (_generatedBytes % _hashLen == 0) {
                 ExpandNext();
             }
 
             // copy what is left in the currentT (1..hash
             int toGenerate = len;
-            int posInT = generatedBytes % hashLen;
-            int leftInT = hashLen - generatedBytes % hashLen;
+            int posInT = _generatedBytes % _hashLen;
+            int leftInT = _hashLen - _generatedBytes % _hashLen;
             int toCopy = System.Math.Min(leftInT, toGenerate);
-            Array.Copy(currentT, posInT, output, outOff, toCopy);
-            generatedBytes += toCopy;
+            Array.Copy(_currentT, posInT, output, outOff, toCopy);
+            _generatedBytes += toCopy;
             toGenerate -= toCopy;
             outOff += toCopy;
 
             while (toGenerate > 0) {
                 ExpandNext();
-                toCopy = System.Math.Min(hashLen, toGenerate);
-                Array.Copy(currentT, 0, output, outOff, toCopy);
-                generatedBytes += toCopy;
+                toCopy = System.Math.Min(_hashLen, toGenerate);
+                Array.Copy(_currentT, 0, output, outOff, toCopy);
+                _generatedBytes += toCopy;
                 toGenerate -= toCopy;
                 outOff += toCopy;
             }
@@ -146,37 +157,37 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         }
     }
 
-    /**
-      * Parameter class for the HkdfBytesGenerator class.
-      */
+    /// <summary>
+    /// Parameter class for the HkdfBytesGenerator class.
+    /// </summary>
     public class HkdfParameters
         : IDerivationParameters
     {
-        private readonly byte[] ikm;
-        private readonly bool skipExpand;
-        private readonly byte[] salt;
-        private readonly byte[] info;
+        private readonly byte[] _ikm;
+        private readonly bool _skipExpand;
+        private readonly byte[] _salt;
+        private readonly byte[] _info;
 
         private HkdfParameters(byte[] ikm, bool skip, byte[] salt, byte[] info)
         {
             if (ikm == null)
                 throw new ArgumentNullException("ikm");
 
-            this.ikm = Arrays.Clone(ikm);
-            this.skipExpand = skip;
+            this._ikm = Arrays.Clone(ikm);
+            this._skipExpand = skip;
 
             if (salt == null || salt.Length == 0) {
-                this.salt = null;
+                this._salt = null;
             }
             else {
-                this.salt = Arrays.Clone(salt);
+                this._salt = Arrays.Clone(salt);
             }
 
             if (info == null) {
-                this.info = new byte[0];
+                this._info = new byte[0];
             }
             else {
-                this.info = Arrays.Clone(info);
+                this._info = Arrays.Clone(info);
             }
         }
 
@@ -219,7 +230,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
          */
         public virtual byte[] GetIkm()
         {
-            return Arrays.Clone(ikm);
+            return Arrays.Clone(_ikm);
         }
 
         /**
@@ -228,7 +239,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
          * @return true for skipping, false for no skipping of step 1
          */
         public virtual bool SkipExtract {
-            get { return skipExpand; }
+            get { return _skipExpand; }
         }
 
         /**
@@ -239,7 +250,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
          */
         public virtual byte[] GetSalt()
         {
-            return Arrays.Clone(salt);
+            return Arrays.Clone(_salt);
         }
 
         /**
@@ -249,7 +260,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
          */
         public virtual byte[] GetInfo()
         {
-            return Arrays.Clone(info);
+            return Arrays.Clone(_info);
         }
     }
 #endif
