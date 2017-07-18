@@ -98,6 +98,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 Id = (byte[])old.Id.Clone();
                 ReplayWindow = new ReplayWindow(0, 256);
                 SequenceNumber = old.SequenceNumber;
+                SigningKey = old.SigningKey;
             }
 
             /// <summary>
@@ -197,15 +198,13 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public EntityContext Sender { get; } = new EntityContext();
 
         /// <summary>
-        /// Key to produce counter signatures with.
-        /// </summary>
-        public OneKey SignerKey { get; }
-
-        /// <summary>
         /// Return the single receipient object
         /// </summary>
         public EntityContext Recipient { get; private set; }
 
+        /// <summary>
+        /// Get the set of all recipients for group.
+        /// </summary>
         public Dictionary<byte[], EntityContext> Recipients { get; private set; } 
 
         /// <summary>
@@ -235,6 +234,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public SecurityContext(SecurityContext old)
         {
             ContextNo = old.ContextNo;
+            GroupId = old.GroupId;
             Sender = new EntityContext(old.Sender);
             if (old.Recipient != null) Recipient = new EntityContext(old.Recipient);
             if (old.Recipients != null) {
@@ -353,6 +353,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             return ctx;
         }
+
+
+
 
 #if DEBUG
         static int _FutzError = 0;
