@@ -63,6 +63,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             if (String.Equals(e.PropertyName, "OSCOAP_ReplayWindow")) _replayWindow = config.OSCOAP_ReplayWindow;
         }
 
+        /// <inheritdoc />
         public override void SendRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
             if ((request.OscoapContext != null) || (exchange.OscoapContext != null)) {
@@ -84,10 +85,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 MoveRequestHeaders(request, encryptedRequest);
 
-                if (_Log.IsInfoEnabled) {
-                    _Log.Info("New inner response message");
-                    _Log.Info(encryptedRequest.ToString());
-                }
+                    _Log.Info(m => m("New inner response message\n{0}", encryptedRequest.ToString()));
 
                 ctx.Sender.IncrementSequenceNumber();
 
@@ -115,9 +113,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
 #endif
 
-                if (_Log.IsInfoEnabled) {
-                    _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
-                }
+                    _Log.Info(m => m("AAD = {0}", BitConverter.ToString(aad.EncodeToBytes())));
 
                 enc.SetExternalData(aad.EncodeToBytes());
 #if DEBUG
@@ -132,6 +128,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 enc.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV), /* Attributes.PROTECTED */ Attributes.DO_NOT_SEND);
                 enc.AddAttribute(HeaderKeys.Algorithm, ctx.Sender.Algorithm, Attributes.DO_NOT_SEND);
                 enc.AddAttribute(HeaderKeys.KeyId, CBORObject.FromObject(ctx.Sender.Id), /*Attributes.PROTECTED*/ Attributes.DO_NOT_SEND);
+                if (ctx.GroupId != null) {
+                    enc.AddAttribute(CBORObject.FromObject("gid"), CBORObject.FromObject(ctx.GroupId), Attributes.DO_NOT_SEND);
+                }
 
                 if (_Log.IsInfoEnabled) {
                     _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
@@ -141,12 +140,16 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 enc.Encrypt(ctx.Sender.Key);
 
+                if (ctx.SignerKey != null) {
+                    CounterSignature sig = new CounterSignature(ctx.SignerKey);
+                    sig.AddAttribute(HeaderKeys.Algorithm, ctx.SignerKey[CoseKeyKeys.Algorithm], Attributes.DO_NOT_SEND);
+                    sig.SetObject(enc);
+                    CBORObject signatureBytes = sig.EncodeToCBORObject();
+                    enc.AddAttribute(HeaderKeys.CounterSignature, signatureBytes, Attributes.DO_NOT_SEND);
+                }
+
                 byte[] encBody;
-#if OSCOAP_COMPRESS
                 encBody = DoCompression(enc);
-#else
-                encBody= enc.EncodeToBytes();
-#endif
 
                 if (hasPayload) {
                     request.Payload = encBody;
@@ -170,180 +173,177 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             base.SendRequest(nextLayer, exchange, request);
         }
 
+        /// <inheritdoc />
         public override void ReceiveRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
-            if (request.HasOption(OptionType.Oscoap)) {
-                Response response;
-                try {
-                    Option op = request.GetFirstOption(OptionType.Oscoap);
-                    request.RemoveOptions(OptionType.Oscoap);
+            if (!request.HasOption(OptionType.Oscoap)) {
+                base.ReceiveRequest(nextLayer, exchange, request);
+                return;
+            }
+            Response response;
+            try {
+                Option op = request.GetFirstOption(OptionType.Oscoap);
+                request.RemoveOptions(OptionType.Oscoap);
 
-                    Encrypt0Message msg;
+                Encrypt0Message msg;
 
-                    if (_Log.IsInfoEnabled) {
-                        _Log.Info("Incoming Request: " + Util.Utils.ToString(request));
-                    }
+                _Log.Info(m => m("Incoming Request: {0}", Util.Utils.ToString(request)));
 
-#if OSCOAP_COMPRESS
-                    byte[] raw;
-                    if (op.RawValue.Length== 0) {
-                        raw = request.Payload;
-                    }
-                    else {
-                        raw = op.RawValue;
-                    }
 
-                    msg = Uncompress(raw);
-                    if (msg == null) {
-                        if (request.Type == MessageType.CON) {
-                            response = new Response(StatusCode.BadOption);
-                            response.PayloadString = "Unable to decompress";
-                            exchange.SendResponse(response);
-                        }
-                        return;  // Ignore messages that have no known security context.
-                    }
-
-#else
-                    if (op.RawValue.Length == 0) {
-                        msg = (Encrypt0Message)Com.AugustCellars.COSE.Message.DecodeFromBytes(request.Payload, Tags.Encrypt0);
-                    }
-                    else {
-                        msg = (Encrypt0Message)Com.AugustCellars.COSE.Message.DecodeFromBytes(op.RawValue, Tags.Encrypt0);
-                    }
-#endif
-
-                    List<SecurityContext> contexts = new List<SecurityContext>();
-                    SecurityContext ctx = null;
-
-                    if (exchange.OscoapContext != null) {
-                        contexts.Add(exchange.OscoapContext);
-                    }
-                    else {
-                        CBORObject kid = msg.FindAttribute(HeaderKeys.KeyId);
-                        contexts = SecurityContextSet.AllContexts.FindByKid(kid.GetByteString());
-                        if (contexts.Count == 0) {
-                            response = new Response(StatusCode.Unauthorized);
-                            response.PayloadString = "No Context Found - 1";
-                            exchange.SendResponse(response);
-                            return;  // Ignore messages that have no known security context.
-                        }
-                    }
-
-                    String partialURI = request.URI.AbsoluteUri; // M00BUG?
-
-                    //  Build AAD
-                    CBORObject aad = CBORObject.NewArray();
-                    aad.Add(CBORObject.FromObject(1)); // M00BUG
-                    aad.Add(CBORObject.FromObject(request.Code));
-                    aad.Add(CBORObject.FromObject(new byte[0])); // encoded I options
-                    aad.Add(CBORObject.FromObject(0));  // Place holder for algorithm
-                    aad.Add(CBORObject.FromObject(msg.FindAttribute(HeaderKeys.KeyId)));
-
-                    byte[] payload = null;
-                    byte[] partialIV = msg.FindAttribute(HeaderKeys.PartialIV).GetByteString();
-                    aad.Add(CBORObject.FromObject(partialIV));
-
-                    byte[] seqNoArray = new byte[8];
-                    Array.Copy(partialIV, 0, seqNoArray, 8 - partialIV.Length, partialIV.Length);
-                    if (BitConverter.IsLittleEndian) Array.Reverse(seqNoArray);
-                    Int64 seqNo = BitConverter.ToInt64(seqNoArray, 0);
-
-                    String responseString = "General decrypt failure";
-
-                    foreach (SecurityContext context in contexts) {
-                        if (_replayWindow && context.Recipient.ReplayWindow.HitTest(seqNo)) {
-                            if (_Log.IsInfoEnabled) {
-                                _Log.Info(String.Format("Hit test on {0} failed", seqNo));
-                            }
-                            responseString = "Hit test - duplicate";
-                            continue;
-                        }
-
-                        aad[3] = context.Recipient.Algorithm;
-
-                        if (_Log.IsInfoEnabled) {
-                            _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
-                            _Log.Info("IV = " + BitConverter.ToString(context.Recipient.GetIV(partialIV).GetByteString()));
-                            _Log.Info("Key = " + BitConverter.ToString(context.Recipient.Key));
-                        }
-                        
-
-                        msg.SetExternalData(aad.EncodeToBytes());
-
-                        msg.AddAttribute(HeaderKeys.Algorithm, context.Recipient.Algorithm, Attributes.DO_NOT_SEND);
-                        msg.AddAttribute(HeaderKeys.IV, context.Recipient.GetIV(partialIV), Attributes.DO_NOT_SEND);
-
-                        try {
-                            ctx = context;
-                            payload = msg.Decrypt(context.Recipient.Key);
-                            context.Recipient.ReplayWindow.SetHit(seqNo);
-                        }
-                        catch (Exception e) {
-                            if (_Log.IsInfoEnabled) _Log.Info("--- " + e.ToString());
-                            responseString = "Decryption Failure";
-                            ctx = null;
-                        }
-
-                        if (ctx != null) {
-                            break;
-                        }
-                    }
-
-                    if (ctx == null) {
-                        if (request.Type == MessageType.CON) {
-                            response = new Response(StatusCode.BadRequest) {
-                                PayloadString = responseString
-                            };
-                            exchange.SendResponse(response);
-                        }
-                        return;
-                    }
-
-                    exchange.OscoapContext = ctx;  // So we know it on the way back.
-                    request.OscoapContext = ctx;
-                    exchange.OscoapSequenceNumber = partialIV;
-
-                    byte[] newRequestData = new byte[payload.Length + _FixedHeader.Length];
-                    Array.Copy(_FixedHeader, newRequestData, _FixedHeader.Length);
-                    Array.Copy(payload, 0, newRequestData, _FixedHeader.Length, payload.Length);
-
-                    Codec.IMessageDecoder me = Spec.NewMessageDecoder(newRequestData);
-                    Request newRequest = me.DecodeRequest();
-
-                    //  Update headers is a pain
-
-                    RestoreOptions(request, newRequest);
-
-                    if (_Log.IsInfoEnabled) {
-                       // log.Info(String.Format("Secure message post = " + Util.Utils.ToString(request)));
-                    }
-
-                    //  We may want a new exchange at this point if it relates to a new message for blockwise.
-
-                    if (request.HasOption(OptionType.Block2)) {
-                        Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, null, request.Source);
-                        BlockHolder block;
-                        _ongoingExchanges.TryGetValue(keyUri, out block);
-
-                        if (block != null) {
-                            block.RestoreTo(exchange);
-                        }
-                    }
-
-                    request.Payload = newRequest.Payload;
+                byte[] raw;
+                if (op.RawValue.Length == 0) {
+                    raw = request.Payload;
                 }
-                catch (Exception e) {
-                    _Log.Error("OSCOAP Layer: reject message because " + e.ToString());
-                    exchange.OscoapContext = null;
+                else {
+                    raw = op.RawValue;
+                }
 
+                msg = Uncompress(raw);
+                if (msg == null) {
+                    //  Only bother to reply to CON messages
                     if (request.Type == MessageType.CON) {
-                        response = new Response(StatusCode.Unauthorized);
-                        response.Payload = Encoding.UTF8.GetBytes("Error is " + e.Message);
+                        response = new Response(StatusCode.BadOption);
+                        response.PayloadString = "Unable to decompress";
                         exchange.SendResponse(response);
                     }
-                    //  Ignore messages that we cannot decrypt.
                     return;
                 }
+
+                List<SecurityContext> contexts = new List<SecurityContext>();
+                SecurityContext ctx = null;
+
+                //  We may know the context because it is a follow up on a conversation - 
+                //  In which case we can just use the same one.
+                //  M00BUG - Multicast problem of recipient ID?
+
+                if (exchange.OscoapContext != null) {
+                    contexts.Add(exchange.OscoapContext);
+                }
+                else {
+                    CBORObject kid = msg.FindAttribute(HeaderKeys.KeyId);
+                    contexts = SecurityContextSet.AllContexts.FindByKid(kid.GetByteString());
+                    if (contexts.Count == 0) {
+                        response = new Response(StatusCode.Unauthorized);
+                        response.PayloadString = "No Context Found - 1";
+                        exchange.SendResponse(response);
+                        return; // Ignore messages that have no known security context.
+                    }
+                }
+
+                String partialURI = request.URI.AbsoluteUri; // M00BUG?
+
+                //  Build AAD
+                CBORObject aad = CBORObject.NewArray();
+                aad.Add(CBORObject.FromObject(1)); // M00BUG
+                aad.Add(CBORObject.FromObject(request.Code));
+                aad.Add(CBORObject.FromObject(new byte[0])); // encoded I options
+                aad.Add(CBORObject.FromObject(0)); // Place holder for algorithm
+                aad.Add(CBORObject.FromObject(msg.FindAttribute(HeaderKeys.KeyId)));
+
+                byte[] payload = null;
+                byte[] partialIV = msg.FindAttribute(HeaderKeys.PartialIV).GetByteString();
+                aad.Add(CBORObject.FromObject(partialIV));
+
+                byte[] seqNoArray = new byte[8];
+                Array.Copy(partialIV, 0, seqNoArray, 8 - partialIV.Length, partialIV.Length);
+                if (BitConverter.IsLittleEndian) Array.Reverse(seqNoArray);
+                Int64 seqNo = BitConverter.ToInt64(seqNoArray, 0);
+
+                String responseString = "General decrypt failure";
+
+                foreach (SecurityContext context in contexts) {
+                    if (_replayWindow && context.Recipient.ReplayWindow.HitTest(seqNo)) {
+                        if (_Log.IsInfoEnabled) {
+                            _Log.Info(String.Format("Hit test on {0} failed", seqNo));
+                        }
+                        responseString = "Hit test - duplicate";
+                        continue;
+                    }
+
+                    aad[3] = context.Recipient.Algorithm;
+
+                    if (_Log.IsInfoEnabled) {
+                        _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
+                        _Log.Info("IV = " + BitConverter.ToString(context.Recipient.GetIV(partialIV).GetByteString()));
+                        _Log.Info("Key = " + BitConverter.ToString(context.Recipient.Key));
+                    }
+
+
+                    msg.SetExternalData(aad.EncodeToBytes());
+
+                    msg.AddAttribute(HeaderKeys.Algorithm, context.Recipient.Algorithm, Attributes.DO_NOT_SEND);
+                    msg.AddAttribute(HeaderKeys.IV, context.Recipient.GetIV(partialIV), Attributes.DO_NOT_SEND);
+
+                    try {
+                        ctx = context;
+                        payload = msg.Decrypt(context.Recipient.Key);
+                        context.Recipient.ReplayWindow.SetHit(seqNo);
+                    }
+                    catch (Exception e) {
+                        if (_Log.IsInfoEnabled) _Log.Info("--- " + e.ToString());
+                        responseString = "Decryption Failure";
+                        ctx = null;
+                    }
+
+                    if (ctx != null) {
+                        break;
+                    }
+                }
+
+                if (ctx == null) {
+                    if (request.Type == MessageType.CON) {
+                        response = new Response(StatusCode.BadRequest) {
+                            PayloadString = responseString
+                        };
+                        exchange.SendResponse(response);
+                    }
+                    return;
+                }
+
+                exchange.OscoapContext = ctx; // So we know it on the way back.
+                request.OscoapContext = ctx;
+                exchange.OscoapSequenceNumber = partialIV;
+
+                byte[] newRequestData = new byte[payload.Length + _FixedHeader.Length];
+                Array.Copy(_FixedHeader, newRequestData, _FixedHeader.Length);
+                Array.Copy(payload, 0, newRequestData, _FixedHeader.Length, payload.Length);
+
+                Codec.IMessageDecoder me = Spec.NewMessageDecoder(newRequestData);
+                Request newRequest = me.DecodeRequest();
+
+                //  Update headers is a pain
+
+                RestoreOptions(request, newRequest);
+
+                if (_Log.IsInfoEnabled) {
+                    // log.Info(String.Format("Secure message post = " + Util.Utils.ToString(request)));
+                }
+
+                //  We may want a new exchange at this point if it relates to a new message for blockwise.
+
+                if (request.HasOption(OptionType.Block2)) {
+                    Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, null, request.Source);
+                    BlockHolder block;
+                    _ongoingExchanges.TryGetValue(keyUri, out block);
+
+                    if (block != null) {
+                        block.RestoreTo(exchange);
+                    }
+                }
+
+                request.Payload = newRequest.Payload;
+            }
+            catch (Exception e) {
+                _Log.Error("OSCOAP Layer: reject message because " + e.ToString());
+                exchange.OscoapContext = null;
+
+                if (request.Type == MessageType.CON) {
+                    response = new Response(StatusCode.Unauthorized);
+                    response.Payload = Encoding.UTF8.GetBytes("Error is " + e.Message);
+                    exchange.SendResponse(response);
+                }
+                //  Ignore messages that we cannot decrypt.
+                return;
             }
 
             base.ReceiveRequest(nextLayer, exchange, request);
@@ -483,33 +483,19 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
                 else ctx = exchange.OscoapContext;
 
-#if OSCOAP_COMPRESS
                 byte[] raw;
                 if (op.RawValue.Length > 0) raw = op.RawValue;
                 else raw = response.Payload;
 
-                bool fHasObserve = response.HasOption(OptionType.Observe);
+                bool fServerIv = true;
 
-                if (fHasObserve) {
                     msg = Uncompress(raw);
                     if (msg == null) return;
-                }
-                else {
-                    msg = Uncompress(raw);
-                    if (msg == null)
-                        return;
 
+                if (msg.FindAttribute(HeaderKeys.PartialIV) == null) {
                     msg.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV), Attributes.DO_NOT_SEND);
+                    fServerIv = false;
                 }
-#else
-                if (op.RawValue.Length > 0) {
-                    msg = (Encrypt0Message)Com.AugustCellars.COSE.Message.DecodeFromBytes(op.RawValue, Tags.Encrypt0);
-                }
-                else {
-                    msg = (Encrypt0Message)Com.AugustCellars.COSE.Message.DecodeFromBytes(response.Payload, Tags.Encrypt0);
-                }
-#endif
-
 
 
                 byte[] partialIV = msg.FindAttribute(HeaderKeys.PartialIV).GetByteString();
@@ -518,12 +504,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 if (BitConverter.IsLittleEndian) Array.Reverse(seqNoArray);
                 Int64 seqNo = BitConverter.ToInt64(seqNoArray, 0);
 
-                if (fHasObserve) if (_replayWindow && ctx.Recipient.ReplayWindow.HitTest(seqNo)) return;
+                if (fServerIv) if (_replayWindow && ctx.Recipient.ReplayWindow.HitTest(seqNo)) return;
 
                 msg.AddAttribute(HeaderKeys.Algorithm, ctx.Recipient.Algorithm, Attributes.DO_NOT_SEND);
 
                CBORObject fullIV = ctx.Recipient.GetIV(partialIV);
-                if (!fHasObserve) fullIV.GetByteString()[0] += 0x80;
+                if (!fServerIv) fullIV.GetByteString()[0] += 0x80;
                 msg.AddAttribute(HeaderKeys.IV, fullIV, Attributes.DO_NOT_SEND);
 
                 //  build aad
@@ -733,6 +719,20 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 head |= 0x08;
             }
 
+            CBORObject gid = msg.FindAttribute(CBORObject.FromObject("gid"));
+            if (gid != null) {
+                cbSize += (1 + gid.GetByteString().Length);
+                head |= 0x10;
+            }
+
+            CBORObject sig = msg.FindAttribute(HeaderKeys.CounterSignature);
+            byte[] sigBytes = null;
+            if (sig != null) {
+                sigBytes = sig.EncodeToBytes();
+                cbSize += (1 + sigBytes.Length);
+                head |= 0x20;
+            }
+
             //  Additional items to flag
 
             encBody = new byte[cbSize + body.Length];
@@ -748,6 +748,20 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 encBody[cbSize] = (byte) kid.GetByteString().Length;
                 Array.Copy(kid.GetByteString(), 0, encBody, cbSize+1, kid.GetByteString().Length);
                 cbSize += kid.GetByteString().Length + 1;
+            }
+
+            if (gid != null) {
+                if (gid.GetByteString().Length > 255) throw new Exception("GID too large");
+                encBody[cbSize] = (byte) gid.GetByteString().Length;
+                Array.Copy(gid.GetByteString(), 0, encBody, cbSize+1, gid.GetByteString().Length);
+                cbSize += gid.GetByteString().Length + 1;
+            }
+
+            if (sig != null) {
+                if (sigBytes.Length > 255) throw new Exception("GID too large");
+                encBody[cbSize] = (byte)sigBytes.Length;
+                Array.Copy(sigBytes, 0, encBody, cbSize + 1, sig.GetByteString().Length);
+                cbSize += sigBytes.Length + 1;
             }
 
             Array.Copy(body, 0, encBody, cbSize, body.Length);
