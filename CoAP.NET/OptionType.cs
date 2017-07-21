@@ -148,6 +148,20 @@ namespace Com.AugustCellars.CoAP
         Oscoap = 65025,
 #endif
 
+#if FRESHNESS
+        /// <summary>
+        /// Resend request for freshness purposes
+        /// <remarks>draft-amsuess-core-repeat-request-tag</remarks>
+        /// </summary>
+        ResendRequest = 65026,
+
+        /// <summary>
+        /// Request defined ETAG
+        /// <remarks>draft-amsuess-core-repeat-request-tag</remarks>
+        /// </summary>
+        Request_ETag = 65027,
+#endif
+
         /// <summary>
         /// no-op for fenceposting
         /// <remarks>draft-bormann-coap-misc-04</remarks>

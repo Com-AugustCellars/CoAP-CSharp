@@ -292,11 +292,17 @@ namespace Com.AugustCellars.CoAP.Net
             return (T)GetOrAdd(key, o => valueFactory(o));
         }
 
+        /// <summary>
+        /// Set an object in the attribute map based on it's key.
+        /// If a previous object existed, return it.
+        /// </summary>
+        /// <param name="key">Key to use to save the object</param>
+        /// <param name="value">value to save</param>
+        /// <returns>old object if one exists.</returns>
         public Object Set(Object key, Object value)
         {
             Object old = null;
-            _attributes.AddOrUpdate(key, value, (k, v) =>
-            {
+            _attributes.AddOrUpdate(key, value, (k, v) => {
                 old = v;
                 return value;
             });
