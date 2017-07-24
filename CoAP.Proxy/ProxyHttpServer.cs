@@ -15,87 +15,95 @@ using Com.AugustCellars.CoAP.Net;
 
 namespace Com.AugustCellars.CoAP.Proxy
 {
+    /// <summary>
+    /// Implementation of a class which acts as an HTTP server for the purpose of
+    /// doing proxying from HTTP to CoAP.
+    /// </summary>
     public class ProxyHttpServer
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(ProxyHttpServer));
-        static readonly String ProxyCoapClient = "proxy/coapClient";
-        static readonly String ProxyHttpClient = "proxy/httpClient";
+        static readonly ILogger _Log = LogManager.GetLogger(typeof(ProxyHttpServer));
+        static readonly string ProxyCoapClient = "proxy/coapClient";
+        static readonly string ProxyHttpClient = "proxy/httpClient";
         readonly ICacheResource _cacheResource = new NoCache(); // TODO cache implementation
-        private IProxyCoAPResolver _proxyCoapResolver;
-        private HttpStack _httpStack;
+        private readonly HttpStack _httpStack;
 
+        /// <summary>
+        /// Create the proxy server on the default HTTP port
+        /// </summary>
         public ProxyHttpServer()
             : this(CoapConfig.Default.HttpPort)
-        { }
+        {
+        }
 
+        /// <summary>
+        /// Create the proxy server on a specific port
+        /// </summary>
+        /// <param name="httpPort">http port</param>
         public ProxyHttpServer(Int32 httpPort)
         {
-            _httpStack = new HttpStack(httpPort);
-            _httpStack.RequestHandler = HandleRequest;
+            _httpStack = new HttpStack(httpPort) {
+                RequestHandler = HandleRequest
+            };
         }
 
-        public IProxyCoAPResolver ProxyCoapResolver
-        {
-            get { return _proxyCoapResolver; }
-            set { _proxyCoapResolver = value; }
-        }
+        /// <summary>
+        /// Get/Set the CoAP resolver to use
+        /// </summary>
+        public IProxyCoAPResolver ProxyCoapResolver { get; set; }
+
 
         private void HandleRequest(Request request)
         {
             Exchange exchange = new ProxyExchange(this, request);
             exchange.Request = request;
 
-            Response response = null;
             // ignore the request if it is reset or acknowledge
             // check if the proxy-uri is defined
-            if (request.Type != MessageType.RST && request.Type != MessageType.ACK
-                    && request.HasOption(OptionType.ProxyUri))
-            {
+            if ((request.Type != MessageType.RST) && (request.Type != MessageType.ACK) &&
+                request.HasOption(OptionType.ProxyUri)) {
+
                 // get the response from the cache
-                response = _cacheResource.GetResponse(request);
+                Response response = _cacheResource.GetResponse(request);
 
                 // TODO update statistics
                 //_statsResource.updateStatistics(request, response != null);
-            }
 
-            // check if the response is present in the cache
-            if (response != null)
-            {
-                // link the retrieved response with the request to set the
-                // parameters request-specific (i.e., token, id, etc)
-                exchange.SendResponse(response);
-                return;
-            }
-            else
-            {
-                // edit the request to be correctly forwarded if the proxy-uri is
-                // set
-                if (request.HasOption(OptionType.ProxyUri))
-                {
-                    try
-                    {
-                        ManageProxyUriRequest(request);
-                    }
-                    catch (Exception)
-                    {
-                        if (log.IsWarnEnabled)
-                            log.Warn("Proxy-uri malformed: " + request.GetFirstOption(OptionType.ProxyUri).StringValue);
-
-                        exchange.SendResponse(new Response(StatusCode.BadOption));
-                    }
+                // check if the response is present in the cache
+                if (response != null) {
+                    // link the retrieved response with the request to set the
+                    // parameters request-specific (i.e., token, id, etc)
+                    exchange.SendResponse(response);
+                    return;
                 }
-
-                // handle the request as usual
-                if (_proxyCoapResolver != null)
-                    _proxyCoapResolver.ForwardRequest(exchange);
             }
+
+            // edit the request to be correctly forwarded if the proxy-uri is set
+
+            if (request.HasOption(OptionType.ProxyUri)) {
+                try {
+                    ManageProxyUriRequest(request);
+                }
+                catch (Exception) {
+                    _Log.Warn(m => m("Proxy-uri malformed: {0}", request.GetFirstOption(OptionType.ProxyUri).StringValue));
+
+                    exchange.SendResponse(new Response(StatusCode.BadOption));
+                }
+            }
+
+            // handle the request as usual
+            if (ProxyCoapResolver != null) ProxyCoapResolver.ForwardRequest(exchange);
+
         }
 
+        /// <summary>
+        /// Cache the response if it was for a proxy request
+        /// </summary>
+        /// <param name="request">request</param>
+        /// <param name="response">matching response</param>
         protected void ResponseProduced(Request request, Response response)
         {
             // check if the proxy-uri is defined
-            if (request.HasOption(OptionType.ProxyUri))
-            {
+            if (request.HasOption(OptionType.ProxyUri)) {
                 // insert the response in the cache
                 _cacheResource.CacheResponse(request, response);
             }
@@ -111,13 +119,11 @@ namespace Com.AugustCellars.CoAP.Proxy
             String clientPath;
 
             // switch between the schema requested
-            if (proxyUri.Scheme != null && proxyUri.Scheme.StartsWith("http"))
-            {
+            if (proxyUri.Scheme != null && proxyUri.Scheme.StartsWith("http")) {
                 // the local resource related to the http client
                 clientPath = ProxyHttpClient;
             }
-            else
-            {
+            else {
                 // the local resource related to the http client
                 clientPath = ProxyCoapClient;
             }
@@ -126,7 +132,7 @@ namespace Com.AugustCellars.CoAP.Proxy
             request.UriPath = clientPath;
         }
 
-        class ProxyExchange : Exchange
+        private class ProxyExchange : Exchange
         {
             readonly ProxyHttpServer _server;
             readonly Request _request;
@@ -154,24 +160,22 @@ namespace Com.AugustCellars.CoAP.Proxy
                 // CoAP endpoint.
                 // TODO: When we change endpoint to be an interface, we can
                 // redirect the responses a little more elegantly.
-                try
-                {
+                try {
                     _request.Response = response;
                     _server.ResponseProduced(_request, response);
                     _server._httpStack.DoSendResponse(_request, response);
                 }
-                catch (Exception e)
-                {
-                    if (log.IsWarnEnabled)
-                        log.Warn("Exception while responding to Http request", e);
+                catch (Exception e) {
+                    if (_Log.IsWarnEnabled) _Log.Warn("Exception while responding to Http request", e);
                 }
             }
         }
 
-        class NoCache : ICacheResource
+        private class NoCache : ICacheResource
         {
             public void CacheResponse(Request request, Response response)
-            { }
+            {
+            }
 
             public Response GetResponse(Request request)
             {
@@ -179,7 +183,8 @@ namespace Com.AugustCellars.CoAP.Proxy
             }
 
             public void InvalidateRequest(Request request)
-            { }
+            {
+            }
         }
     }
 }

@@ -12,7 +12,7 @@
 using System;
 using System.IO;
 
-namespace Com.AugustCellars.CoAP.Http
+namespace Com.AugustCellars.CoAP.Proxy.Http
 {
     public interface IHttpResponse
     {

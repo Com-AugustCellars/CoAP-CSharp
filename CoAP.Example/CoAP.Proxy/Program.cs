@@ -6,32 +6,33 @@ using Com.AugustCellars.CoAP.Server.Resources;
 
 namespace Com.AugustCellars.CoAP.Examples
 {
-    class Program
+    public class Program
     {
         static void Main(string[] args)
         {
-            ForwardingResource coap2coap = new ProxyCoapClientResource("coap2coap");
-            ForwardingResource coap2http = new ProxyHttpClientResource("coap2http");
+            ForwardingResource coap2Coap = new ProxyCoapClientResource("coap2Coap");
+            ForwardingResource coap2Http = new ProxyHttpClientResource("coap2Http");
 
             // Create CoAP Server on PORT with proxy resources form CoAP to CoAP and HTTP
             CoapServer coapServer = new CoapServer(CoapConfig.Default.DefaultPort);
-            coapServer.Add(coap2coap);
-            coapServer.Add(coap2http);
+            coapServer.Add(coap2Coap);
+            coapServer.Add(coap2Http);
             coapServer.Add(new TargetResource("target"));
             coapServer.Start();
 
-            ProxyHttpServer httpServer = new ProxyHttpServer(CoapConfig.Default.HttpPort);
-            httpServer.ProxyCoapResolver = new DirectProxyCoAPResolver(coap2coap);
+            ProxyHttpServer httpServer = new ProxyHttpServer(CoapConfig.Default.HttpPort) {
+                ProxyCoapResolver = new DirectProxyCoAPResolver(coap2Coap)
+            };
 
             Console.WriteLine("Press any key to exit.");
             Console.ReadKey();
         }
 
-        class TargetResource : Resource
+        private class TargetResource : Resource
         {
-            private Int32 _counter;
+            private int _counter;
 
-            public TargetResource(String name)
+            public TargetResource(string name)
                 : base(name)
             { }
 

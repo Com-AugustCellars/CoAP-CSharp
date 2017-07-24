@@ -17,82 +17,86 @@ using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Http;
 using System.Runtime.Remoting.Messaging;
 
-namespace Com.AugustCellars.CoAP.Http
+namespace Com.AugustCellars.CoAP.Proxy.Http
 {
-    class WebServer
+    /// <summary>
+    /// Create a simple web server to act as a proxy.
+    /// </summary>
+    internal partial class WebServer
     {
-        private readonly String _name;
+        private readonly string _name;
         private readonly List<IServiceProvider> _serviceProviders = new List<IServiceProvider>();
         private readonly IChannel _channel;
 
-        public WebServer(String name, Int32 port)
+        /// <summary>
+        /// Create a simple web server object
+        /// </summary>
+        /// <param name="name">name for the web server channel</param>
+        /// <param name="port">port to operate on</param>
+        public WebServer(string name, int port)
         {
             _name = name;
             _channel = new HttpServerChannel(name, port, new WebServerFormatterSinkProvider(this));
         }
 
+        /// <summary>
+        /// Add the provider to the list of providers supported by the server
+        /// </summary>
+        /// <param name="provider"></param>
         public void AddProvider(IServiceProvider provider)
         {
             _serviceProviders.Add(provider);
         }
 
+        /// <summary>
+        /// Start the HTTP channel
+        /// </summary>
         public void Start()
         {
             ChannelServices.RegisterChannel(_channel, false);
         }
 
+        /// <summary>
+        /// Stop the HTTP channel we are using
+        /// </summary>
         public void Stop()
         {
-            try
-            {
+            try {
                 ChannelServices.UnregisterChannel(_channel);
             }
-            catch (Exception) { }
+            catch {
+                // ignored
+            }
         }
 
-        class WebServerFormatterSinkProvider : IServerFormatterSinkProvider
-        {
-            private readonly WebServer _webServer;
-            private IServerChannelSinkProvider _next;
-
-            public WebServerFormatterSinkProvider(WebServer webServer)
-            {
-                _webServer = webServer;
-            }
-
-            public IServerChannelSinkProvider Next
-            {
-                get { return _next; }
-                set { _next = value; }
-            }
-
-            public IServerChannelSink CreateSink(IChannelReceiver channel)
-            {
-                IServerChannelSink sink = null;
-                if (Next != null)
-                    sink = Next.CreateSink(channel);
-                return new WebServerChannelSink(sink, channel, _webServer);
-            }
-
-            public void GetChannelData(IChannelDataStore channelData)
-            { }
-        }
-
-        class WebServerChannelSink : IServerChannelSink
+        /// <summary>
+        /// Implements the HTTP channel sink interface
+        /// </summary>
+        private class WebServerChannelSink : IServerChannelSink
         {
             private readonly WebServer _webServer;
 
+            /// <summary>
+            /// Create the sink
+            /// </summary>
+            /// <param name="next">next sink in the chain</param>
+            /// <param name="channel">channel receiver</param>
+            /// <param name="webServer">What web server</param>
             public WebServerChannelSink(IServerChannelSink next, IChannelReceiver channel, WebServer webServer)
             {
                 _webServer = webServer;
                 NextChannelSink = next;
+                if (channel != null) throw new Exception("We don't use this");
             }
 
+            /// <summary>
+            /// Link of channel sinks.
+            /// </summary>
             public IServerChannelSink NextChannelSink { get; private set; }
 
             public IDictionary Properties
             {
-                get { throw new NotImplementedException(); }
+                get => throw new NotImplementedException();
             }
 
             public void AsyncProcessResponse(IServerResponseChannelSinkStack sinkStack, Object state, IMessage msg, ITransportHeaders headers, Stream stream)
@@ -107,8 +111,7 @@ namespace Com.AugustCellars.CoAP.Http
 
             public ServerProcessing ProcessMessage(IServerChannelSinkStack sinkStack, IMessage requestMsg, ITransportHeaders requestHeaders, Stream requestStream, out IMessage responseMsg, out ITransportHeaders responseHeaders, out Stream responseStream)
             {
-                if (requestMsg != null)
-                {
+                if (requestMsg != null) {
                     return NextChannelSink.ProcessMessage(sinkStack, requestMsg, requestHeaders, requestStream,
                         out responseMsg, out responseHeaders, out responseStream);
                 }
@@ -116,10 +119,8 @@ namespace Com.AugustCellars.CoAP.Http
                 IHttpRequest request = GetRequest(requestHeaders, requestStream);
                 IHttpResponse response = GetResponse(request);
 
-                foreach (var provider in _webServer._serviceProviders)
-                {
-                    if (provider.Accept(request))
-                    {
+                foreach (IServiceProvider provider in _webServer._serviceProviders) {
+                    if (provider.Accept(request)) {
                         provider.Process(request, response);
                         break;
                     }
@@ -134,13 +135,13 @@ namespace Com.AugustCellars.CoAP.Http
                 return ServerProcessing.Complete;
             }
 
-            private IHttpResponse GetResponse(IHttpRequest request)
+            private static IHttpResponse GetResponse(IHttpRequest request)
             {
                 RemotingHttpResponse response = new RemotingHttpResponse();
                 return response;
             }
 
-            private IHttpRequest GetRequest(ITransportHeaders requestHeaders, Stream requestStream)
+            private static IHttpRequest GetRequest(ITransportHeaders requestHeaders, Stream requestStream)
             {
                 return new RemotingHttpRequest(requestHeaders, requestStream);
             }

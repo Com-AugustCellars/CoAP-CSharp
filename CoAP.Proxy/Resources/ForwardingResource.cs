@@ -15,16 +15,26 @@ using Com.AugustCellars.CoAP.Server.Resources;
 
 namespace Com.AugustCellars.CoAP.Proxy.Resources
 {
+    /// <summary>
+    /// Create an abstrack interface for doing a forwarder resource so that it gets everything 
+    /// from one API.
+    /// </summary>
     public abstract class ForwardingResource : Resource
     {
-        public ForwardingResource(String resourceIdentifier)
-            : base(resourceIdentifier)
-        { }
-
-        public ForwardingResource(String resourceIdentifier, Boolean hidden)
+        /// <summary>
+        /// Create a forwarding resource object
+        /// </summary>
+        /// <param name="resourceIdentifier">name of resource</param>
+        /// <param name="hidden">is this a hidden resource? default to false</param>
+        protected ForwardingResource(String resourceIdentifier, Boolean hidden = false)
             : base(resourceIdentifier, hidden)
         { }
 
+        /// <summary>
+        /// Deal with a request
+        /// Default is to accept it and then pass on to get the request process and then send it back.
+        /// </summary>
+        /// <param name="exchange"></param>
         public override void HandleRequest(Exchange exchange)
         {
             exchange.SendAccept();
@@ -32,6 +42,11 @@ namespace Com.AugustCellars.CoAP.Proxy.Resources
             exchange.SendResponse(response);
         }
 
+        /// <summary>
+        /// Function to do the request forwarding
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         protected abstract Response ForwardRequest(Request request);
     }
 }

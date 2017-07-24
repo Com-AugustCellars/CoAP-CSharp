@@ -14,27 +14,39 @@ using Com.AugustCellars.CoAP.Proxy.Resources;
 
 namespace Com.AugustCellars.CoAP.Proxy
 {
+    /// <summary>
+    /// ????????
+    /// </summary>
+    // ReSharper disable once InconsistentNaming
     public class DirectProxyCoAPResolver : IProxyCoAPResolver
     {
-        private ForwardingResource _proxyCoapClientResource;
-
+        /// <summary>
+        /// Create a ????
+        /// </summary>
         public DirectProxyCoAPResolver()
         { }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="proxyCoapClientResource"></param>
         public DirectProxyCoAPResolver(ForwardingResource proxyCoapClientResource)
         {
-            _proxyCoapClientResource = proxyCoapClientResource;
+            ProxyCoapClientResource = proxyCoapClientResource;
         }
 
-        public ForwardingResource ProxyCoapClientResource
-        {
-            get { return _proxyCoapClientResource; }
-            set { _proxyCoapClientResource = value; }
-        }
+        /// <summary>
+        /// Get/Set the Proxy Coap resource code used by the resolver.
+        /// </summary>
+        public ForwardingResource ProxyCoapClientResource { get; set; }
 
+        /// <summary>
+        /// On a request - call the set client resource 
+        /// </summary>
+        /// <param name="exchange"></param>
         public void ForwardRequest(Exchange exchange)
         {
-            _proxyCoapClientResource.HandleRequest(exchange);
+            ProxyCoapClientResource.HandleRequest(exchange);
         }
     }
 }

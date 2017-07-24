@@ -13,7 +13,7 @@ using System;
 using System.Collections.Specialized;
 using System.IO;
 
-namespace Com.AugustCellars.CoAP.Http
+namespace Com.AugustCellars.CoAP.Proxy.Http
 {
     public interface IHttpRequest
     {

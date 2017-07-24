@@ -13,7 +13,7 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
-using Com.AugustCellars.CoAP.Http;
+using Com.AugustCellars.CoAP.Proxy.Http;
 using Com.AugustCellars.CoAP.Threading;
 using Com.AugustCellars.CoAP.Util;
 
@@ -26,7 +26,7 @@ namespace Com.AugustCellars.CoAP.Proxy
     /// </summary>
     public class HttpStack
     {
-        private const String ServerName = "CoAP.NET HTTP Proxy";
+        private const string ServerName = "CoAP.NET HTTP Proxy";
 
         /// <summary>
         /// Resource associated with the proxying behavior.
@@ -34,7 +34,8 @@ namespace Com.AugustCellars.CoAP.Proxy
         /// http://proxy-address/ProxyResourceName/coap-server, the proxying
         /// handler will forward the request desired coap server.
         /// </summary>
-        const String ProxyResourceName = "proxy";
+        const string ProxyResourceName = "proxy";
+ 
         /// <summary>
         /// The resource associated with the local resources behavior.
         /// If a client requests resource indicated by
@@ -44,12 +45,16 @@ namespace Com.AugustCellars.CoAP.Proxy
         const String LocalResourceName = "local";
 
         private static readonly Int32 GatewayTimeout = 100000 * 3 / 4;
-        readonly WebServer _webServer;
+        private readonly WebServer _webServer;
         readonly ConcurrentDictionary<Request, WaitFuture<Request, Response>> _exchangeMap = new ConcurrentDictionary<Request, WaitFuture<Request, Response>>();
-        private IExecutor _executor = Executors.Default;
+        private readonly IExecutor _executor = Executors.Default;
 
         public Action<Request> RequestHandler;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="httpPort"></param>
         public HttpStack(Int32 httpPort)
         {
             _webServer = new WebServer(ServerName, httpPort);
@@ -87,7 +92,7 @@ namespace Com.AugustCellars.CoAP.Proxy
                 handler(request);
         }
 
-        class BaseRequestHandler : CoAP.Http.IServiceProvider
+        class BaseRequestHandler : CoAP.Proxy.Http.IServiceProvider
         {
             public Boolean Accept(IHttpRequest request)
             {
@@ -103,7 +108,7 @@ namespace Com.AugustCellars.CoAP.Proxy
             }
         }
 
-        class ProxyRequestHandler : CoAP.Http.IServiceProvider
+        class ProxyRequestHandler : CoAP.Proxy.Http.IServiceProvider
         {
             readonly HttpStack _httpStack;
             readonly String _uri;

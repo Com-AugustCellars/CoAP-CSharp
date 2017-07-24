@@ -11,11 +11,11 @@
 
 using System;
 
-namespace Com.AugustCellars.CoAP.Http
+namespace Com.AugustCellars.CoAP.Proxy.Http
 {
     interface IServiceProvider
     {
-        Boolean Accept(IHttpRequest request);
+        bool Accept(IHttpRequest request);
         void Process(IHttpRequest request, IHttpResponse response);
     }
 }
