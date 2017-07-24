@@ -133,6 +133,9 @@ namespace Com.AugustCellars.CoAP.Proxy
             http2coapMethod["put"] = Method.PUT;
             http2coapMethod["delete"] = Method.DELETE;
             http2coapMethod["head"] = Method.GET;
+            http2coapMethod["patch"] = Method.PATCH;
+            http2coapMethod["fetch"] = Method.FETCH;
+            http2coapMethod["ipatch"] = Method.iPATCH;
         }
 
         /// <summary>

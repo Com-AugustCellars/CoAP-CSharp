@@ -10,6 +10,7 @@
  */
 
 using System;
+// ReSharper disable InconsistentNaming
 
 namespace Com.AugustCellars.CoAP
 {
@@ -28,35 +29,54 @@ namespace Com.AugustCellars.CoAP
         /// Indicate client request was successfully processed.
         /// </summary>
         /// 
-        public const Int32 SuccessCode = 2;
+        public const int SuccessCode = 2;
+
         /// <summary>
         /// Indicate a client request had an error of some type.
         /// </summary>
-        public const Int32 ClientErrorCode = 4;
+        public const int ClientErrorCode = 4;
 
         /// <summary>
         /// Indicate a server error while processing request
         /// </summary>
-        public const Int32 ServerErrorCode = 5;
+        public const int ServerErrorCode = 5;
 
         #region Method Codes
 
         /// <summary>
         /// The GET method
         /// </summary>
-        public const Int32 GET = 1;
+        public const int GET = 1;
+
         /// <summary>
         /// The POST method
         /// </summary>
-        public const Int32 POST = 2;
+        public const int POST = 2;
+
         /// <summary>
         /// The PUT method
         /// </summary>
-        public const Int32 PUT = 3;
+        public const int PUT = 3;
+
         /// <summary>
         /// The DELETE method
         /// </summary>
-        public const Int32 DELETE = 4;
+        public const int DELETE = 4;
+
+        /// <summary>
+        /// The FETCH method [RFC8132]
+        /// </summary>
+        public const int FETCH = 5;
+
+        /// <summary>
+        /// The PATCH method [RFC8132]
+        /// </summary>
+        public const int PATCH = 6;
+
+        /// <summary>
+        /// The iPATCH method [RFC8132]
+        /// </summary>
+        public const int iPATCH = 7;
 
         #endregion
 
@@ -65,95 +85,127 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// 2.01 Created
         /// </summary>
-        public const Int32 Created = 65;
+        public const int Created = 65;
+
         /// <summary>
         /// 2.02 Deleted
         /// </summary>
-        public const Int32 Deleted = 66;
+        public const int Deleted = 66;
+
         /// <summary>
         /// 2.03 Valid 
         /// </summary>
-        public const Int32 Valid = 67;
+        public const int Valid = 67;
+
         /// <summary>
         /// 2.04 Changed
         /// </summary>
-        public const Int32 Changed = 68;
+        public const int Changed = 68;
+
         /// <summary>
         /// 2.05 Content
         /// </summary>
-        public const Int32 Content = 69;
+        public const int Content = 69;
+
         /// <summary>
-        /// 2.?? Continue
+        /// 2.31 Continue
         /// </summary>
-        public const Int32 Continue = 95;
+        public const int Continue = 95;
+
         /// <summary>
         /// 4.00 Bad Request
         /// </summary>
-        public const Int32 BadRequest = 128;
+        public const int BadRequest = 128;
+
         /// <summary>
         /// 4.01 Unauthorized
         /// </summary>
-        public const Int32 Unauthorized = 129;
+        public const int Unauthorized = 129;
+
         /// <summary>
         /// 4.02 Bad Option
         /// </summary>
-        public const Int32 BadOption = 130;
+        public const int BadOption = 130;
+
         /// <summary>
         /// 4.03 Forbidden
         /// </summary>
-        public const Int32 Forbidden = 131;
+        public const int Forbidden = 131;
+
         /// <summary>
         /// 4.04 Not Found
         /// </summary>
-        public const Int32 NotFound = 132;
+        public const int NotFound = 132;
+
         /// <summary>
         /// 4.05 Method Not Allowed
         /// </summary>
-        public const Int32 MethodNotAllowed = 133;
+        public const int MethodNotAllowed = 133;
+
         /// <summary>
         /// 4.06 Not Acceptable
         /// </summary>
-        public const Int32 NotAcceptable = 134;
+        public const int NotAcceptable = 134;
+
         /// <summary>
-        /// 4.08 Request Entity Incomplete (draft-ietf-core-block)
+        /// 4.08 Request Entity Incomplete [RFC7959]
         /// </summary>
-        public const Int32 RequestEntityIncomplete = 136;
+        public const int RequestEntityIncomplete = 136;
+
         /// <summary>
-        /// 
+        /// 4.09 Conflict [RFC8132]
         /// </summary>
-        public const Int32 PreconditionFailed = 140;
+        public const int Conflict = 137;
+
+        /// <summary>
+        /// 4.12 Precondition Failed
+        /// </summary>
+        public const int PreconditionFailed = 140;
+
         /// <summary>
         /// 4.13 Request Entity Too Large
         /// </summary>
-        public const Int32 RequestEntityTooLarge = 141;
+        public const int RequestEntityTooLarge = 141;
+
         /// <summary>
         /// 4.15 Unsupported Media Type
         /// </summary>
-        public const Int32 UnsupportedMediaType = 143;
+        public const int UnsupportedMediaType = 143;
+
+        /// <summary>
+        /// 4.22 UnprocessableEntity
+        /// </summary>
+        public const int UnprocessableEntity = 150;
+
         /// <summary>
         /// 5.00 Internal Server Error
         /// </summary>
-        public const Int32 InternalServerError = 160;
+        public const int InternalServerError = 160;
+
         /// <summary>
         /// 5.01 Not Implemented
         /// </summary>
-        public const Int32 NotImplemented = 161;
+        public const int NotImplemented = 161;
+
         /// <summary>
         /// 5.02 Bad Gateway
         /// </summary>
-        public const Int32 BadGateway = 162;
+        public const int BadGateway = 162;
+
         /// <summary>
         /// 5.03 Service Unavailable 
         /// </summary>
-        public const Int32 ServiceUnavailable = 163;
+        public const int ServiceUnavailable = 163;
+
         /// <summary>
         /// 5.04 Gateway Timeout
         /// </summary>
-        public const Int32 GatewayTimeout = 164;
+        public const int GatewayTimeout = 164;
+
         /// <summary>
         /// 5.05 Proxying Not Supported
         /// </summary>
-        public const Int32 ProxyingNotSupported = 165;
+        public const int ProxyingNotSupported = 165;
 
         #endregion
 
@@ -162,7 +214,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="code">code to be checked</param>
         /// <returns>class in range of 0-7</returns>
-        public static Int32 GetResponseClass(Int32 code)
+        public static int GetResponseClass(int code)
         {
             return (code >> 5) & 0x7;
         }
@@ -172,7 +224,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="code">The code to be checked</param>
         /// <returns>True iff the code indicates a request</returns>
-        public static Boolean IsRequest(Int32 code)
+        public static Boolean IsRequest(int code)
         {
             return (code >= 1) && (code <= 31);
         }
@@ -182,7 +234,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="code">The code to be checked</param>
         /// <returns>True iff the code indicates a response</returns>
-        public static Boolean IsResponse(Int32 code)
+        public static Boolean IsResponse(int code)
         {
             return (code >= 64) && (code <= 191);
         }
@@ -190,7 +242,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Checks whether a code represents a success code.
         /// </summary>
-        public static Boolean IsSuccess(Int32 code)
+        public static Boolean IsSuccess(int code)
         {
             return code >= 64 && code < 96;
         }
@@ -200,7 +252,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="code">The code to be checked</param>
         /// <returns>True iff the code is valid</returns>
-        public static Boolean IsValid(Int32 code)
+        public static Boolean IsValid(int code)
         {
             // allow unknown custom codes
             return (code >= 0) && (code <= 255);
@@ -211,10 +263,9 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="code">The code to be described</param>
         /// <returns>A string describing the code</returns>
-        public static String ToString(Int32 code)
+        public static string ToString(int code)
         {
-            switch (code)
-            {
+            switch (code) {
                 case Empty:
                     return "Empty Message";
                 case GET:
@@ -225,6 +276,10 @@ namespace Com.AugustCellars.CoAP
                     return "PUT";
                 case DELETE:
                     return "DELETE";
+                case FETCH:
+                    return "FETCH";
+                case PATCH: return "PATCH";
+                case iPATCH: return "iPATCH";
                 case Created:
                     return "2.01 Created";
                 case Deleted:
@@ -235,6 +290,7 @@ namespace Com.AugustCellars.CoAP
                     return "2.04 Changed";
                 case Content:
                     return "2.05 Content";
+                case Continue: return "2.31 Continue";
                 case BadRequest:
                     return "4.00 Bad Request";
                 case Unauthorized:
@@ -251,12 +307,14 @@ namespace Com.AugustCellars.CoAP
                     return "4.06 Not Acceptable";
                 case RequestEntityIncomplete:
                     return "4.08 Request Entity Incomplete";
+                case Conflict: return "4.09 Conflict";
                 case PreconditionFailed:
                     return "4.12 Precondition Failed";
                 case RequestEntityTooLarge:
                     return "4.13 Request Entity Too Large";
                 case UnsupportedMediaType:
                     return "4.15 Unsupported Media Type";
+                case UnprocessableEntity: return "4.22 Unprocessable Entity";
                 case InternalServerError:
                     return "5.00 Internal Server Error";
                 case NotImplemented:
@@ -273,24 +331,19 @@ namespace Com.AugustCellars.CoAP
                     break;
             }
 
-            if (IsValid(code))
-            {
-                if (IsRequest(code))
-                {
-                    return String.Format("Unknown Request [code {0}]", code);
+            if (IsValid(code)) {
+                if (IsRequest(code)) {
+                    return $"Unknown Request [code {code}]";
                 }
-                else if (IsResponse(code))
-                {
-                    return String.Format("Unknown Response [code {0}]", code);
+                else if (IsResponse(code)) {
+                    return $"Unknown Response [code {code}]";
                 }
-                else
-                {
-                    return String.Format("Reserved [code {0}]", code);
+                else {
+                    return $"Reserved [code {code}]";
                 }
             }
-            else
-            {
-                return String.Format("Invalid Message [code {0}]", code);
+            else {
+                return $"Invalid Message [code {code}]";
             }
         }
     }
@@ -304,18 +357,36 @@ namespace Com.AugustCellars.CoAP
         /// GET method
         /// </summary>
         GET = 1,
+
         /// <summary>
         /// POST method
         /// </summary>
         POST = 2,
+
         /// <summary>
         /// PUT method
         /// </summary>
         PUT = 3,
+
         /// <summary>
         /// DELETE method
         /// </summary>
-        DELETE = 4
+        DELETE = 4,
+
+        /// <summary>
+        /// FETCH method [RFC8132]
+        /// </summary>
+        FETCH = 5,
+
+        /// <summary>
+        /// PATCH method [RFC8132]
+        /// </summary>
+        PATCH = 6,
+
+        /// <summary>
+        /// iPATCH method [RFC8132]
+        /// </summary>
+        iPATCH = 7
     }
 
     /// <summary>
@@ -327,90 +398,122 @@ namespace Com.AugustCellars.CoAP
         /// 2.01 Created
         /// </summary>
         Created = 65,
+
         /// <summary>
         /// 2.02 Deleted
         /// </summary>
         Deleted = 66,
+
         /// <summary>
         /// 2.03 Valid 
         /// </summary>
         Valid = 67,
+
         /// <summary>
         /// 2.04 Changed
         /// </summary>
         Changed = 68,
+
         /// <summary>
         /// 2.05 Content
         /// </summary>
         Content = 69,
+
         /// <summary>
-        /// 2.?? Continue
+        /// 2.31 Continue
         /// </summary>
         Continue = 95,
+
         /// <summary>
         /// 4.00 Bad Request
         /// </summary>
         BadRequest = 128,
+
         /// <summary>
         /// 4.01 Unauthorized
         /// </summary>
         Unauthorized = 129,
+
         /// <summary>
         /// 4.02 Bad Option
         /// </summary>
         BadOption = 130,
+
         /// <summary>
         /// 4.03 Forbidden
         /// </summary>
         Forbidden = 131,
+
         /// <summary>
         /// 4.04 Not Found
         /// </summary>
         NotFound = 132,
+
         /// <summary>
         /// 4.05 Method Not Allowed
         /// </summary>
         MethodNotAllowed = 133,
+
         /// <summary>
         /// 4.06 Not Acceptable
         /// </summary>
         NotAcceptable = 134,
+
         /// <summary>
-        /// 4.08 Request Entity Incomplete (draft-ietf-core-block)
+        /// 4.08 Request Entity Incomplete [RFC7959]
         /// </summary>
         RequestEntityIncomplete = 136,
+
         /// <summary>
-        /// 
+        /// 4.09 Conflict [RFC8132]
+        /// </summary>
+        Conflict = 137,
+
+        /// <summary>
+        /// 4.12 Precondition Failed
         /// </summary>
         PreconditionFailed = 140,
+
         /// <summary>
         /// 4.13 Request Entity Too Large
         /// </summary>
         RequestEntityTooLarge = 141,
+
         /// <summary>
         /// 4.15 Unsupported Media Type
         /// </summary>
         UnsupportedMediaType = 143,
+
+        /// <summary>
+        /// 4.22 Unprocessable Entity [RC8132]
+        /// </summary>
+        UnprocessableEntity = 150,
+
         /// <summary>
         /// 5.00 Internal Server Error
         /// </summary>
         InternalServerError = 160,
+
         /// <summary>
         /// 5.01 Not Implemented
         /// </summary>
         NotImplemented = 161,
+
         /// <summary>
         /// 5.02 Bad Gateway
         /// </summary>
         BadGateway = 162,
+
         /// <summary>
         /// 5.03 Service Unavailable 
         /// </summary>
         ServiceUnavailable = 163,
+
         /// <summary>
         /// 5.04 Gateway Timeout
         /// </summary>
         GatewayTimeout = 164,
+
         /// <summary>
         /// 5.05 Proxying Not Supported
         /// </summary>
