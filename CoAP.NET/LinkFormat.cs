@@ -17,6 +17,7 @@ using Com.AugustCellars.CoAP.EndPoint.Resources;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Server.Resources;
 using Com.AugustCellars.CoAP.Util;
+using PeterO.Cbor;
 using Resource = Com.AugustCellars.CoAP.EndPoint.Resources.Resource;
 
 namespace Com.AugustCellars.CoAP
@@ -97,6 +98,17 @@ namespace Com.AugustCellars.CoAP
             return linkFormat.ToString();
         }
 
+        public static byte[] SerializeCbor(IResource root, IEnumerable<String> queries)
+        {
+            CBORObject linkFormat = CBORObject.NewArray();
+
+            foreach (IResource child in root.Children) {
+                SerializeTree(child, queries, linkFormat);
+            }
+
+            return linkFormat.EncodeToBytes();
+        }
+
         public static IEnumerable<WebLink> Parse(String linkFormat)
         {
             if (!String.IsNullOrEmpty(linkFormat))
@@ -166,6 +178,13 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
+        private static void SerializeTree(IResource resource, IEnumerable<string> queries, CBORObject cbor)
+        {
+            if (resource.Visible && Matches(resource, queries)) {
+                SerializeResource(resource, cbor);
+            }
+        }
+
         private static void SerializeResource(IResource resource, StringBuilder sb)
         {
             sb.Append("<")
@@ -173,6 +192,14 @@ namespace Com.AugustCellars.CoAP
                 .Append(resource.Name)
                 .Append(">");
             SerializeAttributes(resource.Attributes, sb);
+        }
+
+        private static void SerializeResource(IResource resource, CBORObject cbor)
+        {
+            CBORObject obj = CBORObject.NewMap();
+
+            obj.Add(1, resource.Path + resource.Name);
+            SerializeAttributes(resource.Attributes, obj);
         }
 
         private static void SerializeAttributes(ResourceAttributes attributes, StringBuilder sb)
@@ -186,6 +213,17 @@ namespace Com.AugustCellars.CoAP
                     continue;
                 sb.Append(Separator);
                 SerializeAttribute(name, values, sb);
+            }
+        }
+
+        private static void SerializeAttributes(ResourceAttributes attributes, CBORObject cbor)
+        {
+            List<string> keys = new List<string>(attributes.Keys);
+            keys.Sort();
+            foreach (string name in keys) {
+                List<string> values = new List<string>(attributes.GetValues(name));
+                if (values.Count == 0) continue;
+                SerializeAttribute(name, values, cbor);
             }
         }
 
@@ -222,6 +260,38 @@ namespace Com.AugustCellars.CoAP
                 if (quotes)
                     sb.Append('"');
             }
+        }
+
+        private static void SerializeAttribute(String name, IEnumerable<String> values, CBORObject cbor)
+        {
+            Boolean quotes = false;
+            StringBuilder sb = new StringBuilder();
+
+            using (IEnumerator<String> it = values.GetEnumerator()) {
+                if (!it.MoveNext() || String.IsNullOrEmpty(it.Current)) {
+                    cbor.Add(name, CBORObject.True);
+                    return;
+                }
+
+                String first = it.Current;
+                Boolean more = it.MoveNext();
+                if (more || !IsNumber(first)) {
+                    sb.Append('"');
+                    quotes = true;
+                }
+
+                sb.Append(first);
+                while (more) {
+                    sb.Append(' ');
+                    sb.Append(it.Current);
+                    more = it.MoveNext();
+                }
+
+                if (quotes)
+                    sb.Append('"');
+            }
+
+            cbor.Add(name, sb.ToString());
         }
 
         private static Boolean IsNumber(String value)

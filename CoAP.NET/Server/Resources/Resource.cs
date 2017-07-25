@@ -362,6 +362,15 @@ namespace Com.AugustCellars.CoAP.Server.Resources
                 case Method.DELETE:
                     DoDelete(ce);
                     break;
+                case Method.FETCH:
+                    DoFetch(ce);
+                    break;
+                case Method.PATCH:
+                    DoPatch(ce);
+                    break;
+                case Method.iPATCH:
+                    DoiPatch(ce);
+                    break;
                 default:
                     ce.Respond(StatusCode.BadRequest);
                     break;
@@ -408,6 +417,35 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// The response code to a DELETE request should be a 2.02 (Deleted).
         /// </summary>
         protected virtual void DoDelete(CoapExchange exchange)
+        {
+            exchange.Respond(StatusCode.MethodNotAllowed);
+        }
+
+        /// <summary>
+        /// Handles the PATCH request in the given CoAPExchange.
+        /// By default it responds with a 4.05 (Method Not Allowed).
+        /// Override this method to respond differently.
+        /// </summary>
+        protected virtual void DoPatch(CoapExchange exchange)
+        {
+            exchange.Respond(StatusCode.MethodNotAllowed);
+        }
+        /// <summary>
+        /// Handles the FETCH request in the given CoAPExchange.
+        /// By default it responds with a 4.05 (Method Not Allowed).
+        /// Override this method to respond differently.
+        /// </summary>
+        protected virtual void DoFetch(CoapExchange exchange)
+        {
+            exchange.Respond(StatusCode.MethodNotAllowed);
+        }
+
+        /// <summary>
+        /// Handles the iPATCH request in the given CoAPExchange.
+        /// By default it responds with a 4.05 (Method Not Allowed).
+        /// Override this method to respond differently.
+        /// </summary>
+        protected virtual void DoiPatch(CoapExchange exchange)
         {
             exchange.Respond(StatusCode.MethodNotAllowed);
         }

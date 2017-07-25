@@ -21,9 +21,9 @@ namespace Com.AugustCellars.CoAP
     /// </summary>
     public class Option
     {
-        private static readonly IConvertor<Int32> int32Convertor = new Int32Convertor();
-        private static readonly IConvertor<Int64> int64Convertor = new Int64Convertor();
-        private static readonly IConvertor<String> stringConvertor = new StringConvertor();
+        private static readonly IConvertor<Int32> _Int32Convertor = new Int32Convertor();
+        private static readonly IConvertor<Int64> _Int64Convertor = new Int64Convertor();
+        private static readonly IConvertor<String> _StringConvertor = new StringConvertor();
 
         /// <summary>
         /// Initializes an option.
@@ -44,7 +44,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public String Name
         {
-            get => Option.ToString(Type);
+            get => ToString(Type);
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Int32 Length
         {
-            get => null == RawValue ? 0 : this.RawValue.Length;
+            get => null == RawValue ? 0 : RawValue.Length;
         }
 
         /// <summary>
@@ -65,11 +65,11 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public String StringValue
         {
-            get => stringConvertor.Decode(RawValue);
+            get => _StringConvertor.Decode(RawValue);
             set
             {
                 if (value == null) throw ThrowHelper.ArgumentNull("value");
-                RawValue = stringConvertor.Encode(value);
+                RawValue = _StringConvertor.Encode(value);
             }
         }
 
@@ -80,8 +80,8 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Int32 IntValue
         {
-            get => int32Convertor.Decode(this.RawValue);
-            set => RawValue = int32Convertor.Encode(value);
+            get => _Int32Convertor.Decode(RawValue);
+            set => RawValue = _Int32Convertor.Encode(value);
         }
 
         /// <summary>
@@ -89,8 +89,8 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public Int64 LongValue
         {
-            get => int64Convertor.Decode(RawValue);
-            set => RawValue = int64Convertor.Encode(value);
+            get => _Int64Convertor.Decode(RawValue);
+            set => RawValue = _Int64Convertor.Encode(value);
         }
 
         /// <summary>
@@ -100,8 +100,8 @@ namespace Com.AugustCellars.CoAP
         {
             get
             {
-                IConvertor convertor = GetConvertor(this.Type);
-                return null == convertor ? null : convertor.Decode(this.RawValue);
+                IConvertor convertor = GetConvertor(Type);
+                return null == convertor ? null : convertor.Decode(RawValue);
             }
         }
 
@@ -113,7 +113,7 @@ namespace Com.AugustCellars.CoAP
             get
             {
                 // TODO refactor
-                switch (this.Type)
+                switch (Type)
                 {
                     case OptionType.MaxAge:
                         return IntValue == CoapConstants.DefaultMaxAge;
@@ -123,6 +123,10 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
+        /// <summary>
+        /// Format the value based on expected type.
+        /// </summary>
+        /// <returns></returns>
         public String ToValueString()
         {
             switch (GetFormatByType(Type))
@@ -153,11 +157,13 @@ namespace Com.AugustCellars.CoAP
         public override Int32 GetHashCode()
         {
             const Int32 prime = 31;
-            Int32 result = (Int32) this.Type;
+            Int32 result = (Int32) Type;
             result = prime * result + ByteArrayUtils.ComputeHash(RawValue);
             return result;
         }
 
+        
+        /// <inheritdoc/>
         public override Boolean Equals(Object obj)
         {
             if (null == obj) return false;
@@ -397,7 +403,7 @@ namespace Com.AugustCellars.CoAP
         /// <returns><code>true</code> if the option is critical</returns>
         public static Boolean IsCritical(OptionType type)
         {
-            return ((Int32)type & 1) > 1;
+            return ((Int32)type & 1) > 0;
         }
 
         /// <summary>
@@ -407,7 +413,7 @@ namespace Com.AugustCellars.CoAP
         /// <returns><code>true</code> if the option is elective</returns>
         public static Boolean IsElective(OptionType type)
         {
-            return ((Int32)type & 1) == 0;
+            return !IsCritical(type);
         }
 
         /// <summary>
@@ -445,7 +451,7 @@ namespace Com.AugustCellars.CoAP
 #pragma warning disable 612, 618
                 case OptionType.FencepostDivisor:
 #pragma warning restore 612, 618
-                    return int32Convertor;
+                    return _Int32Convertor;
                 case OptionType.ProxyUri:
                 case OptionType.ETag:
                 case OptionType.UriHost:
@@ -455,7 +461,7 @@ namespace Com.AugustCellars.CoAP
                 case OptionType.UriQuery:
                 case OptionType.IfMatch:
                 case OptionType.IfNoneMatch:
-                    return stringConvertor;
+                    return _StringConvertor;
                 default:
                     return null;
             }
