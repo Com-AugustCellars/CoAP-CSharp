@@ -54,7 +54,9 @@
     <Compile Include="Http\IHttpResponse.cs" />
     <Compile Include="Http\IServiceProvider.cs" />
     <Compile Include="Http\RemotingHttpRequest.cs" />
+    <Compile Include="Http\RemotingHttpResponse.cs" />
     <Compile Include="Http\WebServer.cs" />
+    <Compile Include="Http\WebServerFormatterSinkProvider.cs" />
     <Compile Include="ICacheResource.cs" />
     <Compile Include="IProxyCoAPResolver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
