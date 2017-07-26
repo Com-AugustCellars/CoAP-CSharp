@@ -274,6 +274,7 @@ namespace Com.AugustCellars.CoAP.Proxy
                 }
                 else {
                     coapRequest.URI = new Uri(uriString);
+                    coapRequest.UriQuery = httpRequest.QueryString;
                 }
 
                 // TODO set the proxy as the sender to receive the response correctly
@@ -285,6 +286,7 @@ namespace Com.AugustCellars.CoAP.Proxy
 
                 // set the uri string as uri-path option
                 coapRequest.UriPath = uriString;
+                coapRequest.UriQuery = httpRequest.QueryString;
             }
 
             // translate the http headers in coap options
