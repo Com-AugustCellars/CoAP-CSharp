@@ -14,7 +14,7 @@ namespace Com.AugustCellars.CoAP.Examples
             ForwardingResource coap2Http = new ProxyHttpClientResource("coap2Http");
 
             // Create CoAP Server on PORT with proxy resources form CoAP to CoAP and HTTP
-            CoapServer coapServer = new CoapServer(CoapConfig.Default.DefaultPort);
+            CoapServer coapServer = new CoapServer(CoapConfig.Default.DefaultPort+2);
             coapServer.Add(coap2Coap);
             coapServer.Add(coap2Http);
             coapServer.Add(new TargetResource("target"));

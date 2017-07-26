@@ -58,9 +58,9 @@ namespace Com.AugustCellars.CoAP.Proxy
         public HttpStack(Int32 httpPort)
         {
             _webServer = new WebServer(ServerName, httpPort);
-            _webServer.AddProvider(new BaseRequestHandler());
             _webServer.AddProvider(new ProxyRequestHandler(this, ProxyResourceName, true));
             _webServer.AddProvider(new ProxyRequestHandler(this, LocalResourceName, false));
+            _webServer.AddProvider(new BaseRequestHandler());
         }
 
         public void Stop()

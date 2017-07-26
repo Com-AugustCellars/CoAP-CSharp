@@ -264,6 +264,10 @@ namespace Com.AugustCellars.CoAP.Proxy
                         uriString = "coap://" + uriString;
                     }
 
+                    if (httpRequest.QueryString != null) {
+                        uriString += "?" + httpRequest.QueryString;
+                    }
+
                     // the uri will be set as a proxy-uri option
                     // set the proxy-uri option to allow the lower layers to underes
                     coapRequest.SetOption(Option.Create(OptionType.ProxyUri, uriString));

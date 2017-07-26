@@ -86,7 +86,7 @@ namespace Com.AugustCellars.CoAP.Proxy.Http
             {
                 _webServer = webServer;
                 NextChannelSink = next;
-                if (channel != null) throw new Exception("We don't use this");
+               // if (channel != null) /throw new Exception("We don't use this");
             }
 
             /// <summary>
