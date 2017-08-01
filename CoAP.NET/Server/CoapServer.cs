@@ -52,18 +52,31 @@ namespace Com.AugustCellars.CoAP.Server
         /// <param name="config">the configuration, or <code>null</code> for default</param>
         /// <param name="ports">the ports to bind to</param>
         public CoapServer(ICoapConfig config, params Int32[] ports)
+            : this(config, null, ports)
+        {
+        }
+
+        /// <summary>
+        /// Constructs a server with the specified configuration that
+        /// listens to the given ports.
+        /// </summary>
+        /// <param name="config">the configuration, or <code>null</code> for default</param>
+        /// <param name="rootResource">root resource object to use</param>
+        /// <param name="ports">the ports to bind to</param>
+        public CoapServer(ICoapConfig config, IResource rootResource, params int[] ports)
         {
             Config = config ?? CoapConfig.Default;
-            _root = new RootResource(this);
+            _root = rootResource ?? new RootResource(this);
             _deliverer = new ServerMessageDeliverer(Config, _root);
 
             Resource wellKnown = new Resource(".well-known", false);
             wellKnown.Add(new DiscoveryResource(_root));
             _root.Add(wellKnown);
 
-            foreach (Int32 port in ports) {
+            foreach (int port in ports) {
                 Bind(port);
             }
+
         }
 
         /// <summary>
@@ -255,12 +268,10 @@ namespace Com.AugustCellars.CoAP.Server
 
         class RootResource : Resource
         {
-            readonly CoapServer _server;
 
             public RootResource(CoapServer server)
                 : base(String.Empty)
             {
-                _server = server;
             }
 
             protected override void DoGet(CoapExchange exchange)

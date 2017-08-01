@@ -17,6 +17,7 @@ This project is NOT to be used for commercial purposes.  It is intented only for
 
 1.1.7
   - Missed the public on FileLogManager class
+  - Add method and dispatch code for dealing with FETCH, PATCH and iPATCH.  These methods were defined in RFC 8132.
 
 1.1.6
   - Re-enable DTLS reliability layer.  It was removed for debugging purposes.
