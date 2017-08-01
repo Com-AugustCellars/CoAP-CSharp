@@ -52,15 +52,15 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <inheritdoc/>
         public override void SendRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
-            if (request.HasOption(OptionType.Block2) && request.Block2.NUM > 0)
-            {
+            if (request.HasOption(OptionType.Block2) && request.Block2.NUM > 0) {
                 // This is the case if the user has explicitly added a block option
                 // for random access.
                 // Note: We do not regard it as random access when the block num is
                 // 0. This is because the user might just want to do early block
                 // size negotiation but actually wants to receive all blocks.
-                if (log.IsDebugEnabled)
-                    log.Debug("Request carries explicit defined block2 option: create random access blockwise status");
+
+                log.Debug("Request carries explicit defined block2 option: create random access blockwise status");
+
                 BlockwiseStatus status = new BlockwiseStatus(request.ContentFormat);
                 BlockOption block2 = request.Block2;
                 status.CurrentSZX = block2.SZX;
@@ -69,19 +69,17 @@ namespace Com.AugustCellars.CoAP.Stack
                 exchange.ResponseBlockStatus = status;
                 base.SendRequest(nextLayer, exchange, request);
             }
-            else if (RequiresBlockwise(request))
-            {
+            else if (RequiresBlockwise(request)) {
                 // This must be a large POST or PUT request
-                if (log.IsDebugEnabled)
-                    log.Debug("Request payload " + request.PayloadSize + "/" + _maxMessageSize + " requires Blockwise.");
+                log.Debug(m => m("Request payload {0}/{1} requires Blockwise.", request.PayloadSize, _maxMessageSize));
+
                 BlockwiseStatus status = FindRequestBlockStatus(exchange, request);
                 Request block = GetNextRequestBlock(request, status);
                 exchange.RequestBlockStatus = status;
                 exchange.CurrentRequest = block;
                 base.SendRequest(nextLayer, exchange, block);
             }
-            else
-            {
+            else {
                 exchange.CurrentRequest = request;
                 base.SendRequest(nextLayer, exchange, request);
             }
@@ -215,44 +213,44 @@ namespace Com.AugustCellars.CoAP.Stack
         public override void SendResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
             BlockOption block1 = exchange.Block1ToAck;
-            if (block1 != null)
+            if (block1 != null) {
                 exchange.Block1ToAck = null;
+            }
 
-            if (RequiresBlockwise(exchange, response))
-            {
-                if (log.IsDebugEnabled)
-                    log.Debug("Response payload " + response.PayloadSize + "/" + _maxMessageSize + " requires Blockwise");
+            if (RequiresBlockwise(exchange, response)) {
+                log.Debug(m => m("Response payload {0}/{1} requires Blockwise", response.PayloadSize, _maxMessageSize));
 
                 BlockwiseStatus status = FindResponseBlockStatus(exchange, response);
 
                 Response block = GetNextResponseBlock(response, status);
-                
-                if (block1 != null) // in case we still have to ack the last block1
-                    block.SetOption(block1);
-                if (block.Token == null)
-                    block.Token = exchange.Request.Token;
 
-                if (status.Complete)
-                {
+                if (block1 != null) {
+                    // in case we still have to ack the last block1
+                    block.SetOption(block1);
+                }
+
+                if (block.Token == null) {
+                    block.Token = exchange.Request.Token;
+                }
+
+                if (status.Complete) {
                     // clean up blockwise status
-                    if (log.IsDebugEnabled)
-                        log.Debug("Ongoing finished on first block " + status);
+                    log.Debug(m => m("Ongoing finished on first block {0}", status));
                     exchange.ResponseBlockStatus = null;
                     ClearBlockCleanup(exchange);
                 }
-                else
-                {
-                    if (log.IsDebugEnabled)
-                        log.Debug("Ongoing started " + status);
+                else {
+                    log.Debug(m => m("Ongoing started {0}", status));
                 }
 
                 exchange.CurrentResponse = block;
                 base.SendResponse(nextLayer, exchange, block);
             }
-            else
-            {
-                if (block1 != null)
+            else {
+                if (block1 != null) {
                     response.SetOption(block1);
+                }
+
                 exchange.CurrentResponse = response;
                 // Block1 transfer completed
                 ClearBlockCleanup(exchange);
@@ -465,21 +463,22 @@ namespace Com.AugustCellars.CoAP.Stack
         private BlockwiseStatus FindResponseBlockStatus(Exchange exchange, Response response)
         {
             BlockwiseStatus status = exchange.ResponseBlockStatus;
-            if (status == null)
-            {
-                status = new BlockwiseStatus(response.ContentType);
-                status.CurrentSZX = BlockOption.EncodeSZX(_defaultBlockSize);
+
+            if (status == null) {
+                status = new BlockwiseStatus(response.ContentType) {
+                    CurrentSZX = BlockOption.EncodeSZX(_defaultBlockSize)
+                };
                 exchange.ResponseBlockStatus = status;
-                if (log.IsDebugEnabled)
-                    log.Debug("There is no blockwise status yet. Create and set new Block2 status: " + status);
+
+                log.Debug(m=> m("There is no blockwise status yet. Create and set new Block2 status: {0}", status));
             }
-            else
-            {
-                if (log.IsDebugEnabled)
-                    log.Debug("Current Block2 status: " + status);
+            else {
+                    log.Debug(m => m("Current Block2 status: {0}", status));
             }
+
             // sets a timeout to complete exchange
             PrepareBlockCleanup(exchange);
+
             return status;
         }
 
@@ -514,16 +513,15 @@ namespace Com.AugustCellars.CoAP.Stack
             Int32 szx = status.CurrentSZX;
             Int32 num = status.CurrentNUM;
 
-            if (response.HasOption(OptionType.Observe))
-            {
+            if (response.HasOption(OptionType.Observe)) {
                 // a blockwise notification transmits the first block only
                 block = response;
             }
-            else
-            {
-                block = new Response(response.StatusCode);
-                block.Destination = response.Destination;
-                block.Token = response.Token;
+            else {
+                block = new Response(response.StatusCode) {
+                    Destination = response.Destination,
+                    Token = response.Token
+                };
                 block.SetOptions(response.GetOptions());
                 block.TimedOut += (o, e) => response.IsTimedOut = true;
             }
@@ -531,8 +529,8 @@ namespace Com.AugustCellars.CoAP.Stack
             Int32 payloadSize = response.PayloadSize;
             Int32 currentSize = 1 << (4 + szx);
             Int32 from = num * currentSize;
-            if (payloadSize > 0 && payloadSize > from)
-            {
+
+            if (payloadSize > 0 && payloadSize > from) {
                 Int32 to = Math.Min((num + 1) * currentSize, response.PayloadSize);
                 Int32 length = to - from;
                 Byte[] blockPayload = new Byte[length];
@@ -548,8 +546,7 @@ namespace Com.AugustCellars.CoAP.Stack
 
                 status.Complete = !m;
             }
-            else
-            {
+            else {
                 block.AddOption(new BlockOption(OptionType.Block2, num, szx, false));
                 block.Last = true;
                 status.Complete = true;
@@ -598,25 +595,24 @@ namespace Com.AugustCellars.CoAP.Stack
 
         /// <summary>
         /// Schedules a clean-up task.
+        /// If a clean-up task already exists, it will be disposed of.
         /// Use the <see cref="ICoapConfig.BlockwiseStatusLifetime"/> to set the timeout.
         /// </summary>
         protected void PrepareBlockCleanup(Exchange exchange)
         {
-            Timer timer = new Timer();
-            timer.AutoReset = false;
-            timer.Interval = _blockTimeout;
+            Timer timer = new Timer {
+                AutoReset = false,
+                Interval = _blockTimeout
+            };
             timer.Elapsed += (o, e) => BlockwiseTimeout(exchange);
 
             Timer old = exchange.Set("BlockCleanupTimer", timer) as Timer;
-            if (old != null)
-            {
-                try
-                {
+            if (old != null) {
+                try {
                     old.Stop();
                     old.Dispose();
                 }
-                catch (ObjectDisposedException)
-                {
+                catch (ObjectDisposedException) {
                     // ignore
                 }
             }
@@ -630,31 +626,28 @@ namespace Com.AugustCellars.CoAP.Stack
         protected void ClearBlockCleanup(Exchange exchange)
         {
             Timer timer = exchange.Remove("BlockCleanupTimer") as Timer;
-            if (timer != null)
-            {
-                try
-                {
+            if (timer != null) {
+                try {
                     timer.Stop();
                     timer.Dispose();
                 }
-                catch (ObjectDisposedException)
-                {
+                catch (ObjectDisposedException) {
                     // ignore
                 }
             }
         }
 
+        /// <summary>
+        /// Time to try and do clean up.
+        /// </summary>
+        /// <param name="exchange">exchange to clean up</param>
         private void BlockwiseTimeout(Exchange exchange)
         {
-            if (exchange.Request == null)
-            {
-                if (log.IsInfoEnabled)
-                    log.Info("Block1 transfer timed out: " + exchange.CurrentRequest);
+            if (exchange.Request == null) {
+                log.Info(m => m("Block1 transfer timed out: {0}", exchange.CurrentRequest));
             }
-            else
-            {
-                if (log.IsInfoEnabled)
-                    log.Info("Block2 transfer timed out: " + exchange.Request);
+            else {
+                log.Info(m => m("Block2 transfer timed out: {0}", exchange.Request));
             }
             exchange.Complete = true;
         }

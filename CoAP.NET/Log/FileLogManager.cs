@@ -2,8 +2,15 @@
 
 namespace Com.AugustCellars.CoAP.Log
 {
-    class FileLogManager : ILogManager
+    /// <summary>
+    /// Log to file to make life easier to get information
+    /// </summary>
+    public class FileLogManager : ILogManager
     {
+        /// <summary>
+        /// Create a file log manager item
+        /// </summary>
+        /// <param name="writeTo">File to write things to</param>
         public FileLogManager(System.IO.TextWriter writeTo)
         {
             LogStream = writeTo;
