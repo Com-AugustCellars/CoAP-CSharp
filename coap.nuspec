@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>Com.AugustCellars.CoAP</id>
-        <version>1.1.7</version>
+        <version>1.1.8</version>
         <title>Com.AugustCellars.CoAP</title>
         <authors>Jim Schaad</authors>
         <owners>jimsch</owners>
@@ -15,10 +15,12 @@
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
 This project is NOT to be used for commercial purposes.  It is intented only for research and verification work.
 
+1.1.8
+  - Rewrite the LinkFormat code - introduce a strict parsing mode and setup for doing a resource directory.
+
 1.1.7
   - Missed the public on FileLogManager class
   - Add method and dispatch code for dealing with FETCH, PATCH and iPATCH.  These methods were defined in RFC 8132.
-
 1.1.6
   - Re-enable DTLS reliability layer.  It was removed for debugging purposes.
   - Re-enable observer reconnect attempts.  The ability to disable it remains, this just changes the default value.

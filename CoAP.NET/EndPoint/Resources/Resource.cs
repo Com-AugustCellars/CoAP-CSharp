@@ -11,42 +11,54 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.Observe;
 using Com.AugustCellars.CoAP.Util;
+using Com.AugustCellars.CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.Threading;
 
 namespace Com.AugustCellars.CoAP.EndPoint.Resources
 {
     /// <summary>
     /// This class describes the functionality of a CoAP resource.
     /// </summary>
-    public abstract class Resource : IComparable<Resource>
+    public partial class RemoteResource : IComparable<RemoteResource>, IResource
     {
         private static ILogger log = LogManager.GetLogger(typeof(Resource));
 
         private Int32 _totalSubResourceCount;
-        private String _resourceIdentifier;
         private HashSet<LinkAttribute> _attributes;
-        private Resource _parent;
-        private SortedDictionary<String, Resource> _subResources;
+        private RemoteResource _parent;
+        private SortedDictionary<String, RemoteResource> _subResources;
         private Boolean _hidden;
 
         /// <summary>
         /// Initialize a resource.
         /// </summary>
         /// <param name="resourceIdentifier">The identifier of this resource</param>
-        public Resource(String resourceIdentifier) : this(resourceIdentifier, false) { }
+        public RemoteResource(String resourceIdentifier) : this(resourceIdentifier, false)
+        {
+        }
 
         /// <summary>
         /// Initialize a resource.
         /// </summary>
         /// <param name="resourceIdentifier">The identifier of this resource</param>
         /// <param name="hidden">True if this resource is hidden</param>
-        public Resource(String resourceIdentifier, Boolean hidden)
+        public RemoteResource(String resourceIdentifier, Boolean hidden)
         {
-            this._resourceIdentifier = resourceIdentifier;
+            this.Name = resourceIdentifier;
             this._hidden = hidden;
             this._attributes = new HashSet<LinkAttribute>();
+        }
+
+        /// <inheritdoc/>
+        public String Uri
+        {
+            get => Path + Name;
         }
 
         /// <summary>
@@ -54,33 +66,25 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         /// </summary>
         public String Path
         {
-            get
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append(Name);
-                if (_parent == null)
-                    sb.Append("/");
-                else
-                {
-                    Resource res = _parent;
-                    while (res != null)
-                    {
-                        sb.Insert(0, "/");
-                        sb.Insert(0, res.Name);
-                        res = res._parent;
-                    }
-                }
-                return sb.ToString();
-            }
+            get => String.Empty;
+            set => throw new NotSupportedException();
         }
 
-        public String Name
+        /// <inheritdoc/>
+        public IResource Parent
         {
-            get { return _resourceIdentifier; }
-            set { _resourceIdentifier = value; }
+            get => _parent;
+            set => throw new NotImplementedException();
         }
 
-        public ICollection<LinkAttribute> Attributes
+        /// <inheritdoc/>
+        public String Name { get; set; }
+
+        /// <inheritdoc/>
+        public ResourceAttributes Attributes { get; } = new ResourceAttributes();
+
+        [Obsolete("Use Attributes")]
+        public ICollection<LinkAttribute> LinkAttributes
         {
             get { return _attributes; }
         }
@@ -88,10 +92,8 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         public IList<LinkAttribute> GetAttributes(String name)
         {
             List<LinkAttribute> list = new List<LinkAttribute>();
-            foreach (LinkAttribute attr in Attributes)
-            {
-                if (attr.Name.Equals(name))
-                    list.Add(attr);
+            foreach (LinkAttribute attr in LinkAttributes) {
+                if (attr.Name.Equals(name)) list.Add(attr);
             }
             return list.AsReadOnly();
         }
@@ -99,18 +101,20 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         public Boolean SetAttribute(LinkAttribute attr)
         {
             // Adds depending on the Link Format rules
-            return LinkFormat.AddAttribute(Attributes, attr);
+            return LinkFormat.AddAttribute(LinkAttributes, attr);
         }
 
         public Boolean ClearAttribute(String name)
         {
             Boolean cleared = false;
-            foreach (LinkAttribute attr in GetAttributes(name))
-            {
+            foreach (LinkAttribute attr in GetAttributes(name)) {
                 cleared |= _attributes.Remove(attr);
             }
             return cleared;
         }
+
+        /// <inheritdoc/>
+        public Boolean Visible { get => !_hidden; }
 
         public Boolean Hidden
         {
@@ -118,28 +122,22 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
             set { _hidden = value; }
         }
 
-        public IList<String> ResourceTypes
+        public IList<string> ResourceTypes
         {
-            get
-            {
-                return GetStringValues(GetAttributes(LinkFormat.ResourceType));
-            }
+            get { return GetStringValues(GetAttributes(LinkFormat.ResourceType)); }
         }
 
         /// <summary>
         /// Gets or sets the type attribute of this resource.
         /// </summary>
-        public String ResourceType
+        public string ResourceType
         {
             get
             {
-                IList<LinkAttribute> attrs = GetAttributes(LinkFormat.ResourceType);
-                return attrs.Count == 0 ? null : attrs[0].StringValue;
+                IList<string> attrs = Attributes.GetResourceTypes().ToList();
+                return attrs.Count == 0 ? null : attrs[0];
             }
-            set
-            {
-                SetAttribute(new LinkAttribute(LinkFormat.ResourceType, value));
-            }
+            set { SetAttribute(new LinkAttribute(LinkFormat.ResourceType, value)); }
         }
 
         /// <summary>
@@ -161,10 +159,7 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
 
         public IList<String> InterfaceDescriptions
         {
-            get
-            {
-                return GetStringValues(GetAttributes(LinkFormat.InterfaceDescription));
-            }
+            get { return GetStringValues(GetAttributes(LinkFormat.InterfaceDescription)); }
         }
 
         /// <summary>
@@ -177,23 +172,18 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
                 IList<LinkAttribute> attrs = GetAttributes(LinkFormat.InterfaceDescription);
                 return attrs.Count == 0 ? null : attrs[0].StringValue;
             }
-            set
-            {
-                SetAttribute(new LinkAttribute(LinkFormat.InterfaceDescription, value));
-            }
+            set { SetAttribute(new LinkAttribute(LinkFormat.InterfaceDescription, value)); }
         }
 
         public IList<Int32> GetContentTypeCodes
         {
-            get
-            {
-                return GetIntValues(GetAttributes(LinkFormat.ContentType));
-            }
+            get { return GetIntValues(GetAttributes(LinkFormat.ContentType)); }
         }
 
         /// <summary>
         /// Gets or sets the content type code attribute of this resource.
         /// </summary>
+        [Obsolete("Use Attributes.GetContentTypes()")]
         public Int32 ContentTypeCode
         {
             get
@@ -201,10 +191,7 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
                 IList<LinkAttribute> attrs = GetAttributes(LinkFormat.ContentType);
                 return attrs.Count == 0 ? 0 : attrs[0].IntValue;
             }
-            set
-            {
-                SetAttribute(new LinkAttribute(LinkFormat.ContentType, value));
-            }
+            set { SetAttribute(new LinkAttribute(LinkFormat.ContentType, value)); }
         }
 
         /// <summary>
@@ -217,10 +204,7 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
                 IList<LinkAttribute> attrs = GetAttributes(LinkFormat.MaxSizeEstimate);
                 return attrs.Count == 0 ? -1 : attrs[0].IntValue;
             }
-            set
-            {
-                SetAttribute(new LinkAttribute(LinkFormat.MaxSizeEstimate, value));
-            }
+            set { SetAttribute(new LinkAttribute(LinkFormat.MaxSizeEstimate, value)); }
         }
 
         /// <summary>
@@ -228,16 +212,11 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         /// </summary>
         public Boolean Observable
         {
-            get
-            {
-                return GetAttributes(LinkFormat.Observable).Count > 0;
-            }
+            get { return GetAttributes(LinkFormat.Observable).Count > 0; }
             set
             {
-                if (value)
-                    SetAttribute(new LinkAttribute(LinkFormat.Observable, value));
-                else
-                    ClearAttribute(LinkFormat.Observable);
+                if (value) SetAttribute(new LinkAttribute(LinkFormat.Observable, value));
+                else ClearAttribute(LinkFormat.Observable);
             }
         }
 
@@ -257,45 +236,58 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
             get { return null == _subResources ? 0 : _subResources.Count; }
         }
 
+
         /// <summary>
         /// Removes this resource from its parent.
         /// </summary>
         public void Remove()
         {
-            if (_parent != null)
-                _parent.RemoveSubResource(this);
+            if (_parent != null) _parent.RemoveSubResource(this);
+        }
+
+        /// <inheritdoc/>
+        public bool Remove(IResource child)
+        {
+            ((RemoteResource) child).Remove();
+            return true;
+        }
+
+
+        /// <inheritdoc/>
+        public IResource GetChild(string name)
+        {
+            return GetResource(name);
         }
 
         /// <summary>
         /// Gets sub-resources of this resource.
         /// </summary>
         /// <returns></returns>
-        public Resource[] GetSubResources()
+        public RemoteResource[] GetSubResources()
         {
-            if (null == _subResources)
-                return new Resource[0];
+            if (null == _subResources) return new RemoteResource[0];
 
-            Resource[] resources = new Resource[_subResources.Count];
+            RemoteResource[] resources = new RemoteResource[_subResources.Count];
             this._subResources.Values.CopyTo(resources, 0);
             return resources;
         }
 
-        public Resource GetResource(String path)
+        public RemoteResource GetResource(String path)
         {
             return GetResource(path, false);
         }
 
-        public Resource GetResource(String path, Boolean last)
+        public RemoteResource GetResource(String path, Boolean last)
         {
-            if (String.IsNullOrEmpty(path))
-                return this;
+            if (String.IsNullOrEmpty(path)) return this;
 
+            return _subResources[path];
+
+#if false
             // find root for absolute path
-            if (path.StartsWith("/"))
-            {
-                Resource root = this;
-                while (root._parent != null)
-                    root = root._parent;
+            if (path.StartsWith("/")) {
+                RemoteResource root = this;
+                while (root._parent != null) root = root._parent;
                 path = path.Equals("/") ? null : path.Substring(1);
                 return root.GetResource(path);
             }
@@ -304,117 +296,63 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
             String head = null, tail = null;
 
             // note: "some/resource/" addresses a resource "" under "resource"
-            if (pos == -1)
-            {
+            if (pos == -1) {
                 head = path;
             }
-            else
-            {
+            else {
                 head = path.Substring(0, pos);
                 tail = path.Substring(pos + 1);
             }
 
-            if (SubResources.ContainsKey(head))
-                return SubResources[head].GetResource(tail, last);
-            else if (last)
-                return this;
-            else
-                return null;
+            if (SubResources.ContainsKey(head)) return SubResources[head].GetResource(tail, last);
+            else if (last) return this;
+            else return null;
+#endif
         }
 
-        private SortedDictionary<String, Resource> SubResources
+        /// <inheritdoc/>
+        public IEnumerable<IResource> Children {
+            get
+            {
+                if (_subResources == null) return null;
+                return SubResources.Values;
+            }
+        }
+
+
+        private SortedDictionary<String, RemoteResource> SubResources
         {
             get
             {
-                if (_subResources == null)
-                    _subResources = new SortedDictionary<String, Resource>();
+                if (_subResources == null) _subResources = new SortedDictionary<String, RemoteResource>();
                 return _subResources;
             }
+        }
+
+        /// <inheritdoc/>
+        public void Add(IResource resource)
+        {
+            AddSubResource((RemoteResource) resource);
         }
 
         /// <summary>
         /// Adds a resource as a sub-resource of this resource.
         /// </summary>
         /// <param name="resource">The sub-resource to be added</param>
-        public void AddSubResource(Resource resource)
+        public void AddSubResource(RemoteResource resource)
         {
-            if (null == resource)
-                throw new ArgumentNullException("resource");
+            if (null == resource) throw new ArgumentNullException(nameof(resource));
 
-            // no absolute paths allowed, use root directly
-            while (resource.Name.StartsWith("/"))
-            {
-                if (_parent != null)
-                {
-                    if (log.IsWarnEnabled)
-                        log.Warn("Adding absolute path only allowed for root: made relative " + resource.Name);
-                }
-                resource.Name = resource.Name.Substring(1);
-            }
+            //  For simplicity purposes we keep this as a flat list rather than as a
+            //  tree structure.  The reason for this is that people can feed us back 
+            //  a full URI as the name, so trying to rebuild the tree structure just
+            //  is not going to make alot of sense.
 
-            // get last existing resource along path
-            Resource baseRes = GetResource(resource.Name, true);
 
-            String path = this.Path;
-            if (!path.EndsWith("/"))
-                path += "/";
-            path += resource.Name;
+            resource._parent = this;
+            SubResources[resource.Name] = resource;
 
-            path = path.Substring(baseRes.Path.Length);
-            if (path.StartsWith("/"))
-                path = path.Substring(1);
-
-            if (path.Length == 0)
-            {
-                // resource replaces base
-                if (log.IsInfoEnabled)
-                    log.Info("Replacing resource " + baseRes.Path);
-                foreach (Resource sub in baseRes.GetSubResources())
-                {
-                    sub._parent = resource;
-                    resource.SubResources[sub.Name] = sub;
-                }
-                resource._parent = baseRes._parent;
-                baseRes._parent.SubResources[baseRes.Name] = resource;
-            }
-            else
-            {
-                // resource is added to base
-
-                String[] segments = path.Split('/');
-                if (segments.Length > 1)
-                {
-                    if (log.IsDebugEnabled)
-                        log.Debug("Splitting up compound resource " + resource.Name);
-                    resource.Name = segments[segments.Length - 1];
-
-                    // insert middle segments
-                    Resource sub = null;
-                    for (Int32 i = 0; i < segments.Length - 1; i++)
-                    {
-                        sub = baseRes.CreateInstance(segments[i]);
-                        sub.Hidden = true;
-                        baseRes.AddSubResource(sub);
-                        baseRes = sub;
-                    }
-                }
-                else
-                    resource.Name = path;
-
-                resource._parent = baseRes;
-                baseRes.SubResources[resource.Name] = resource;
-
-                if (log.IsDebugEnabled)
-                    log.Debug("Add resource " + resource.Name);
-            }
-
-            // update number of sub-resources in the tree
-            Resource p = resource._parent;
-            while (p != null)
-            {
-                p._totalSubResourceCount++;
-                p = p._parent;
-            }
+            if (log.IsDebugEnabled) log.Debug("Add resource " + resource.Name);
         }
 
         /// <summary>
@@ -430,16 +368,13 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         /// Removes a sub-resource from this resource.
         /// </summary>
         /// <param name="resource">the sub-resource to remove</param>
-        public void RemoveSubResource(Resource resource)
+        public void RemoveSubResource(RemoteResource resource)
         {
-            if (null == resource)
-                return;
+            if (null == resource) return;
 
-            if (SubResources.Remove(resource._resourceIdentifier))
-            {
-                Resource p = resource._parent;
-                while (p != null)
-                {
+            if (SubResources.Remove(resource.Name)) {
+                RemoteResource p = resource._parent;
+                while (p != null) {
                     p._totalSubResourceCount--;
                     p = p._parent;
                 }
@@ -453,11 +388,12 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
             DoCreateSubResource(request, newIdentifier);
         }
 
-        public Int32 CompareTo(Resource other)
+        public Int32 CompareTo(RemoteResource other)
         {
             return Path.CompareTo(other.Path);
         }
 
+        /// <inheritdoc/>
         public override String ToString()
         {
             StringBuilder sb = new StringBuilder();
@@ -467,29 +403,23 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
 
         private void Print(StringBuilder sb, Int32 indent)
         {
-            for (Int32 i = 0; i < indent; i++)
-                sb.Append(" ");
-            sb.AppendFormat("+[{0}]",_resourceIdentifier);
-            
+            for (Int32 i = 0; i < indent; i++) sb.Append(" ");
+            sb.AppendFormat("+[{0}]", Name);
+
             String title = Title;
-            if (title != null)
-                sb.AppendFormat(" {0}", title);
+            if (title != null) sb.AppendFormat(" {0}", title);
             sb.AppendLine();
 
-            foreach (LinkAttribute attr in Attributes)
-            {
-                if (attr.Name.Equals(LinkFormat.Title))
-                    continue;
-                for (Int32 i = 0; i < indent + 3; i++)
-                    sb.Append(" ");
+            foreach (LinkAttribute attr in LinkAttributes) {
+                if (attr.Name.Equals(LinkFormat.Title)) continue;
+                for (Int32 i = 0; i < indent + 3; i++) sb.Append(" ");
                 sb.AppendFormat("- ");
                 attr.Serialize(sb);
                 sb.AppendLine();
             }
 
             if (_subResources != null)
-                foreach (Resource sub in _subResources.Values)
-                {
+                foreach (RemoteResource sub in _subResources.Values) {
                     sub.Print(sb, indent + 2);
                 }
         }
@@ -498,14 +428,13 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         /// Creates a resouce instance with proper subtype.
         /// </summary>
         /// <returns></returns>
-        protected abstract Resource CreateInstance(String name);
-        protected abstract void DoCreateSubResource(Request request, String newIdentifier);
+//        protected abstract RemoteResource CreateInstance(String name);
+//        protected abstract void DoCreateSubResource(Request request, String newIdentifier);
 
         private static IList<String> GetStringValues(IEnumerable<LinkAttribute> attributes)
         {
             List<String> list = new List<String>();
-            foreach (LinkAttribute attr in attributes)
-            {
+            foreach (LinkAttribute attr in attributes) {
                 list.Add(attr.StringValue);
             }
             return list;
@@ -514,11 +443,46 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         private static IList<Int32> GetIntValues(IEnumerable<LinkAttribute> attributes)
         {
             List<Int32> list = new List<Int32>();
-            foreach (LinkAttribute attr in attributes)
-            {
+            foreach (LinkAttribute attr in attributes) {
                 list.Add(attr.IntValue);
             }
             return list;
         }
+
+        /// <inheritdoc/>
+        public void AddObserveRelation(ObserveRelation o)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
+        public void RemoveObserveRelation(ObserveRelation o)
+        {
+            throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
+        public bool Cachable
+        {
+            get => false;
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<IEndPoint> EndPoints {
+            get => throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
+        public IExecutor Executor {
+            get => throw new NotSupportedException();
+        }
+
+        /// <inheritdoc/>
+        public void HandleRequest(Exchange exchange)
+        {
+            throw new NotSupportedException();
+        }
+
     }
 }
+

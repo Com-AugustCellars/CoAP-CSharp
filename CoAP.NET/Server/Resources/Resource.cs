@@ -32,11 +32,11 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         private Boolean _observable;
         private MessageType _observeType = MessageType.Unknown;
         private IResource _parent;
-        private IDictionary<String, IResource> _children
+        private readonly IDictionary<String, IResource> _children
             = new ConcurrentDictionary<String, IResource>();
-        private ConcurrentDictionary<String, ObserveRelation> _observeRelations
+        private readonly ConcurrentDictionary<String, ObserveRelation> _observeRelations
             = new ConcurrentDictionary<String, ObserveRelation>();
-        private ObserveNotificationOrderer _notificationOrderer
+        private readonly ObserveNotificationOrderer _notificationOrderer
             = new ObserveNotificationOrderer();
 
         /// <summary>

@@ -374,7 +374,6 @@ namespace Com.AugustCellars.CoAP
                 case OptionType.Block1:
                 case OptionType.Size2:
                 case OptionType.Size1:
-                case OptionType.IfNoneMatch:
                 case OptionType.Accept:
 #pragma warning disable 612, 618
                 case OptionType.FencepostDivisor:
@@ -390,6 +389,7 @@ namespace Com.AugustCellars.CoAP
                     return OptionFormat.String;
                 case OptionType.ETag:
                 case OptionType.IfMatch:
+                case OptionType.IfNoneMatch:
                     return OptionFormat.Opaque;
                 default:
                     return OptionFormat.Unknown;
