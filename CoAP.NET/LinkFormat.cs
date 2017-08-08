@@ -103,6 +103,23 @@ namespace Com.AugustCellars.CoAP
 
         private static readonly ILogger _Log = LogManager.GetLogger(typeof(LinkFormat));
 
+        //  Mapping defined in the RFC
+        private static readonly Dictionary<string, CBORObject> _CborAttributeKeys = new Dictionary<string, CBORObject>() {
+            ["href"] = CBORObject.FromObject(1),
+            ["rel"] = CBORObject.FromObject(2),
+            ["anchor"] = CBORObject.FromObject(3),
+            ["rev"] = CBORObject.FromObject(4),
+            ["hreflang"] = CBORObject.FromObject(5),
+            ["media"] = CBORObject.FromObject(6),
+            ["title"] = CBORObject.FromObject(7),
+            ["type"] = CBORObject.FromObject(8),
+            ["rt"] = CBORObject.FromObject(9),
+            ["if"] = CBORObject.FromObject(10),
+            ["sz"] = CBORObject.FromObject(11),
+            ["ct"] = CBORObject.FromObject(12),
+            ["obs"] = CBORObject.FromObject(13)
+        };
+
         /// <summary>
         /// Serialize resources starting at a resource node into WebLink format
         /// </summary>
@@ -145,10 +162,24 @@ namespace Com.AugustCellars.CoAP
             if (queries != null) queryList = queries.ToList();
 
             foreach (IResource child in root.Children) {
-                SerializeTree(child, queryList, linkFormat);
+                SerializeTree(child, queryList, linkFormat, _CborAttributeKeys);
             }
 
             return linkFormat.EncodeToBytes();
+        }
+
+        public static string SerializeJson(IResource root, IEnumerable<string> queries)
+        {
+            CBORObject linkFormat = CBORObject.NewArray();
+
+            List<string> queryList = null;
+            if (queries != null) queryList = queries.ToList();
+
+            foreach (IResource child in root.Children) {
+                SerializeTree(child, queryList, linkFormat, null);
+            }
+
+            return linkFormat.ToJSONString();
         }
 
         public static IEnumerable<WebLink> Parse(string linkFormat)
@@ -175,6 +206,7 @@ namespace Com.AugustCellars.CoAP
                     if (ParseStrictMode && SingleOccuranceAttributes.Contains(name)) {
                         throw new ArgumentException($"'{name}' occurs multiple times");
                     }
+
 
                     if (eq == -1) {
                         link.Attributes.Add(name);
@@ -211,10 +243,20 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        private static void SerializeTree(IResource resource, IReadOnlyCollection<string> queries, CBORObject cbor)
+        private static void SerializeTree(IResource resource, IReadOnlyCollection<string> queries, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
         {
             if (resource.Visible && Matches(resource, queries)) {
-                SerializeResource(resource, cbor);
+                SerializeResource(resource, cbor, dictionary);
+            }
+
+            if (resource.Children == null) return;
+
+            // sort by resource name
+            List<IResource> childrens = new List<IResource>(resource.Children);
+            childrens.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
+
+            foreach (IResource child in childrens) {
+                SerializeTree(child, queries, cbor, dictionary);
             }
         }
 
@@ -227,12 +269,15 @@ namespace Com.AugustCellars.CoAP
             SerializeAttributes(resource.Attributes, sb);
         }
 
-        private static void SerializeResource(IResource resource, CBORObject cbor)
+        private static void SerializeResource(IResource resource, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
         {
             CBORObject obj = CBORObject.NewMap();
 
-            obj.Add(1, resource.Path + resource.Name);
-            SerializeAttributes(resource.Attributes, obj);
+            if (dictionary == null) obj.Add("href", resource.Path + resource.Name);
+            else obj.Add(1, resource.Path + resource.Name);
+            SerializeAttributes(resource.Attributes, obj, dictionary);
+
+            cbor.Add(obj);
         }
 
         private static void SerializeAttributes(ResourceAttributes attributes, StringBuilder sb)
@@ -247,14 +292,15 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        private static void SerializeAttributes(ResourceAttributes attributes, CBORObject cbor)
+        private static void SerializeAttributes(ResourceAttributes attributes, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
         {
             List<string> keys = new List<string>(attributes.Keys);
             keys.Sort();
             foreach (string name in keys) {
                 List<string> values = new List<string>(attributes.GetValues(name));
                 if (values.Count == 0) continue;
-                SerializeAttribute(name, values, cbor);
+
+                SerializeAttribute(name, values, cbor, dictionary);
             }
         }
 
@@ -307,36 +353,41 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        private static void SerializeAttribute(string name, IEnumerable<string> values, CBORObject cbor)
+        private static void SerializeAttribute(string name, IReadOnlyCollection<string> values, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
         {
-            bool quotes = false;
-            StringBuilder sb = new StringBuilder();
             bool useSpace = SpaceSeparatedValueAttributes.Contains(name);
+            CBORObject result;
 
-            using (IEnumerator<string> it = values.GetEnumerator()) {
-                if (!it.MoveNext() || string.IsNullOrEmpty(it.Current)) {
-                    cbor.Add(name, CBORObject.True);
-                    return;
-                }
-
-                string first = it.Current;
-                bool more = it.MoveNext();
-                if (more || !IsNumber(first)) {
-                    sb.Append('"');
-                    quotes = true;
-                }
-
-                sb.Append(first);
-                while (more) {
-                    sb.Append(' ');
-                    sb.Append(it.Current);
-                    more = it.MoveNext();
-                }
-
-                if (quotes) sb.Append('"');
+            CBORObject nameX = null;
+            if (dictionary == null || !dictionary.TryGetValue(name, out nameX)) {
+                nameX = CBORObject.FromObject(name);
             }
 
-            cbor.Add(name, sb.ToString());
+            if (useSpace && values.Count > 1) {
+                StringBuilder sb = new StringBuilder();
+
+                foreach (string value in values) {
+                    sb.Append(value);
+                    sb.Append(" ");
+                }
+                sb.Length = sb.Length - 1;
+
+                result = CBORObject.FromObject(sb.ToString());
+            }
+            else if (values.Count == 1) {
+                string value = values.First();
+                if (string.IsNullOrEmpty(value)) result = CBORObject.True;
+                else result = CBORObject.FromObject(values.First());
+            }
+            else {
+                result = CBORObject.NewArray();
+                foreach (string value in values) {
+                    if (string.IsNullOrEmpty(value)) result.Add(CBORObject.True);
+                    else result.Add(value);
+                }
+            }
+
+            cbor.Add(nameX, result);
         }
 
         private static bool IsNumber(string value)
@@ -416,27 +467,96 @@ namespace Com.AugustCellars.CoAP
                 root.AddSubResource(resource);
             }
 
-#if false
-            Scanner scanner = new Scanner(linkFormat);
+            return root;
+        }
+        /// <summary>
+        /// Parse a CBOR encoded link format structure
+        /// </summary>
+        /// <param name="linkFormat">link data</param>
+        /// <returns>remote resource</returns>
+        public static RemoteResource DeserializeCbor(byte[] linkFormat)
+        {
+            return DeserializeCbor(CBORObject.DecodeFromBytes(linkFormat));
+        }
 
-            string path = null;
-            while ((path = scanner.Find(ResourceNameRegex)) != null) {
-                path = path.Substring(1, path.Length - 2);
+        /// <summary>
+        /// Parse a JSON encoded link format structure
+        /// </summary>
+        /// <param name="linkFormat">link data</param>
+        /// <returns>remote resource</returns>
+        public static RemoteResource DeserializeJson(string linkFormat)
+        {
+            return DeserializeCbor(CBORObject.FromJSONString(linkFormat));
+        }
 
-                // Retrieve specified resource, create if necessary
-                RemoteResource resource = new RemoteResource(path);
+        private static RemoteResource DeserializeCbor(CBORObject cbor)
+        { 
+            if (cbor.Type != CBORType.Array) throw new ArgumentException();
 
-                LinkAttribute attr = null;
-                while (scanner.Find(DelimiterRegex, 1) == null && (attr = ParseAttribute(scanner)) != null) {
-                    AddAttribute(resource.LinkAttributes, attr);
+            RemoteResource root = new RemoteResource(string.Empty);
+
+            for (int i = 0; i < cbor.Count; i++) {
+                string href;
+                if (cbor[i].ContainsKey("href")) {
+                    href = cbor[i]["href"].AsString();
+                }
+                else {
+                    href = cbor[i][CBORObject.FromObject(1)].AsString();
                 }
 
-                root.AddSubResource(resource);
+                RemoteResource child = new RemoteResource(href);
+
+                foreach (CBORObject key in cbor[i].Keys) {
+                    string keyName;
+                    if (key.Type == CBORType.Number) {
+                        keyName = null;
+                        foreach (KeyValuePair<string, CBORObject> kvp  in _CborAttributeKeys) {
+                            if (key.Equals(kvp.Value)) {
+                                keyName = kvp.Key;
+                                break;
+                            }
+                        }
+                        if (keyName == null) throw new ArgumentException("Invalid numeric key");
+                    }
+                    else if (key.Type == CBORType.TextString) {
+                        keyName = key.AsString();
+                    }
+                    else {
+                        throw new ArgumentException("Unexpected key type found");
+                    }
+
+                    if (keyName == "href") continue;
+
+                    CBORObject value = cbor[i][key];
+
+                    if (value.Type == CBORType.TextString) {
+                        child.Attributes.Add(keyName, value.AsString());
+                    }
+                    else if (value.Type == CBORType.Boolean) {
+                        child.Attributes.Add(keyName);
+                    }
+                    else if (value.Type == CBORType.Array) {
+                        for (int i1 = 0; i1 < value.Count; i1++) {
+                            if (value[i1].Type == CBORType.TextString) {
+                                child.Attributes.Add(keyName, value[i1].AsString());
+                            }
+                            else if (value[i1].Type == CBORType.Boolean) {
+                                if (value[i1].AsBoolean() != true) throw new ArgumentException("false unexpectedly found");
+                                child.Attributes.Add(keyName);
+                            }
+                            else throw new ArgumentException("Unexpected value type found");
+                        }
+                    }
+                    else throw new ArgumentException("Unexpected value type found");
+                }
+
+                root.AddSubResource(child);
             }
-#endif
+            
 
             return root;
         }
+
 
 #if false
         private static LinkAttribute ParseAttribute(Scanner scanner)

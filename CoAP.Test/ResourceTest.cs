@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-#if !NETFX_CORE
 using NUnit.Framework;
 using TestClass = NUnit.Framework.TestFixtureAttribute;
 using TestMethod = NUnit.Framework.TestAttribute;
-#else
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-#endif
 using Com.AugustCellars.CoAP.EndPoint.Resources;
 using Com.AugustCellars.CoAP.Server.Resources;
 
@@ -35,6 +31,42 @@ namespace Com.AugustCellars.CoAP
             Assert.AreEqual("41", contents[0]);
             Assert.AreEqual("TemperatureC", res.ResourceType);
         }
+
+        [TestMethod]
+        public void SimpleTest_CBOR()
+        {
+            byte[] input = new byte[] {
+                0x81, 0xa3,
+                0x01, 0x6d, 0x2f, 0x73, 0x65, 0x6e, 0x73, 0x6F, 0x72, 0x73, 0x2F, 0x74, 0x65, 0x6D, 0x70,
+                0x0C, 0x62, 0x34, 0x31,
+                0x09, 0x6C, 0x54, 0x65, 0x6D, 0x70, 0x65, 0x72, 0x61, 0x74, 0x75, 0x72, 0x65, 0x43
+            };
+            RemoteResource root = RemoteResource.NewRoot(input, MediaType.ApplicationCbor);
+
+            RemoteResource res = root.GetResource("/sensors/temp");
+            Assert.IsNotNull(res);
+            Assert.AreEqual(res.Name, "/sensors/temp");
+            List<string> contents = res.Attributes.GetContentTypes().ToList();
+            Assert.AreEqual(1, contents.Count);
+            Assert.AreEqual("41", contents[0]);
+            Assert.AreEqual("TemperatureC", res.ResourceType);
+        }
+
+        [TestMethod]
+        public void SimpleTest_JSON()
+        {
+            String input = "[{\"href\":\"/sensors/temp\",\"ct\":\"41\",\"rt\":\"TemperatureC\"}]";
+            RemoteResource root = RemoteResource.NewRoot(input, MediaType.ApplicationJson);
+
+            RemoteResource res = root.GetResource("/sensors/temp");
+            Assert.IsNotNull(res);
+            Assert.AreEqual(res.Name, "/sensors/temp");
+            List<string> contents = res.Attributes.GetContentTypes().ToList();
+            Assert.AreEqual(1, contents.Count);
+            Assert.AreEqual("41", contents[0]);
+            Assert.AreEqual("TemperatureC", res.ResourceType);
+        }
+
 
 #if false
         // We have flattened out the tree because of full URIs so this test makes no sense any more
@@ -108,6 +140,48 @@ namespace Com.AugustCellars.CoAP
 
             String queried = LinkFormat.Serialize(res, query);
             Assert.AreEqual(link2 + "," + link1, queried);
+        }
+
+        [TestMethod]
+        public void ConversionTestsToCbor()
+        {
+            string link = "</sensors>;ct=40;title=\"Sensor Index\",</sensors/temp>;rt=\"temperature-c\";if=\"sensor\"," +
+                          "</sensors/light>;rt=\"light-lux\";if=\"sensor\",<http://www.example.com/sensors/t123>;anchor=\"/sensors/temp\"" +
+                          ";rel=\"describedby\",</t>;anchor=\"/sensors/temp\";rel=\"alternate\"";
+            byte[] cborX = new byte[] {0x85,
+                0xA3, 0x01, 0x68, 0x2F, 0x73, 0x65, 0x6E, 0x73, 0x6F, 0x72, 0x73, 0x0C, 0x62, 0x34, 0x30, 0x07, 0x6C, 0x53, 0x65, 0x6E, 0x73, 0x6F, 0x72, 0x20, 0x49, 0x6E, 0x64, 0x65, 0x78,
+                0xA3, 0x01, 0x6E, 0x2F, 0x73, 0x65, 0x6E, 0x73, 0x6F, 0x72, 0x73, 0x2F, 0x6C, 0x69, 0x67, 0x68, 0x74, 0x0A, 0x66, 0x73, 0x65, 0x6E, 0x73, 0x6F, 0x72, 0x09, 0x69, 0x6C, 0x69, 0x67, 0x68, 0x74, 0x2D, 0x6C, 0x75, 0x78,
+                0xA3, 0x01, 0x6D, 0x2F, 0x73, 0x65, 0x6E, 0x73, 0x6F, 0x72, 0x73, 0x2F, 0x74, 0x65, 0x6D, 0x70, 0x0A, 0x66, 0x73, 0x65, 0x6E, 0x73, 0x6F, 0x72, 0x09, 0x6D, 0x74, 0x65, 0x6D, 0x70, 0x65, 0x72, 0x61, 0x74, 0x75, 0x72, 0x65, 0x2D, 0x63,
+                0xA3, 0x01, 0x62, 0x2F, 0x74, 0x03, 0x6D, 0x2F, 0x73, 0x65, 0x6E, 0x73, 0x6F, 0x72, 0x73, 0x2F, 0x74, 0x65, 0x6D, 0x70, 0x02, 0x69, 0x61, 0x6C, 0x74, 0x65, 0x72, 0x6E, 0x61, 0x74, 0x65,
+                0xA3, 0x01, 0x78, 0x23, 0x68, 0x74, 0x74, 0x70, 0x3A, 0x2F, 0x2F, 0x77, 0x77, 0x77, 0x2E, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65, 0x2E, 0x63, 0x6F, 0x6D, 0x2F, 0x73, 0x65, 0x6E, 0x73, 0x6F, 0x72, 0x73, 0x2F, 0x74, 0x31, 0x32, 0x33, 0x03, 0x6D, 0x2F, 0x73, 0x65, 0x6E, 0x73, 0x6F, 0x72, 0x73, 0x2F, 0x74, 0x65, 0x6D, 0x70, 0x02, 0x6B, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x64, 0x62, 0x79
+            };
+            RemoteResource res = RemoteResource.NewRoot(link);
+
+            byte[] cborOut = LinkFormat.SerializeCbor(res, null);
+            Assert.AreEqual(cborOut, cborX);
+        }
+
+        [TestMethod]
+        public void ConversionTestsToJson()
+        {
+            string link = "</sensors>;ct=40;title=\"Sensor Index\"," +
+                          "</sensors/light>;if=\"sensor\";rt=\"light-lux\"," +
+                          "</sensors/temp>;if=\"sensor\";obs;rt=\"temperature-c\"," +
+                          "</t>;anchor=\"/sensors/temp\";rel=\"alternate\"," +
+                          "<http://www.example.com/sensors/t123>;anchor=\"/sensors/temp\";ct=4711;foo=\"bar\";foo=3;rel=\"describedby\"";
+            string jsonX = "[{\"href\":\"/sensors\",\"ct\":\"40\",\"title\":\"Sensor Index\"}," +
+                           "{\"href\":\"/sensors/light\",\"if\":\"sensor\",\"rt\":\"light-lux\"}," +
+                           "{\"href\":\"/sensors/temp\",\"if\":\"sensor\",\"obs\":true,\"rt\":\"temperature-c\"}," +
+                           "{\"href\":\"/t\",\"anchor\":\"/sensors/temp\",\"rel\":\"alternate\"}," +
+                           "{\"href\":\"http://www.example.com/sensors/t123\",\"anchor\":\"/sensors/temp\",\"ct\":\"4711\",\"foo\":[\"bar\",\"3\"],\"rel\":\"describedby\"}]";
+            RemoteResource res = RemoteResource.NewRoot(link);
+
+            string jsonOut = LinkFormat.SerializeJson(res, null);
+            Assert.AreEqual(jsonOut, jsonX);
+
+            res = RemoteResource.NewRoot(jsonX, MediaType.ApplicationJson);
+            jsonOut = LinkFormat.Serialize(res, null);
+            Assert.AreEqual(jsonOut, link);
         }
 
         [TestMethod]

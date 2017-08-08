@@ -10,6 +10,7 @@
  */
 
 using System;
+using System.Text;
 
 namespace Com.AugustCellars.CoAP.Server.Resources
 {
@@ -44,9 +45,37 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         /// <inheritdoc/>
         protected override void DoGet(CoapExchange exchange)
         {
-            exchange.Respond(StatusCode.Content,
-                LinkFormat.Serialize(_root, exchange.Request.UriQueries),
-                MediaType.ApplicationLinkFormat);
+            Request req = exchange.Request;
+            int type = MediaType.ApplicationLinkFormat;
+
+            if (req.HasOption(OptionType.Accept)) {
+                byte[] payload;
+
+                switch (req.Accept) {
+                    case MediaType.ApplicationLinkFormat:
+                        payload = Encoding.UTF8.GetBytes(LinkFormat.Serialize(_root, req.UriQueries));
+                        break;
+
+                    case MediaType.ApplicationCbor:
+                        payload = LinkFormat.SerializeCbor(_root, req.UriQueries);
+                        break;
+
+                    case MediaType.ApplicationJson:
+                        payload = Encoding.UTF8.GetBytes(LinkFormat.SerializeJson(_root, req.UriQueries));
+                        break;
+
+                    default:
+                        exchange.Respond(StatusCode.BadOption);
+                        return;
+                }
+
+                exchange.Respond(StatusCode.Content, payload, req.Accept);
+            }
+            else {
+                exchange.Respond(StatusCode.Content,
+                    LinkFormat.Serialize(_root, exchange.Request.UriQueries),
+                    MediaType.ApplicationLinkFormat);
+            }
         }
     }
 }
