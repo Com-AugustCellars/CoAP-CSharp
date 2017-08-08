@@ -225,7 +225,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        private static void SerializeTree(IResource resource, IReadOnlyCollection<string> queries, StringBuilder sb)
+        private static void SerializeTree(IResource resource, List<string> queries, StringBuilder sb)
         {
             if (resource.Visible && Matches(resource, queries)) {
                 SerializeResource(resource, sb);
@@ -243,7 +243,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        private static void SerializeTree(IResource resource, IReadOnlyCollection<string> queries, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
+        private static void SerializeTree(IResource resource, List<string> queries, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
         {
             if (resource.Visible && Matches(resource, queries)) {
                 SerializeResource(resource, cbor, dictionary);
@@ -304,7 +304,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        private static void SerializeAttribute(string name, IReadOnlyCollection<string> values, StringBuilder sb)
+        private static void SerializeAttribute(string name, List<string> values, StringBuilder sb)
         {
             bool quotes = false;
             bool useSpace = SpaceSeparatedValueAttributes.Contains(name);
@@ -353,7 +353,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        private static void SerializeAttribute(string name, IReadOnlyCollection<string> values, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
+        private static void SerializeAttribute(string name, List<string> values, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
         {
             bool useSpace = SpaceSeparatedValueAttributes.Contains(name);
             CBORObject result;
@@ -632,7 +632,7 @@ namespace Com.AugustCellars.CoAP
         }
 #endif
 
-        private static bool Matches(IResource resource, IReadOnlyCollection<string> query)
+        private static bool Matches(IResource resource, List<string> query)
         {
             if (resource == null) return false;
             if (query == null) return true;
