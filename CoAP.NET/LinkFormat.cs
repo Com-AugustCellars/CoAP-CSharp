@@ -247,7 +247,7 @@ namespace Com.AugustCellars.CoAP
                 if (resource.Type != CBORType.Map) throw new ArgumentException("Element not correctly formatted");
 
                 string name;
-                if (resource.ContainsKey("hkey")) name = resource["hkey"].AsString();
+                if (resource.ContainsKey("href")) name = resource["href"].AsString();
                 else name = resource[CBORObject.FromObject(1)].AsString();
 
                 WebLink link = new WebLink(name);
