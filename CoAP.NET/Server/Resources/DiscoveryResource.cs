@@ -46,7 +46,6 @@ namespace Com.AugustCellars.CoAP.Server.Resources
         protected override void DoGet(CoapExchange exchange)
         {
             Request req = exchange.Request;
-            int type = MediaType.ApplicationLinkFormat;
 
             if (req.HasOption(OptionType.Accept)) {
                 byte[] payload;

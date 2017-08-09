@@ -216,6 +216,25 @@ namespace Com.AugustCellars.CoAP
         }
 
         [TestMethod]
+        public void TestCoapClient_Discover()
+        {
+            Uri uri = new Uri($"coap://localhost:{_serverPort}/");
+            CoapClient client = new CoapClient(uri);
+
+            IEnumerable<WebLink> resources = client.Discover();
+            Assert.AreEqual(4, resources.Count());
+
+            resources = client.Discover(MediaType.ApplicationLinkFormat);
+            Assert.AreEqual(4, resources.Count());
+
+            resources = client.Discover(MediaType.ApplicationCbor);
+            Assert.AreEqual(4, resources.Count());
+
+            resources = client.Discover(MediaType.ApplicationJson);
+            Assert.AreEqual(4, resources.Count());
+        }
+
+        [TestMethod]
         public void TestCoapClient_UriQuery()
         {
             Uri uri = new Uri("coap://localhost:" + _serverPort + "/");

@@ -89,28 +89,29 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
             get { return _attributes; }
         }
 
+        [Obsolete("use Attributes.Get()")]
         public IList<LinkAttribute> GetAttributes(String name)
         {
-            List<LinkAttribute> list = new List<LinkAttribute>();
-            foreach (LinkAttribute attr in LinkAttributes) {
-                if (attr.Name.Equals(name)) list.Add(attr);
+            IEnumerable<string> oldList = Attributes.GetValues(name);
+            List<LinkAttribute> newList = new List<LinkAttribute>();
+            foreach (string item in oldList) {
+                newList.Add(new LinkAttribute(name, item));
             }
-            return list.AsReadOnly();
+            return newList.AsReadOnly();
         }
 
+        [Obsolete("use Attributes.Add()")]
         public Boolean SetAttribute(LinkAttribute attr)
         {
-            // Adds depending on the Link Format rules
-            return LinkFormat.AddAttribute(LinkAttributes, attr);
+            Attributes.Add(attr.Name, attr.Value.ToString());
+            return true;
         }
 
+        [Obsolete("use Attributes.Clear()")]
         public Boolean ClearAttribute(String name)
         {
-            Boolean cleared = false;
-            foreach (LinkAttribute attr in GetAttributes(name)) {
-                cleared |= _attributes.Remove(attr);
-            }
-            return cleared;
+            Attributes.Clear(name);
+            return true;
         }
 
         /// <inheritdoc/>

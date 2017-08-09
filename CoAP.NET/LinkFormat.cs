@@ -234,7 +234,8 @@ namespace Com.AugustCellars.CoAP
 
         public static IEnumerable<WebLink> ParseJson(string linkFormat)
         {
-            return ParseCommon(CBORObject.FromJSONString(linkFormat), null);
+            CBORObject links = CBORObject.FromJSONString(linkFormat);
+            return ParseCommon(links, null);
         }
 
         private static IEnumerable<WebLink> ParseCommon(CBORObject links, Dictionary<string, CBORObject> dictionary)
