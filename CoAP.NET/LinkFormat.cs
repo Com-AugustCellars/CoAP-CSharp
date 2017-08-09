@@ -48,6 +48,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public static bool ParseStrictMode = false;
 
+#if false
         /// <summary>
         /// Name of the attribute Resource Type
         /// </summary>
@@ -57,7 +58,7 @@ namespace Com.AugustCellars.CoAP
         /// Name of the attribute Interface Description
         /// </summary>
         public static readonly string InterfaceDescription = "if";
-
+#endif
         /// <summary>
         /// Name of the attribute Content Type
         /// </summary>
@@ -68,6 +69,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public static readonly string MaxSizeEstimate = "sz";
 
+#if false
         /// <summary>
         /// Name of the attribute Title
         /// </summary>
@@ -77,22 +79,25 @@ namespace Com.AugustCellars.CoAP
         /// Name of the attribute Observable
         /// </summary>
         public static readonly string Observable = "obs";
+#endif
 
         /// <summary>
         /// Name of the attribute link
         /// </summary>
         public static readonly string Link = "href";
 
+#if false
         /// <summary>
         /// The string as the delimiter between resources
         /// </summary>
         public static readonly string Delimiter = ",";
-
+#endif
         /// <summary>
         /// The string to separate attributes
         /// </summary>
         public static readonly string Separator = ";";
 
+        #if false
         public static readonly Regex DelimiterRegex = new Regex("\\s*" + Delimiter + "+\\s*");
         public static readonly Regex SeparatorRegex = new Regex("\\s*" + Separator + "+\\s*");
 
@@ -100,6 +105,7 @@ namespace Com.AugustCellars.CoAP
         public static readonly Regex WordRegex = new Regex("\\w+");
         public static readonly Regex QuotedString = new Regex("\\G\".*?\"");
         public static readonly Regex Cardinal = new Regex("\\G\\d+");
+#endif
 
         private static readonly ILogger _Log = LogManager.GetLogger(typeof(LinkFormat));
 
@@ -188,7 +194,6 @@ namespace Com.AugustCellars.CoAP
                 yield break;
             }
 
-
             string[] resources = SplitOn(linkFormat, ',');
 
             foreach (string resource in resources) {
@@ -200,8 +205,7 @@ namespace Com.AugustCellars.CoAP
 
                 for (int i = 1; i < attributes.Length; i++) {
                     int eq = attributes[i].IndexOf('=');
-                    string name;
-                    name = eq == -1 ? attributes[i] : attributes[i].Substring(0, eq);
+                    string name = eq == -1 ? attributes[i] : attributes[i].Substring(0, eq);
 
                     if (ParseStrictMode && SingleOccuranceAttributes.Contains(name)) {
                         throw new ArgumentException($"'{name}' occurs multiple times");
@@ -222,6 +226,73 @@ namespace Com.AugustCellars.CoAP
                 }
 
                 yield return link;
+            }
+        }
+
+        public static IEnumerable<WebLink> ParseCbor(byte[] linkFormat)
+        {
+            CBORObject links = CBORObject.DecodeFromBytes(linkFormat);
+            return ParseCommon(links, _CborAttributeKeys);
+        }
+
+        public static IEnumerable<WebLink> ParseJson(string linkFormat)
+        {
+            return ParseCommon(CBORObject.FromJSONString(linkFormat), null);
+        }
+
+        private static IEnumerable<WebLink> ParseCommon(CBORObject links, Dictionary<string, CBORObject> dictionary)
+        {
+            if (links.Type != CBORType.Array) throw new ArgumentException("Not an array");
+
+            for (int i = 0; i < links.Count; i++) {
+                CBORObject resource = links[i];
+                if (resource.Type != CBORType.Map) throw new ArgumentException("Element not correctly formatted");
+
+                string name;
+                if (resource.ContainsKey("hkey")) name = resource["hkey"].AsString();
+                else name = resource[CBORObject.FromObject(1)].AsString();
+
+                WebLink link = new WebLink(name);
+
+                foreach (CBORObject key in resource.Keys) {
+                    string keyName = null;
+                    if (dictionary != null && key.Type == CBORType.Number) {
+                        foreach (KeyValuePair<string, CBORObject> kvp in dictionary) {
+                            if (key.Equals(kvp.Value)) {
+                                keyName = kvp.Key;
+                                break;
+                            }
+                        }
+                    }
+                    if (keyName == null) keyName = key.AsString();
+
+                    if (ParseStrictMode && SingleOccuranceAttributes.Contains(keyName)) {
+                        throw new ArgumentException($"'{keyName}' occurs multiple times");
+                    }
+
+                    CBORObject value = resource[key];
+                    if (value.Type == CBORType.Boolean) {
+                        link.Attributes.Add(name);
+                    }
+                    else if (value.Type == CBORType.TextString) {
+                        link.Attributes.Add(name, value.AsString());
+                    }
+                    else if (value.Type == CBORType.Array) {
+                        for (int i1 = 0; i1 < value.Count; i1++) {
+                            if (value.Type == CBORType.Boolean) {
+                                link.Attributes.Add(name);
+                            }
+                            else if (value.Type == CBORType.TextString) {
+                                link.Attributes.Add(name, value.AsString());
+                            }
+                            else throw new ArgumentException("incorrect type");
+                        }
+                    }
+                    else throw new ArgumentException("incorrect type");
+                }
+
+                yield return link;
+
             }
         }
 
@@ -358,7 +429,7 @@ namespace Com.AugustCellars.CoAP
             bool useSpace = SpaceSeparatedValueAttributes.Contains(name);
             CBORObject result;
 
-            CBORObject nameX = null;
+            CBORObject nameX;
             if (dictionary == null || !dictionary.TryGetValue(name, out nameX)) {
                 nameX = CBORObject.FromObject(name);
             }
