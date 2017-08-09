@@ -48,7 +48,6 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public static bool ParseStrictMode = false;
 
-#if false
         /// <summary>
         /// Name of the attribute Resource Type
         /// </summary>
@@ -58,7 +57,7 @@ namespace Com.AugustCellars.CoAP
         /// Name of the attribute Interface Description
         /// </summary>
         public static readonly string InterfaceDescription = "if";
-#endif
+
         /// <summary>
         /// Name of the attribute Content Type
         /// </summary>
@@ -69,7 +68,6 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public static readonly string MaxSizeEstimate = "sz";
 
-#if false
         /// <summary>
         /// Name of the attribute Title
         /// </summary>
@@ -79,7 +77,6 @@ namespace Com.AugustCellars.CoAP
         /// Name of the attribute Observable
         /// </summary>
         public static readonly string Observable = "obs";
-#endif
 
         /// <summary>
         /// Name of the attribute link
