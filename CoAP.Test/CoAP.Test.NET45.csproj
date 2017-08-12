@@ -81,6 +81,8 @@
     <Compile Include="MemoryLeakingMapTest.cs" />
     <Compile Include="MessageTypeTest.cs" />
     <Compile Include="OptionTest.cs" />
+    <Compile Include="OSCOAP\Oscoap.cs" />
+    <Compile Include="OSCOAP\SecurityContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RandomAccessBlockTest.cs" />
     <Compile Include="ResourceAttributesTest.cs" />

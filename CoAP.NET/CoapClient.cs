@@ -126,7 +126,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// OSCOAP context to use for the message
         /// </summary>
-        public OSCOAP.OscoapOption Oscoap { get; set; }
+        public OSCOAP.SecurityContext OscoapContext { get; set; }
 
         /// <summary>
         /// Let the client use Confirmable requests.
@@ -632,7 +632,7 @@ namespace Com.AugustCellars.CoAP
         {
             request.Type = _type;
             request.URI = Uri;
-            request.Oscoap = Oscoap;
+            request.OscoapContext = OscoapContext;
 
             if (UriPath != null) {
                 request.UriPath = UriPath;

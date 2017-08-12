@@ -50,9 +50,9 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         /// <param name="hidden">True if this resource is hidden</param>
         public RemoteResource(String resourceIdentifier, Boolean hidden)
         {
-            this.Name = resourceIdentifier;
-            this._hidden = hidden;
-            this._attributes = new HashSet<LinkAttribute>();
+            Name = resourceIdentifier;
+            _hidden = hidden;
+            _attributes = new HashSet<LinkAttribute>();
         }
 
         /// <inheritdoc/>
@@ -115,7 +115,10 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         }
 
         /// <inheritdoc/>
-        public Boolean Visible { get => !_hidden; }
+        public Boolean Visible
+        {
+            get => !_hidden;
+        }
 
         public Boolean Hidden
         {
@@ -284,8 +287,7 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
 
             return _subResources[path];
 
-#if false
-            // find root for absolute path
+#if false // find root for absolute path
             if (path.StartsWith("/")) {
                 RemoteResource root = this;
                 while (root._parent != null) root = root._parent;
@@ -312,7 +314,8 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         }
 
         /// <inheritdoc/>
-        public IEnumerable<IResource> Children {
+        public IEnumerable<IResource> Children
+        {
             get
             {
                 if (_subResources == null) return null;
@@ -469,12 +472,14 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         }
 
         /// <inheritdoc/>
-        public IEnumerable<IEndPoint> EndPoints {
+        public IEnumerable<IEndPoint> EndPoints
+        {
             get => throw new NotSupportedException();
         }
 
         /// <inheritdoc/>
-        public IExecutor Executor {
+        public IExecutor Executor
+        {
             get => throw new NotSupportedException();
         }
 

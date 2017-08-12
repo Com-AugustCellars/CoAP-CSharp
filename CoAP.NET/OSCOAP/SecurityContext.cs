@@ -265,40 +265,51 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             else ctx.Sender.Algorithm = algAEAD;
             ctx.Sender.Id = senderId ?? throw new ArgumentNullException(nameof(senderId));
 
-            ctx.Recipient =  new EntityContext();
-            ctx.Recipient.Algorithm = ctx.Sender.Algorithm;
-            ctx.Recipient.Id = recipientId ?? throw new ArgumentNullException(nameof(recipientId));
+            ctx.Recipient = new EntityContext {
+                Algorithm = ctx.Sender.Algorithm,
+                Id = recipientId ?? throw new ArgumentNullException(nameof(recipientId)),
+                ReplayWindow = new ReplayWindow(0, 64)
+            };
 
-            ctx.Recipient.ReplayWindow = new ReplayWindow(0, 64);
 
             CBORObject info = CBORObject.NewArray();
 
-            info.Add(senderId);                 // 0
-            info.Add(ctx.Sender.Algorithm);     // 1
-            info.Add("Key");                    // 2
-            info.Add(128/8);                    // 3 in bytes
+            info.Add(senderId); // 0
+            info.Add(ctx.Sender.Algorithm); // 1
+            info.Add("Key"); // 2
+            info.Add(128 / 8); // 3 in bytes
 
-            IDigest sha256 = new Sha256Digest();
+            IDigest sha256;
+
+            if (algKeyAgree == null || algKeyAgree.Equals(AlgorithmValues.ECDH_SS_HKDF_256)) {
+
+                sha256 = new Sha256Digest();
+            }
+            else if (algKeyAgree.Equals(AlgorithmValues.ECDH_SS_HKDF_512)) {
+                sha256 = new Sha512Digest();
+            }
+            else throw new ArgumentException("Unrecognized key agreement algorithm");
+
             IDerivationFunction hkdf = new HkdfBytesGenerator(sha256);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
 
-            ctx.Sender.Key = new byte[128/8];
+            ctx.Sender.Key = new byte[128 / 8];
             hkdf.GenerateBytes(ctx.Sender.Key, 0, ctx.Sender.Key.Length);
 
             info[0] = CBORObject.FromObject(recipientId);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
-            ctx.Recipient.Key = new byte[128/8];
+            ctx.Recipient.Key = new byte[128 / 8];
             hkdf.GenerateBytes(ctx.Recipient.Key, 0, ctx.Recipient.Key.Length);
- 
+
             info[2] = CBORObject.FromObject("IV");
-            info[3] = CBORObject.FromObject(56/8);
+            info[3] = CBORObject.FromObject(56 / 8);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
-            ctx.Recipient.BaseIV = new byte[56/8];
+            ctx.Recipient.BaseIV = new byte[56 / 8];
             hkdf.GenerateBytes(ctx.Recipient.BaseIV, 0, ctx.Recipient.BaseIV.Length);
 
             info[0] = CBORObject.FromObject(senderId);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
-            ctx.Sender.BaseIV = new byte[56/8];
+            ctx.Sender.BaseIV = new byte[56 / 8];
             hkdf.GenerateBytes(ctx.Sender.BaseIV, 0, ctx.Sender.BaseIV.Length);
 
             //  Give a unique context number for doing comparisons
@@ -323,9 +334,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         {
             EntityContext ctx = new EntityContext();
 
-            if (algAEAD == null) ctx.Algorithm = AlgorithmValues.AES_CCM_64_64_128;
-            else ctx.Algorithm = algAEAD;
+            ctx.Algorithm = algAEAD ?? AlgorithmValues.AES_CCM_64_64_128;
             ctx.Id = entityId ?? throw new ArgumentNullException(nameof(entityId));
+            if (algKeyAgree == null) algKeyAgree = AlgorithmValues.ECDH_SS_HKDF_256;
 
             ctx.ReplayWindow = new ReplayWindow(0, 64);
 
@@ -338,7 +349,17 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             info.Add("Key");                    // 2
             info.Add(128 / 8);                  // 3 in bytes
 
-            IDigest sha256 = new Sha256Digest();
+
+            IDigest sha256;
+
+            if (algKeyAgree == null || algKeyAgree.Equals(AlgorithmValues.ECDH_SS_HKDF_256)) {
+                sha256 = new Sha256Digest();
+            }
+            else if (algKeyAgree.Equals(AlgorithmValues.ECDH_SS_HKDF_512)) {
+                sha256 = new Sha512Digest();
+            }
+            else throw new ArgumentException("Unknown key agree algorithm");
+
             IDerivationFunction hkdf = new HkdfBytesGenerator(sha256);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
 
@@ -358,11 +379,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
 
 #if DEBUG
-        static int _FutzError = 0;
-        static public int FutzError {
-            get { return _FutzError; }
-            set { _FutzError = value; }
-        }
+        static public int FutzError { get; set; }
 #endif
     }
 #endif
