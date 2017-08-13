@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
 using PeterO.Cbor;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -186,6 +187,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         }
 
         static int _ContextNumber;
+        private byte[] _masterSecret;
+        private byte[] _salt;
 
         /// <summary>
         /// What is the global unique context number for this context.
@@ -195,7 +198,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <summary>
         /// Return the sender information object
         /// </summary>
-        public EntityContext Sender { get; } = new EntityContext();
+        public EntityContext Sender { get; private set; } = new EntityContext();
 
         /// <summary>
         /// Return the single receipient object
@@ -243,6 +246,15 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     Recipients[item.Key] = new EntityContext(new EntityContext(item.Value));
                 }
             }
+        }
+
+
+
+        public void AddRecipient(byte[] recipientId)
+        {
+            EntityContext x = DeriveEntityContext(_masterSecret, recipientId, _salt, Sender.Algorithm, null);
+
+            Recipients.Add(recipientId, x);
         }
 
 
@@ -314,12 +326,39 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// to build a security context for a single sender and recipient.
         /// </summary>
         /// <param name="masterSecret">pre-shared key</param>
+        /// <param name="senderId">name assigned to sender</param>
+        /// <param name="recipientIds">names assigned to recipients</param>
+        /// <param name="masterSalt">salt value</param>
+        /// <param name="algAEAD">encryption algorithm</param>
+        /// <param name="algKeyAgree">key agreement algorithm</param>
+        /// <returns></returns>
+        public static SecurityContext DeriveGroupContext(byte[] masterSecret, byte[] senderId, byte[][] recipientIds, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
+        {
+            SecurityContext ctx = new SecurityContext();
+            ctx._masterSecret = masterSecret;
+            ctx._salt = masterSalt;
+
+            ctx.Sender = DeriveEntityContext(masterSecret, senderId, masterSalt, algAEAD, algKeyAgree);
+            if (recipientIds != null) {
+                foreach (byte[] id in recipientIds) {
+                    ctx.Recipients.Add(id, DeriveEntityContext(masterSecret, id, masterSalt, algAEAD, algKeyAgree));
+                }
+            }
+
+            return ctx;
+        }
+
+        /// <summary>
+        /// Given the set of inputs, perform the crptographic operations that are needed
+        /// to build a security context for a single sender and recipient.
+        /// </summary>
+        /// <param name="masterSecret">pre-shared key</param>
         /// <param name="entityId">name assigned to sender</param>
         /// <param name="masterSalt">salt value</param>
         /// <param name="algAEAD">encryption algorithm</param>
         /// <param name="algKeyAgree">key agreement algorithm</param>
         /// <returns></returns>
-        public static EntityContext DeriveEntityContext(byte[] masterSecret, byte[] entityId, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
+        private static EntityContext DeriveEntityContext(byte[] masterSecret, byte[] entityId, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
         {
             EntityContext ctx = new EntityContext();
 

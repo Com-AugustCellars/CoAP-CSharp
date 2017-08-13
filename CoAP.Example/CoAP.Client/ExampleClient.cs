@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Text;
 using System.Collections.Generic;
+using System.IO;
 using PeterO.Cbor;
 using Com.AugustCellars.COSE;
 using Com.AugustCellars.CoAP.Util;
 using Com.AugustCellars.CoAP.DTLS;
 using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.OSCOAP;
 
 #if DNX451
 using Common.Logging;
@@ -42,6 +44,8 @@ namespace Com.AugustCellars.CoAP.Examples
             Boolean loop = false;
             Boolean byEvent = true;
             OneKey authKey = null;
+            SecurityContext oscoap = null;
+            SecurityContextSet contextSet = null;
 
             if (args.Length == 0)
                 PrintUsage();
@@ -69,8 +73,16 @@ namespace Com.AugustCellars.CoAP.Examples
                         }
                         authKey.Add(COSE.CoseKeyKeys.KeyIdentifier, CBORObject.FromObject(Encoding.UTF8.GetBytes(arg.Substring(8))));
                     }
-                    else
-                        Console.WriteLine("Unknown option: " + arg);
+                    else if (arg.StartsWith("-oscoap=")) {
+                        if (contextSet == null) {
+                            Console.WriteLine("Must have -oscoap-data bevore -oscoap");
+                            Environment.Exit(1);
+                        }
+                    }
+                    else if (arg.StartsWith("-oscoap-data=")) {
+                        contextSet = LoadContextSet(arg.Substring(13));
+                    }
+                    else Console.WriteLine("Unknown option: " + arg);
                 }
                 else
                 {
@@ -258,6 +270,41 @@ namespace Com.AugustCellars.CoAP.Examples
             Console.WriteLine("  CoAPClient DISCOVER coap://localhost");
             Console.WriteLine("  CoAPClient POST coap://localhost/storage data");
             Environment.Exit(0);
+        }
+
+        private static SecurityContextSet LoadContextSet(string fileName)
+        {
+            if (fileName == null) fileName = "ServerKeys.cbor";
+            KeySet keys = new KeySet();
+
+            FileStream fs = new FileStream(fileName, FileMode.Open);
+            using (BinaryReader reader = new BinaryReader(fs)) {
+                byte[] data = reader.ReadBytes((int)fs.Length);
+                CBORObject obj = CBORObject.DecodeFromBytes(data);
+                for (int i = 0; i < obj.Count; i++) {
+                    OneKey key = new OneKey(obj[i]);
+                    string[] usages = key[_UsageKey].AsString().Split(' ');
+
+                    foreach (String usage in usages) {
+                        if (usage == "oscoap") {
+                            SecurityContext ctx = SecurityContext.DeriveContext(
+                                key[CoseKeyParameterKeys.Octet_k].GetByteString(),
+                                key[CBORObject.FromObject("RecipID")].GetByteString(),
+                                key[CBORObject.FromObject("SenderID")].GetByteString(), null,
+                                key[CoseKeyKeys.Algorithm]);
+                            SecurityContextSet.AllContexts.Add(ctx);
+                            break;
+                        }
+                    }
+
+                    if ((usages.Length != 1) || (usages[0] != "oscoap")) {
+                        keys.AddKey(key);
+                    }
+                }
+                reader.Close();
+            }
+            return keys;
+
         }
     }
 }
