@@ -7,8 +7,9 @@ using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.COSE;
+using Org.BouncyCastle.Asn1.Cms;
 using PeterO.Cbor;
-// ReSharper disable All
+using Attributes = Com.AugustCellars.COSE.Attributes;
 
 namespace Com.AugustCellars.CoAP.OSCOAP
 {
@@ -144,8 +145,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     CounterSignature sig = new CounterSignature(ctx.Sender.SigningKey);
                     sig.AddAttribute(HeaderKeys.Algorithm, ctx.Sender.SigningKey[CoseKeyKeys.Algorithm], Attributes.DO_NOT_SEND);
                     sig.SetObject(enc);
-                    aad = ctx.Sender.SigningKey[CoseKeyKeys.Algorithm];
-                    sig.SetExternalData(aad.EncodeToBytes());
+                    CBORObject aad2 = ctx.Sender.SigningKey[CoseKeyKeys.Algorithm];
+                    sig.SetExternalData(aad2.EncodeToBytes());
                     CBORObject signatureBytes = sig.EncodeToCBORObject();
                     enc.AddAttribute(HeaderKeys.CounterSignature, signatureBytes, Attributes.DO_NOT_SEND);
                 }
@@ -178,13 +179,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <inheritdoc />
         public override void ReceiveRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
-            if (!request.HasOption(OptionType.Oscoap)) {
+            if (!request.HasOption(OptionType.Oscoap) && !request.HasOption(OptionType.Oscoap2)) {
                 base.ReceiveRequest(nextLayer, exchange, request);
                 return;
             }
             Response response;
             try {
                 Option op = request.GetFirstOption(OptionType.Oscoap);
+                if (op == null) op = request.GetFirstOption(OptionType.Oscoap2);
                 request.RemoveOptions(OptionType.Oscoap);
 
                 Encrypt0Message msg;
@@ -204,8 +206,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 if (msg == null) {
                     //  Only bother to reply to CON messages
                     if (request.Type == MessageType.CON) {
-                        response = new Response(StatusCode.BadOption);
-                        response.PayloadString = "Unable to decompress";
+                        response = new Response(StatusCode.BadOption) {
+                            PayloadString = "Unable to decompress"
+                        };
                         exchange.SendResponse(response);
                     }
                     return;
@@ -213,6 +216,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 List<SecurityContext> contexts = new List<SecurityContext>();
                 SecurityContext ctx = null;
+                CBORObject kid = null;
 
                 //  We may know the context because it is a follow up on a conversation - 
                 //  In which case we can just use the same one.
@@ -223,7 +227,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
                 else {
                     CBORObject gid = msg.FindAttribute(CBORObject.FromObject("gid"));
-                    CBORObject kid = msg.FindAttribute(HeaderKeys.KeyId);
+                    kid = msg.FindAttribute(HeaderKeys.KeyId);
 
                     if (gid != null) {
                         contexts = SecurityContextSet.AllContexts.FindByGroupId(gid.GetByteString());
@@ -262,36 +266,41 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 String responseString = "General decrypt failure";
 
                 foreach (SecurityContext context in contexts) {
-                    if (_replayWindow && context.Recipient.ReplayWindow.HitTest(seqNo)) {
-                        if (_Log.IsInfoEnabled) {
-                            _Log.Info(String.Format("Hit test on {0} failed", seqNo));
-                        }
+                    SecurityContext.EntityContext recip = context.Recipient;
+                    if (recip == null) {
+                        if (kid == null) continue;
+                        recip = context.Recipients[kid.GetByteString()];
+                        if (recip == null) continue;
+                    }
+
+                    if (_replayWindow && recip.ReplayWindow.HitTest(seqNo)) {
+                        _Log.Info(m => m("Hit test on {0} failed", seqNo));
                         responseString = "Hit test - duplicate";
                         continue;
                     }
 
-                    aad[3] = context.Recipient.Algorithm;
+                    aad[3] = recip.Algorithm;
 
                     if (_Log.IsInfoEnabled) {
                         _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
-                        _Log.Info("IV = " + BitConverter.ToString(context.Recipient.GetIV(partialIV).GetByteString()));
-                        _Log.Info("Key = " + BitConverter.ToString(context.Recipient.Key));
+                        _Log.Info("IV = " + BitConverter.ToString(recip.GetIV(partialIV).GetByteString()));
+                        _Log.Info("Key = " + BitConverter.ToString(recip.Key));
                     }
 
 
                     msg.SetExternalData(aad.EncodeToBytes());
 
-                    msg.AddAttribute(HeaderKeys.Algorithm, context.Recipient.Algorithm, Attributes.DO_NOT_SEND);
-                    msg.AddAttribute(HeaderKeys.IV, context.Recipient.GetIV(partialIV), Attributes.DO_NOT_SEND);
+                    msg.AddAttribute(HeaderKeys.Algorithm, recip.Algorithm, Attributes.DO_NOT_SEND);
+                    msg.AddAttribute(HeaderKeys.IV, recip.GetIV(partialIV), Attributes.DO_NOT_SEND);
 
                     try {
                         ctx = context;
-                        payload = msg.Decrypt(context.Recipient.Key);
-                        context.Recipient.ReplayWindow.SetHit(seqNo);
+                        payload = msg.Decrypt(recip.Key);
+                        recip.ReplayWindow.SetHit(seqNo);
                     }
                     catch (Exception e) {
                         if (_Log.IsInfoEnabled) _Log.Info("--- " + e.ToString());
-                        responseString = "Decryption Failure";
+                        // responseString = "Decryption Failure";
                         ctx = null;
                     }
 
@@ -388,6 +397,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 aad.Add(ctx.Sender.Algorithm);
                 aad.Add(ctx.Recipient.Id);
                 aad.Add(exchange.OscoapSequenceNumber);
+                if (ctx.GroupId != null) {
+                    aad.Add(ctx.GroupId);
+                }
 
                 Console.WriteLine(BitConverter.ToString(aad.EncodeToBytes()));
 
@@ -399,10 +411,13 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 enc.SetContent(msg2);
                 enc.SetExternalData(aad.EncodeToBytes());
 
-                if (response.HasOption(OptionType.Observe) || ctx.Sender.SigningKey != null) {
+                if (response.HasOption(OptionType.Observe) || ctx.GroupId != null) {
                     enc.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV), Attributes.PROTECTED);
                     enc.AddAttribute(HeaderKeys.IV, ctx.Sender.GetIV(ctx.Sender.PartialIV), Attributes.DO_NOT_SEND);
                     ctx.Sender.IncrementSequenceNumber();
+                    if (ctx.GroupId != null) {
+                        enc.AddAttribute(HeaderKeys.KeyId, CBORObject.FromObject(ctx.Sender.Id), Attributes.UNPROTECTED);
+                    }
                 }
                 else {
                     CBORObject iv = ctx.Sender.GetIV(exchange.OscoapSequenceNumber);
@@ -419,12 +434,13 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 byte[] finalBody;
                 finalBody = DoCompression(enc);
 
+                OptionType xxx = exchange.Request.HasOption(OptionType.Oscoap2) ? OptionType.Oscoap2 : OptionType.Oscoap;
                 if (hasPayload) {
                     response.Payload = finalBody;
-                    response.AddOption(new OscoapOption());
+                    response.AddOption(new OscoapOption(xxx));
                 }
                 else {
-                    OscoapOption o = new OscoapOption();
+                    OscoapOption o = new OscoapOption(xxx);
                     o.Set(finalBody);
                     response.AddOption(o);
                 }
@@ -478,8 +494,27 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 bool fServerIv = true;
 
+
                     msg = Uncompress(raw);
                     if (msg == null) return;
+
+                SecurityContext.EntityContext recip = ctx.Recipient;
+                if (recip == null) {
+                    if (ctx.GroupId == null) {
+                        //  This is not currently a valid state to be in
+                        return;
+                    }
+                    CBORObject kid = msg.FindAttribute(HeaderKeys.KeyId);
+                    if (kid == null) {
+                        //  this is not currently a valid state to be in
+                        return;
+                    }
+                    recip = ctx.Recipients[kid.GetByteString()];
+                    if (recip == null) {
+                        // M00TODO - deal with asking the user for a recipient structure at this point.
+                        return;
+                    }
+                }
 
                 if (msg.FindAttribute(HeaderKeys.PartialIV) == null) {
                     msg.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV), Attributes.DO_NOT_SEND);
@@ -493,11 +528,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 if (BitConverter.IsLittleEndian) Array.Reverse(seqNoArray);
                 Int64 seqNo = BitConverter.ToInt64(seqNoArray, 0);
 
-                if (fServerIv) if (_replayWindow && ctx.Recipient.ReplayWindow.HitTest(seqNo)) return;
+                if (fServerIv) if (_replayWindow && recip.ReplayWindow.HitTest(seqNo)) return;
 
-                msg.AddAttribute(HeaderKeys.Algorithm, ctx.Recipient.Algorithm, Attributes.DO_NOT_SEND);
+                msg.AddAttribute(HeaderKeys.Algorithm, recip.Algorithm, Attributes.DO_NOT_SEND);
 
-               CBORObject fullIV = ctx.Recipient.GetIV(partialIV);
+               CBORObject fullIV = recip.GetIV(partialIV);
                 if (!fServerIv) fullIV.GetByteString()[0] += 0x80;
                 msg.AddAttribute(HeaderKeys.IV, fullIV, Attributes.DO_NOT_SEND);
 
@@ -506,9 +541,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 aad.Add(CBORObject.FromObject(1));
                 aad.Add(CBORObject.FromObject(response.Code));
                 aad.Add(CBORObject.FromObject(new byte[0]));        // M00BUG
-                aad.Add(ctx.Recipient.Algorithm);
+                aad.Add(recip.Algorithm);
                 aad.Add(ctx.Sender.Id);
                 aad.Add(ctx.Sender.PartialIV);
+                if (ctx.GroupId != null) aad.Add(ctx.GroupId);
 
                 msg.SetExternalData(aad.EncodeToBytes());
 
@@ -516,9 +552,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
                 }
 
-                byte[] payload = msg.Decrypt(ctx.Recipient.Key);
+                byte[] payload = msg.Decrypt(recip.Key);
 
-                ctx.Recipient.ReplayWindow.SetHit(seqNo);
+                recip.ReplayWindow.SetHit(seqNo);
 
                 byte[] rgb = new byte[payload.Length + _FixedHeader.Length];
                 Array.Copy(_FixedHeader, rgb, _FixedHeader.Length);
@@ -549,7 +585,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 int port;
                 String strUri;
                 if (!unprotected.ProxyUri.IsAbsoluteUri) throw new Exception("Must be an absolute URI");
-                if (unprotected.ProxyUri.Fragment != null) throw new Exception("Fragments not allowed in ProxyUri");
+                if (! string.IsNullOrEmpty(unprotected.ProxyUri.Fragment)) throw new Exception("Fragments not allowed in ProxyUri");
                 switch (unprotected.ProxyUri.Scheme) {
                     case "coap":
                         port = 5683;
@@ -562,6 +598,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     default:
                         throw new Exception("Unsupported schema");
                 }
+
                 strUri = unprotected.ProxyUri.Scheme + ":";
 
                 if (unprotected.ProxyUri.Host[0] != '[') {
@@ -594,10 +631,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     case OptionType.UriPort:
                     case OptionType.ProxyUri:
                     case OptionType.ProxyScheme:
-                        break;
-
                     case OptionType.Observe:
-                        encrypted.AddOption(op);
                         break;
 
                     default:
@@ -627,10 +661,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     case OptionType.UriPort:
                     case OptionType.ProxyUri:
                     case OptionType.ProxyScheme:
-                        break;
-
                     case OptionType.Observe:
-                        encrypted.AddOption(op);
                         break;
 
                     default:
@@ -772,7 +803,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             //  Decode the wierd body
             //  First byte is of the form 0abcdeee where abcd are flags and eee is the the IV size.
             if (0 != (raw[0] & 0x80)) return null;  // This is not legal
-            if (0 != (raw[0] & 0x70)) return null;  // These are not currently supported.
+            if (0 != (raw[0] & 0x40)) return null;  // These are not currently supported.
 
             int iX = 1;
             if (0 != (raw[0] & 0x07)) {
@@ -787,6 +818,20 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 Array.Copy(raw, iX + 1, kidX, 0, kidX.Length);
                 iX += (kidX.Length + 1);
                 map.Add(HeaderKeys.KeyId, kidX);
+            }
+
+            if (0 != (raw[0] & 0x10)) {
+                byte[] gidX = new byte[raw[iX]];
+                Array.Copy(raw, iX + 1, gidX, 0, gidX.Length);
+                iX += (gidX.Length + 1);
+                map.Add(CBORObject.FromObject("gid"), gidX);
+            }
+
+            if (0 != (raw[0] & 0x20)) {
+                byte[] counter = new byte[raw[iX]];
+                Array.Copy(raw, iX + 1, counter, 0, counter.Length);
+                iX += (counter.Length + 1);
+                map.Add(HeaderKeys.CounterSignature, counter);
             }
 
             byte[] encBody = new byte[raw.Length - iX];

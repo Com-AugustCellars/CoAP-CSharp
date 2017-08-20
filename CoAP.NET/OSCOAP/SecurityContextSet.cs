@@ -65,7 +65,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 if (ctx.GroupId != null &&  groupId.Length == ctx.GroupId.Length) {
                     bool match = true;
                     for (int i = 0; i < groupId.Length; i++) {
-                        if (groupId[i] != ctx.Recipient.Id[i]) {
+                        if (groupId[i] != ctx.GroupId[i]) {
                             match = false;
                             break;
                         }

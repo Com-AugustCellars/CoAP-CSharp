@@ -146,6 +146,7 @@ namespace Com.AugustCellars.CoAP
         /// <remarks>draft-ietf-core-oscoap</remarks>
         /// </summary>
         Oscoap = 65025,
+        Oscoap2 = 21,
 #endif
 
 #if FRESHNESS

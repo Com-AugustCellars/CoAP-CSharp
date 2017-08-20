@@ -2,6 +2,7 @@
 using System.Text;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using PeterO.Cbor;
 using Com.AugustCellars.COSE;
 using Com.AugustCellars.CoAP.Util;
@@ -9,40 +10,20 @@ using Com.AugustCellars.CoAP.DTLS;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.OSCOAP;
 
-#if DNX451
-using Common.Logging;
-using Common.Logging.Configuration;
-
-namespace Com.AugustCellars.CoAP.Client.DNX
-{
-	// DNX entry point
-	public class Program
-	{
-		public void Main(string[] args)
-		{
-			NameValueCollection console_props = new NameValueCollection();
-			console_props["showDateTime"] = "true";
-			console_props["level"] = "Debug";
-			LogManager.Adapter = new Common.Logging.Simple.ConsoleOutLoggerFactoryAdapter(console_props);
-			CoAP.Examples.ExampleClient.Main(args);
-		}
-	}
-}
-#endif
-
 namespace Com.AugustCellars.CoAP.Examples
 {
 
-	// .NET 2, .NET 4 entry point
-	class ExampleClient
+    class ExampleClient
     {
+        private static readonly CBORObject _UsageKey = CBORObject.FromObject("usage");
+
         public static void Main(String[] args)
         {
             String method = null;
             Uri uri = null;
             String payload = null;
             Boolean loop = false;
-            Boolean byEvent = true;
+            Boolean byEvent = false;
             OneKey authKey = null;
             SecurityContext oscoap = null;
             SecurityContextSet contextSet = null;
@@ -78,6 +59,10 @@ namespace Com.AugustCellars.CoAP.Examples
                             Console.WriteLine("Must have -oscoap-data bevore -oscoap");
                             Environment.Exit(1);
                         }
+
+                        byte[] id = Encoding.UTF8.GetBytes(arg.Substring(8));
+
+                        oscoap = contextSet.FindByGroupId(id).First();
                     }
                     else if (arg.StartsWith("-oscoap-data=")) {
                         contextSet = LoadContextSet(arg.Substring(13));
@@ -146,7 +131,10 @@ namespace Com.AugustCellars.CoAP.Examples
             }
 
             request.URI = uri;
-            request.SetPayload(payload, MediaType.TextPlain);
+            if (payload != null) {
+                request.SetPayload(payload, MediaType.TextPlain);
+            }
+            if (oscoap != null) request.OscoapContext = oscoap;
 
             // uncomment the next line if you want to specify a draft to use
             // request.EndPoint = CoAP.Net.EndPointManager.Draft13;
@@ -295,6 +283,13 @@ namespace Com.AugustCellars.CoAP.Examples
                             SecurityContextSet.AllContexts.Add(ctx);
                             break;
                         }
+                        else if (usage == "oscoap-group") {
+                            SecurityContext ctx = SecurityContext.DeriveGroupContext(key[CoseKeyParameterKeys.Octet_k].GetByteString(), key[CBORObject.FromObject(2)].GetByteString(), key[CBORObject.FromObject("SenderID")].GetByteString(), null, null, key[CoseKeyKeys.Algorithm]);
+                            foreach (CBORObject recipient in key[CBORObject.FromObject("recipients")].Values) {
+                                ctx.AddRecipient(recipient[CBORObject.FromObject("RecipID")].GetByteString());
+                            }
+                            SecurityContextSet.AllContexts.Add(ctx);
+                        }
                     }
 
                     if ((usages.Length != 1) || (usages[0] != "oscoap")) {
@@ -303,7 +298,9 @@ namespace Com.AugustCellars.CoAP.Examples
                 }
                 reader.Close();
             }
-            return keys;
+
+            //
+            return SecurityContextSet.AllContexts;
 
         }
     }

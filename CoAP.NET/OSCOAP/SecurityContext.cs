@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
+using Com.AugustCellars.CoAP.Util;
 using PeterO.Cbor;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -226,7 +228,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <param name="groupId"></param>
         public SecurityContext(byte[] groupId)
         {
-            Recipients = new Dictionary<byte[], EntityContext>();
+            Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
             GroupId = groupId;
         }
 
@@ -241,7 +243,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             Sender = new EntityContext(old.Sender);
             if (old.Recipient != null) Recipient = new EntityContext(old.Recipient);
             if (old.Recipients != null) {
-                Recipients = new Dictionary<byte[], EntityContext>();
+                Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
                 foreach (var item in old.Recipients) {
                     Recipients[item.Key] = new EntityContext(new EntityContext(item.Value));
                 }
@@ -332,7 +334,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <param name="algAEAD">encryption algorithm</param>
         /// <param name="algKeyAgree">key agreement algorithm</param>
         /// <returns></returns>
-        public static SecurityContext DeriveGroupContext(byte[] masterSecret, byte[] senderId, byte[][] recipientIds, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
+        public static SecurityContext DeriveGroupContext(byte[] masterSecret, byte[] groupID, byte[] senderId, byte[][] recipientIds, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
         {
             SecurityContext ctx = new SecurityContext();
             ctx._masterSecret = masterSecret;
@@ -344,6 +346,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     ctx.Recipients.Add(id, DeriveEntityContext(masterSecret, id, masterSalt, algAEAD, algKeyAgree));
                 }
             }
+
+            ctx.GroupId = groupID;
+            ctx.Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
 
             return ctx;
         }
@@ -403,6 +408,35 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             set { _FutzError = value; }
         }
 #endif
+
+        public class ByteArrayComparer : EqualityComparer<byte[]>
+        {
+            public override bool Equals(byte[] first, byte[] second)
+            {
+                if (first == null || second == null) {
+                    // null == null returns true.
+                    // non-null == null returns false.
+                    return first == second;
+                }
+                if (ReferenceEquals(first, second)) {
+                    return true;
+                }
+                if (first.Length != second.Length) {
+                    return false;
+                }
+                // Linq extension method is based on IEnumerable, must evaluate every item.
+                return first.SequenceEqual(second);
+            }
+            public override int GetHashCode(byte[] obj)
+            {
+                if (obj == null) {
+                    throw new ArgumentNullException(nameof(obj));
+                }
+                // quick and dirty, instantly identifies obviously different
+                // arrays as being different
+                return obj.Length;
+            }
+        }
     }
 #endif
 }
