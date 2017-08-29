@@ -10,7 +10,7 @@
  */
 
 using System;
-using System.Timers;
+using System.Threading;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Observe;
@@ -240,43 +240,50 @@ namespace Com.AugustCellars.CoAP.Stack
         {
             private readonly Exchange _exchange;
             private readonly Action<Request> _reregister;
-            private readonly Timer _timer;
+            private Timer _timer;
+            private readonly int _timeout;
 
             public ReregistrationContext(Exchange exchange, Int64 timeout, Action<Request> reregister)
             {
                 _exchange = exchange;
                 _reregister = reregister;
-                _timer = new Timer(timeout) {
-                    AutoReset = false
-                };
-                _timer.Elapsed += timer_Elapsed;
+                _timeout = (int) timeout;
+                Start();
             }
 
             public void Start()
             {
-                _timer.Start();
+                _timer = new Timer((o) => timer_Elapsed(o), this, _timeout, Timeout.Infinite);
+            }
+
+            public void Stop()
+            {
+                _timer.Dispose();
+                _timer = null;
             }
 
             public void Restart()
             {
-                _timer.Stop();
-                _timer.Start();
+                Stop();
+                Start();
             }
 
             public void Cancel()
             {
-                _timer.Stop();
                 Dispose();
             }
 
             public void Dispose()
             {
                 _timer.Dispose();
+                _timer = null;
             }
 
-            void timer_Elapsed(Object sender, ElapsedEventArgs e)
+            static void  timer_Elapsed(Object sender)
             {
-                Request request = _exchange.Request;
+                ReregistrationContext me = (ReregistrationContext) sender;
+
+                Request request = me._exchange.Request;
                 if (!request.IsCancelled) {
                     Request refresh = Request.NewGet();
                     refresh.SetOptions(request.GetOptions());
@@ -290,7 +297,7 @@ namespace Com.AugustCellars.CoAP.Stack
                         log.Debug("Re-registering for " + request);
                     }
                     request.FireReregister(refresh);
-                    _reregister(refresh);
+                    me._reregister(refresh);
                 }
                 else {
                     if (log.IsDebugEnabled) {

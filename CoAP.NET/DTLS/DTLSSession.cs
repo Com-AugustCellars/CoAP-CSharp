@@ -303,7 +303,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                         try {
                           Monitor.Wait(_receivingQueue, waitMillis);
                         }
-                        catch (ThreadInterruptedException) {
+                        catch (System.Threading.ThreadStateException /*  ThreadInterruptedException */) {
                             // TODO Keep waiting until full wait expired?
                         }
                         if (_receivingQueue.Count < 1) {
@@ -315,16 +315,16 @@ namespace Com.AugustCellars.CoAP.DTLS
                     _receivingQueue.TryDequeue(out packet);
                     int copyLength = Math.Min(len, packet.Length);
                     Array.Copy(packet, 0, buf, off, copyLength);
-                    Debug.Print($"OurTransport::Receive - EP:{_ep} Data Length: {packet.Length}");
-                    Debug.Print(BitConverter.ToString(buf, off, copyLength));
+                    Debug.WriteLine($"OurTransport::Receive - EP:{_ep} Data Length: {packet.Length}");
+                    Debug.WriteLine(BitConverter.ToString(buf, off, copyLength));
                     return copyLength;
                 }
             }
 
             public void Send(byte[] buf, int off, int len)
             {
-                Debug.Print($"OurTransport::Send Data Length: {len}");
-                Debug.Print(BitConverter.ToString(buf, off, len));
+                Debug.WriteLine($"OurTransport::Send Data Length: {len}");
+                Debug.WriteLine(BitConverter.ToString(buf, off, len));
                 byte[] newBuf = new byte[len];
                 Array.Copy(buf, off, newBuf, 0, newBuf.Length);
                 buf = newBuf;

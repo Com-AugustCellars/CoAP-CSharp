@@ -11,8 +11,7 @@
 
 using System;
 using System.ComponentModel;
-using System.Diagnostics.Contracts;
-using System.Timers;
+using System.Threading;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 
@@ -279,11 +278,6 @@ namespace Com.AugustCellars.CoAP.Stack
                 _retransmit = retransmit;
                 _maxRetransmitCount = maxRetransmitCount;
                 CurrentTimeout = message.AckTimeout;
-                _timer = new Timer() {
-                    AutoReset = false
-                };
-
-                _timer.Elapsed += timer_Elapsed;
             }
 
             public Int32 FailedTransmissionCount { get; private set; }
@@ -292,11 +286,13 @@ namespace Com.AugustCellars.CoAP.Stack
 
             public void Start()
             {
-                _timer.Stop();
+                if (_timer != null) {
+                    _timer.Dispose();
+                    _timer = null;
+                }
 
                 if (CurrentTimeout > 0) {
-                    _timer.Interval = CurrentTimeout;
-                    _timer.Start();
+                    _timer = new Timer(timer_Elapsed, this, CurrentTimeout, Timeout.Infinite);
                 }
             }
 
@@ -310,7 +306,6 @@ namespace Com.AugustCellars.CoAP.Stack
                 }
 
                 try {
-                    t.Stop();
                     t.Dispose();
                 }
                 catch (ObjectDisposedException) {
@@ -333,13 +328,20 @@ namespace Com.AugustCellars.CoAP.Stack
                 Cancel();
             }
 
-            void timer_Elapsed(Object sender, ElapsedEventArgs e)
+            static void timer_Elapsed(Object sender)
             {
-                /*
-			     * Do not retransmit a message if it has been acknowledged,
-			     * rejected, canceled or already been retransmitted for the maximum
-			     * number of times.
-			     */
+
+                TransmissionContext me = (TransmissionContext) sender;
+                me.timer_Elapsed();
+            }
+
+            void timer_Elapsed()
+            { 
+            /*
+             * Do not retransmit a message if it has been acknowledged,
+             * rejected, canceled or already been retransmitted for the maximum
+             * number of times.
+             */
                 Int32 failedCount = ++FailedTransmissionCount;
 
                 if (_message.IsAcknowledged) {

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.5</TargetFramework>
+    <PackageId>Com.AugustCellars.CoAP</PackageId>
+    <PackageVersion>1.1.8</PackageVersion>
+    <Version>1.1.8</Version>
+    <Authors>Jim Schaad</Authors>
+    <Description>Com.AugustCellars.CoAP is an implementation in C# providing CoAP-based services to .NET applications.</Description>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright @2015 Smersh. Copyright @2016-7 Jim Schaad</Copyright>
+    <PackageTags>CAP RFC7252 OSCOAP</PackageTags>
+    
+    <PackageReleaseNotes>
+This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
+This project is NOT to be used for commercial purposes.  It is intented only for research and verification work.
+
+1.1.8
+  - Rewrite the LinkFormat code - introduce a strict parsing mode and setup for doing a resource directory.
+
+1.1.7
+  - Missed the public on FileLogManager class
+  - Add method and dispatch code for dealing with FETCH, PATCH and iPATCH.  These methods were defined in RFC 8132.
+1.1.6
+  - Re-enable DTLS reliability layer.  It was removed for debugging purposes.
+  - Re-enable observer reconnect attempts.  The ability to disable it remains, this just changes the default value.
+  - Add a UriPath and UriQuery property to the CoapClient class.  This means that URIs do not need to be constantly reparsed when looking at multiple resources on a server.
+1.1.5
+  - DTLS should now check sessions correct
+  - Remove some left over Console.Write statements
+1.1.4
+  - Refer to strongly named assemblies.  These will become strongly named in the next version
+  - Updates dealing with the internal logging system so it can be made to log to a file rather than the console
+  - DTLS server implemention is now functional and included.
+1.1.3
+  - Turn off logging by default
+  - Turn off auto re-enrollment for Observe relationships by default.  The ObserveReconnect property on a request can be used to turn it back on for that request.
+1.1.2
+  - Implement a basic version of DTLS client code          
+1.1.1
+  - Correct dll name          
+1.1.0
+  - Fix internal inconsistances          
+1.0.0
+  - Add support for OSCOAP draft -02
+  - Change name space to not collide with smershlink version
+    </PackageReleaseNotes>
+    
+    <Configurations>Debug;Release;Deploy</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <AssemblyName>CoAP.Net</AssemblyName>
+    <RootNamespace>CoAP.Net</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Deploy|AnyCPU' ">
+    <AssemblyOriginatorKeyFile>AugustCellarsStrongKey.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+    <IntermediateOutputPath>obj\Deploy\Std10</IntermediateOutputPath>
+    <OutputPath>bin\Deploy\Std10\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;NETSTANDARD1_0; INCLUDE_OSCOAP</DefineConstants>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Com.AugustCellars.COSE" Version="1.0.5.3" />
+    <PackageReference Include="Common.Logging" Version="3.4.1" />
+    <PackageReference Include="Common.Logging.Core" Version="3.4.1" />
+    <PackageReference Include="PeterO.Cbor" Version="3.0.0" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.8.1.3" />
+    <PackageReference Include="System.Collections.Specialized" Version="4.3.0" />
+    <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
+    <PackageReference Include="System.Net.Primitives" Version="4.3.0" />
+    <PackageReference Include="System.Threading.Thread" Version="4.3.0" />
+    <PackageReference Include="System.Threading.ThreadPool" Version="4.3.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Compile Include="BlockOption.cs" />
+    <Compile Include="Channel\DataReceivedEventArgs.cs" />
+    <Compile Include="Channel\IChannel.cs" />
+    <Compile Include="Channel\IPAddressExtensions.cs" />
+    <Compile Include="Channel\UDPChannel.cs" />
+    <Compile Include="Channel\UDPChannel.NET40.cs" />
+    <Compile Include="CoapClient.cs" />
+    <Compile Include="CoapConfig.cs" />
+    <Compile Include="CoapConstants.cs" />
+    <Compile Include="CoapObserveRelation.cs" />
+    <Compile Include="Code.cs" />
+    <Compile Include="Codec\DatagramReader.cs" />
+    <Compile Include="Codec\DatagramWriter.cs" />
+    <Compile Include="Codec\MessageDecoder.cs" />
+    <Compile Include="Codec\MessageEncoder.cs" />
+    <Compile Include="Codec\IMessageDecoder.cs" />
+    <Compile Include="Codec\IMessageEncoder.cs" />
+    <Compile Include="Deduplication\CropRotation.cs" />
+    <Compile Include="Deduplication\DeduplicatorFactory.cs" />
+    <Compile Include="Deduplication\IDeduplicator.cs" />
+    <Compile Include="Deduplication\NoopDeduplicator.cs" />
+    <Compile Include="Deduplication\SweepDeduplicator.cs" />
+    <Compile Include="DTLS\DTLSChannel.cs" />
+    <Compile Include="DTLS\DTLSClient.cs" />
+    <Compile Include="DTLS\DTLSClientChannel.cs" />
+    <Compile Include="DTLS\DTLSClientEndPoint.cs" />
+    <Compile Include="DTLS\DTLSEndPoint.cs" />
+    <Compile Include="DTLS\DtlsServer.cs" />
+    <Compile Include="DTLS\DTLSSession.cs" />
+    <Compile Include="DTLS\QueueItem.cs" />
+    <Compile Include="EmptyMessage.cs" />
+    <Compile Include="EndPoint\Resources\RemoteResource.cs" />
+    <Compile Include="EndPoint\Resources\Resource.cs" />
+    <Compile Include="ICoapConfig.cs" />
+    <Compile Include="ISecureSession.cs" />
+    <Compile Include="ISession.cs" />
+    <Compile Include="LinkAttribute.cs" />
+    <Compile Include="LinkFormat.cs" />
+    <Compile Include="Log\CommonLoggingManager.cs" />
+    <Compile Include="Log\ConsoleLogManager.cs" />
+    <Compile Include="Log\FileLogManager.cs" />
+    <Compile Include="Log\ILogger.cs" />
+    <Compile Include="Log\ILogManager.cs" />
+    <Compile Include="Log\LogManager.cs" />
+    <Compile Include="Log\NopLogManager.cs" />
+    <Compile Include="Log\TextWriterLogger.cs" />
+    <Compile Include="MediaType.cs" />
+    <Compile Include="Message.cs" />
+    <Compile Include="MessageType.cs" />
+    <Compile Include="Net\ClientMessageDeliverer.cs" />
+    <Compile Include="Net\CoAPEndPoint.cs" />
+    <Compile Include="Net\EndPointManager.cs" />
+    <Compile Include="Net\Exchange.cs" />
+    <Compile Include="Net\IEndPoint.cs" />
+    <Compile Include="Net\IMatcher.cs" />
+    <Compile Include="Net\IMessageDeliverer.cs" />
+    <Compile Include="Net\IOutbox.cs" />
+    <Compile Include="Net\Matcher.cs" />
+    <Compile Include="Observe\ObserveNotificationOrderer.cs" />
+    <Compile Include="Observe\ObservingEndpoint.cs" />
+    <Compile Include="Observe\ObserveManager.cs" />
+    <Compile Include="Observe\ObserveRelation.cs" />
+    <Compile Include="Observe\ReregisterEventArgs.cs" />
+    <Compile Include="Option.cs" />
+    <Compile Include="OptionType.cs" />
+    <Compile Include="OSCOAP\HKDF.cs" />
+    <Compile Include="OSCOAP\OscoapLayer.cs" />
+    <Compile Include="OSCOAP\OscoapOption.cs" />
+    <Compile Include="OSCOAP\SecureBlockwiseLayer.cs" />
+    <Compile Include="OSCOAP\SecurityContext.cs" />
+    <Compile Include="OSCOAP\SecurityContextSet.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Request.cs" />
+    <Compile Include="Response.cs" />
+    <Compile Include="ResponseEventArgs.cs" />
+    <Compile Include="Server\CoapServer.cs" />
+    <Compile Include="Server\IServer.cs" />
+    <Compile Include="Server\Resources\CoapExchange.cs" />
+    <Compile Include="Server\Resources\DiscoveryResource.cs" />
+    <Compile Include="Server\Resources\IResource.cs" />
+    <Compile Include="Server\Resources\Resource.cs" />
+    <Compile Include="Server\Resources\ResourceAttributes.cs" />
+    <Compile Include="Server\Resources\TimerResource.cs" />
+    <Compile Include="Server\ServerMessageDeliverer.cs" />
+    <Compile Include="SessionEventArgs.cs" />
+    <Compile Include="Spec.cs" />
+    <Compile Include="Stack\AbstractLayer.cs" />
+    <Compile Include="Stack\BlockwiseLayer.cs" />
+    <Compile Include="Stack\BlockwiseStatus.cs" />
+    <Compile Include="Stack\Chain.cs" />
+    <Compile Include="Stack\CoapStack.cs" />
+    <Compile Include="Stack\IEntry.cs" />
+    <Compile Include="Stack\ILayer.cs" />
+    <Compile Include="Stack\LayerStack.cs" />
+    <Compile Include="Stack\ObserveLayer.cs" />
+    <Compile Include="Stack\ReliabilityLayer.cs" />
+    <Compile Include="Stack\TokenLayer.cs" />
+    <Compile Include="Threading\Executors.NET40.cs" />
+    <Compile Include="Threading\IExecutor.cs" />
+    <Compile Include="Threading\NoThreadingExecutor.cs" />
+    <Compile Include="Threading\ThreadPoolExecutor.cs" />
+    <Compile Include="Threading\TaskExecutor.cs" />
+    <Compile Include="Util\ArrayEqualityComparer.cs" />
+    <Compile Include="Util\ByteArrayUtils.cs" />
+    <Compile Include="Util\Scanner.cs" />
+    <Compile Include="Util\System.Collections.Generic\SynchronizedCollection.cs" />
+    <Compile Include="Util\ThrowHelper.cs" />
+    <Compile Include="Util\Utils.cs" />
+    <Compile Include="Util\WaitFuture.cs" />
+    <Compile Include="WebLink.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="AugustCellarsStrongKey.snk" />
+  </ItemGroup>
+</Project>

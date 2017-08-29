@@ -10,7 +10,7 @@
  */
 
 using System;
-using System.Timers;
+using System.Threading;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 
@@ -600,24 +600,17 @@ namespace Com.AugustCellars.CoAP.Stack
         /// </summary>
         protected void PrepareBlockCleanup(Exchange exchange)
         {
-            Timer timer = new Timer {
-                AutoReset = false,
-                Interval = _blockTimeout
-            };
-            timer.Elapsed += (o, e) => BlockwiseTimeout(exchange);
+            Timer timer = new Timer((o) => BlockwiseTimeout(exchange), this, _blockTimeout, Timeout.Infinite);
 
             Timer old = exchange.Set("BlockCleanupTimer", timer) as Timer;
             if (old != null) {
                 try {
-                    old.Stop();
                     old.Dispose();
                 }
                 catch (ObjectDisposedException) {
                     // ignore
                 }
             }
-
-            timer.Start();
         }
 
         /// <summary>
@@ -628,7 +621,6 @@ namespace Com.AugustCellars.CoAP.Stack
             Timer timer = exchange.Remove("BlockCleanupTimer") as Timer;
             if (timer != null) {
                 try {
-                    timer.Stop();
                     timer.Dispose();
                 }
                 catch (ObjectDisposedException) {
@@ -641,7 +633,7 @@ namespace Com.AugustCellars.CoAP.Stack
         /// Time to try and do clean up.
         /// </summary>
         /// <param name="exchange">exchange to clean up</param>
-        private void BlockwiseTimeout(Exchange exchange)
+        private static void BlockwiseTimeout(Exchange exchange)
         {
             if (exchange.Request == null) {
                 log.Info(m => m("Block1 transfer timed out: {0}", exchange.CurrentRequest));

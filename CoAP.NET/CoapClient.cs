@@ -192,7 +192,7 @@ namespace Com.AugustCellars.CoAP
                 request.Send().WaitForResponse(timeout);
                 return request.IsRejected;
             }
-            catch (System.Threading.ThreadInterruptedException) {
+            catch (System.Threading.ThreadStateException /* ThreadInterruptedException*/) {
                 /* ignore */
             }
             return false;

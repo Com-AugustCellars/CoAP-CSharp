@@ -129,7 +129,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Frequency to sweep for the sweep deduplicator
         /// </summary>
-        Int64 MarkAndSweepInterval { get; }
+        Int32 MarkAndSweepInterval { get; }
 
         /// <summary>
         /// Size of receive buffer if greater than 0

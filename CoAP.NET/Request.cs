@@ -12,6 +12,8 @@
 using System;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Observe;
 #if INCLUDE_OSCOAP
@@ -136,7 +138,9 @@ namespace Com.AugustCellars.CoAP
                         }
                     }
 
-                    Destination = new IPEndPoint(Dns.GetHostAddresses(host)[0], port);
+                    Task < IPAddress[] > foo =  Dns.GetHostAddressesAsync(host);
+                    foo.Wait();
+                    Destination = new IPEndPoint(foo.Result[0], port);
 
                     UriPath = value.AbsolutePath;
                     UriQuery = value.Query;

@@ -11,9 +11,10 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Timers;
+using System.Threading;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
+using Org.BouncyCastle.Asn1.X509;
 
 namespace Com.AugustCellars.CoAP.Deduplication
 {
@@ -26,7 +27,8 @@ namespace Com.AugustCellars.CoAP.Deduplication
         private readonly ConcurrentDictionary<Exchange.KeyID, Exchange>[] _maps;
         private Int32 _first;
         private Int32 _second;
-        private readonly Timer _timer;
+        private Timer _timer;
+        private readonly int _period;
 
         public CropRotation(ICoapConfig config)
         {
@@ -36,28 +38,32 @@ namespace Com.AugustCellars.CoAP.Deduplication
             _maps[2] = new ConcurrentDictionary<Exchange.KeyID, Exchange>();
             _first = 0;
             _second = 1;
-            _timer = new Timer(config.CropRotationPeriod);
-            _timer.Elapsed += Rotation;
+            _period = config.CropRotationPeriod;
+            _timer = new Timer(Rotation, this, _period, _period);
         }
 
-        private void Rotation(Object sender, ElapsedEventArgs e)
+        private static void Rotation(Object sender)
         {
-            Int32 third = _first;
-            _first = _second;
-            _second = (_second + 1) % 3;
-            _maps[third].Clear();
+            CropRotation me = (CropRotation) sender;
+            Int32 third = me._first;
+            me._first = me._second;
+            me._second = (me._second + 1) % 3;
+            me._maps[third].Clear();
         }
 
         /// <inheritdoc/>
         public void Start()
         {
-            _timer.Start();
+            if (_timer == null) {
+                _timer = new Timer(Rotation, this, _period, _period);
+            }
         }
 
         /// <inheritdoc/>
         public void Stop()
         {
-            _timer.Stop();
+            _timer.Dispose();
+            _timer = null;
             Clear();
         }
 
@@ -108,6 +114,7 @@ namespace Com.AugustCellars.CoAP.Deduplication
         public void Dispose()
         {
             _timer.Dispose();
+            _timer = null;
         }
     }
 }

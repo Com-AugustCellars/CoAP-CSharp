@@ -13,7 +13,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.Contracts;
 using Com.AugustCellars.CoAP.Deduplication;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Observe;
