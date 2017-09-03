@@ -49,8 +49,8 @@
     <Reference Include="CBOR, Version=3.0.0.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
       <HintPath>..\..\packages\PeterO.Cbor.3.0.0\lib\netstandard1.0\CBOR.dll</HintPath>
     </Reference>
-    <Reference Include="COSE, Version=1.0.5.5, Culture=neutral, PublicKeyToken=feba232d7e8953ed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Com.AugustCellars.COSE.1.0.5.5\lib\netstandard1.0\COSE.dll</HintPath>
+    <Reference Include="COSE, Version=1.1.0.0, Culture=neutral, PublicKeyToken=feba232d7e8953ed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Com.AugustCellars.COSE.1.1.0\lib\netstandard1.0\COSE.dll</HintPath>
     </Reference>
     <Reference Include="Numbers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=9cd62db60ea5554c, processorArchitecture=MSIL">
       <HintPath>..\..\packages\PeterO.Numbers.1.0.0\lib\netstandard1.0\Numbers.dll</HintPath>
