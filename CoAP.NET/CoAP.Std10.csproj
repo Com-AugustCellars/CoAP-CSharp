@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.3</TargetFramework>
+    <TargetFramework>netstandard1.5</TargetFramework>
     <PackageId>Com.AugustCellars.CoAP</PackageId>
     <PackageVersion>1.1.8</PackageVersion>
     <Version>1.1.8</Version>

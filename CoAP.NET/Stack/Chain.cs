@@ -255,7 +255,7 @@ namespace Com.AugustCellars.CoAP.Stack
         {
             Entry e = _head._nextEntry;
             while (e != _tail) {
-                if (filterType.GetTypeInfo().IsAssignableFrom(e.Filter.GetType().GetTypeInfo()))
+                if (filterType.GetTypeInfo().IsAssignableFrom(e.Filter.GetType()))
                     return e;
                 e = e._nextEntry;
             }
