@@ -360,6 +360,7 @@ namespace Com.AugustCellars.CoAP.Stack
                         block.Destination = request.Destination;
                         block.SetOptions(request.GetOptions());
                         block.SetOption(new BlockOption(OptionType.Block2, num, szx, m));
+                        block.Session = request.Session;
                         // we use the same token to ease traceability (GET without Observe no longer cancels relations)
                         block.Token = response.Token;
                         // make sure not to use Observe for block retrieval
@@ -491,6 +492,7 @@ namespace Com.AugustCellars.CoAP.Stack
             block.Destination = request.Destination;
             block.Token = request.Token;
             block.Type = MessageType.CON;
+            block.Session = request.Session;
 
             Int32 currentSize = 1 << (4 + szx);
             Int32 from = num * currentSize;
@@ -520,7 +522,8 @@ namespace Com.AugustCellars.CoAP.Stack
             else {
                 block = new Response(response.StatusCode) {
                     Destination = response.Destination,
-                    Token = response.Token
+                    Token = response.Token,
+                    Session =  response.Session
                 };
                 block.SetOptions(response.GetOptions());
                 block.TimedOut += (o, e) => response.IsTimedOut = true;

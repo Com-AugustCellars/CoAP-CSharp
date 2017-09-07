@@ -51,15 +51,11 @@ This project is NOT to be used for commercial purposes.  It is intented only for
         </frameworkAssemblies>
         <dependencies>
           <dependency id="BouncyCastle" version="1.8.1"/>
-          <dependency id="Com.AugustCellars.COSE" version="1.0.5.2"/>
-          <dependency id="PeterO.CBOR" version="2.4.2"/>
-          <dependency id="PeterO.Numbers" version="0.2.2"/>
+          <dependency id="Com.AugustCellars.COSE" version="1.1.0"/>
+          <dependency id="PeterO.CBOR" version="3.0.0"/>
         </dependencies>
     </metadata>
     <files>
-        <file src="CoAP.NET\bin\Deploy\NET40\CoAP.dll" target="lib\portable-net40+sl5+win+wpa81+wp80\CoAP.dll" />
-        <file src="CoAP.NET\bin\Deploy\NET40\CoAP.pdb" target="lib\portable-net40+sl5+win+wpa81+wp80\CoAP.pdb" />
-        <file src="CoAP.NET\bin\Deploy\NET40\CoAP.XML" target="lib\portable-net40+sl5+win+wpa81+wp80\CoAP.XML" />
         <file src="CoAP.NET\bin\Deploy\NET45\CoAP.dll" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CoAP.dll" />
         <file src="CoAP.NET\bin\Deploy\NET45\CoAP.pdb" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CoAP.pdb" />
         <file src="CoAP.NET\bin\Deploy\NET45\CoAP.XML" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CoAP.XML" />
