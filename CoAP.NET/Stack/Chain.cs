@@ -12,7 +12,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Reflection;
 
 namespace Com.AugustCellars.CoAP.Stack
 {
@@ -254,8 +253,9 @@ namespace Com.AugustCellars.CoAP.Stack
         public IEntry<TFilter, TNextFilter> GetEntry(Type filterType)
         {
             Entry e = _head._nextEntry;
-            while (e != _tail) {
-                if (filterType.GetTypeInfo().IsAssignableFrom(e.Filter.GetType()))
+            while (e != _tail)
+            {
+                if (filterType.IsAssignableFrom(e.Filter.GetType()))
                     return e;
                 e = e._nextEntry;
             }

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading;
+using System.Timers;
 
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.CoAP.Log;
@@ -611,17 +611,26 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// </summary>
         protected void PrepareBlockCleanup(Exchange exchange)
         {
-            Timer timer = new Timer((o) => BlockwiseTimeout(o, exchange), this, _blockTimeout, Timeout.Infinite);
+            Timer timer = new Timer();
+            timer.AutoReset = false;
+            timer.Interval = _blockTimeout;
+            timer.Elapsed += (o, e) => BlockwiseTimeout(exchange);
 
             Timer old = exchange.Set("BlockCleanupTimer", timer) as Timer;
-            if (old != null) {
-                try {
+            if (old != null)
+            {
+                try
+                {
+                    old.Stop();
                     old.Dispose();
                 }
-                catch (ObjectDisposedException) {
+                catch (ObjectDisposedException)
+                {
                     // ignore
                 }
             }
+
+            timer.Start();
         }
 
         /// <summary>
@@ -634,6 +643,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             {
                 try
                 {
+                    timer.Stop();
                     timer.Dispose();
                 }
                 catch (ObjectDisposedException)
@@ -643,13 +653,17 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
         }
 
-        private static void BlockwiseTimeout(Object obj, Exchange exchange)
+        private void BlockwiseTimeout(Exchange exchange)
         {
-            if (exchange.Request == null) {
-                if (log.IsInfoEnabled) log.Info("Block1 transfer timed out: " + exchange.CurrentRequest);
+            if (exchange.Request == null)
+            {
+                if (log.IsInfoEnabled)
+                    log.Info("Block1 transfer timed out: " + exchange.CurrentRequest);
             }
-            else {
-                if (log.IsInfoEnabled) log.Info("Block2 transfer timed out: " + exchange.Request);
+            else
+            {
+                if (log.IsInfoEnabled)
+                    log.Info("Block2 transfer timed out: " + exchange.Request);
             }
             exchange.Complete = true;
         }

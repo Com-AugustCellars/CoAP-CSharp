@@ -184,7 +184,7 @@ namespace Com.AugustCellars.CoAP.Channel
 
             public void Dispose()
             {
-                Socket.Dispose();
+                Socket.Close();
                 ReadBuffer.Dispose();
                 WriteBuffer.Dispose();
             }

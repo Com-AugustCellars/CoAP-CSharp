@@ -10,7 +10,6 @@
  */
 
 using System;
-using System.Net;
 
 namespace Com.AugustCellars.CoAP.Channel
 {

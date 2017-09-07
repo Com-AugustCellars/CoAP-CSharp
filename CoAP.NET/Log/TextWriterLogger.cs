@@ -10,7 +10,6 @@
  */
 
 using System;
-using System.Globalization;
 using Common.Logging.Factory;
 using FormatMessageCallback = System.Action<Com.AugustCellars.CoAP.Log.FormatMessageHandler>;
 
@@ -248,7 +247,7 @@ namespace Com.AugustCellars.CoAP.Log
                 log = "[" + _logName + "]";
             }
 
-            String text = $"{DateTime.Now.ToString("T", CultureInfo.InvariantCulture)} {log} {level} - {message}";
+            String text = $"{DateTime.Now.ToLongTimeString()} {log} {level} - {message}";
             if (exception != null) {
                 text += exception.ToString();
             }

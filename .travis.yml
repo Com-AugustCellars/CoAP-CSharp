@@ -2,12 +2,17 @@
 # see travis-ci.org for details
 
 language: csharp
-dist: trusty
 
 env:
-  - SLN=CoAP.Std10.sln
-    TARGET=Std10
+  - SLN=CoAP.NET40.2010.sln
+    TARGET=NET40
     VERSION=Release
+  - SLN=CoAP.NET45.sln
+    TARGET=NET45
+    VERSION=Release
+#  - SLN=CoAP.NET45.sln
+#    TARGET=NET45
+#    VERSION=Debug
 
 install:
    - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
@@ -15,3 +20,8 @@ install:
 
 script:
   - ./build.sh
+#  - xbuild CoAP.NET.2010.sln /p:Configuration=Release
+#  - mono ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe ./CoAP.Test/bin/Release/CoAP.Test.dll
+#  - xbuild CoAP.NET.2010.sln /t:Clean
+#  - xbuild CoAP.NET40.2010.sln /p:Configuration=Release
+#  - mono ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe ./CoAP.Test/bin/Release/NET40/CoAP.Test.dll

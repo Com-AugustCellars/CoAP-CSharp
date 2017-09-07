@@ -12,8 +12,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Threading;
-#if LOG_SWEEP_DEDUPLICATOR
+using System.Timers;
+#if LOG_SWEE_DEDUPLICATOR
 using Com.AugustCellars.CoAP.Log;
 #endif
 using Com.AugustCellars.CoAP.Net;
@@ -28,25 +28,25 @@ namespace Com.AugustCellars.CoAP.Deduplication
 
         private readonly ConcurrentDictionary<Exchange.KeyID, Exchange> _incommingMessages
             = new ConcurrentDictionary<Exchange.KeyID, Exchange>();
-        private Timer _timer;
+        private readonly Timer _timer;
         private readonly ICoapConfig _config;
 
         public SweepDeduplicator(ICoapConfig config)
         {
             _config = config;
-            Start();
+            _timer = new Timer(config.MarkAndSweepInterval);
+            _timer.Elapsed += Sweep;
         }
 
-        private static void Sweep(Object sender)
+        private void Sweep(Object sender, ElapsedEventArgs e)
         {
-            SweepDeduplicator me = (SweepDeduplicator) sender;
 #if LOG_SWEEP_DEDUPLICATOR
             log.Debug(m => m("Start Mark-And-Sweep with {0} entries", _incommingMessages.Count));
 #endif
 
-            DateTime oldestAllowed = DateTime.Now.AddMilliseconds(-me._config.ExchangeLifetime);
+            DateTime oldestAllowed = DateTime.Now.AddMilliseconds(-_config.ExchangeLifetime);
             List<Exchange.KeyID> keysToRemove = new List<Exchange.KeyID>();
-            foreach (KeyValuePair<Exchange.KeyID, Exchange> pair in me._incommingMessages) {
+            foreach (KeyValuePair<Exchange.KeyID, Exchange> pair in _incommingMessages) {
                 if (pair.Value.Timestamp < oldestAllowed) {
 #if LOG_SWEEP_DEDUPLICATOR
                     log.Debug(m => m("Mark-And-Sweep removes {0}", pair.Key));
@@ -57,7 +57,7 @@ namespace Com.AugustCellars.CoAP.Deduplication
             if (keysToRemove.Count > 0) {
                 Exchange ex;
                 foreach (Exchange.KeyID key in keysToRemove) {
-                    me._incommingMessages.TryRemove(key, out ex);
+                    _incommingMessages.TryRemove(key, out ex);
                 }
             }
         }
@@ -65,16 +65,13 @@ namespace Com.AugustCellars.CoAP.Deduplication
         /// <inheritdoc/>
         public void Start()
         {
-            if (_timer == null) {
-                _timer = new Timer(Sweep, this, _config.MarkAndSweepInterval, _config.MarkAndSweepInterval);
-            }
+            _timer.Start();
         }
 
         /// <inheritdoc/>
         public void Stop()
         {
-            _timer.Dispose();
-            _timer = null;
+            _timer.Stop();
             Clear();
         }
 
@@ -108,7 +105,6 @@ namespace Com.AugustCellars.CoAP.Deduplication
         public void Dispose()
         {
             _timer.Dispose();
-            _timer = null;
         }
     }
 }

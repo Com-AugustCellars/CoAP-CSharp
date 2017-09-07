@@ -55,7 +55,7 @@ namespace Com.AugustCellars.CoAP
         private const string Default_Deduplicator = Deduplication.DeduplicatorFactory.MarkAndSweepDeduplicator;
         private const int Default_CropRotationPeriod = 2000; // ms
         private const int Default_ExchangeLifetime = 247 * 1000; // ms
-        private const Int32 Default_MarkAndSweepInterval = 10 * 1000; // ms
+        private const Int64 Default_MarkAndSweepInterval = 10 * 1000; // ms
         private const Int64 Default_NotificationMaxAge = 128 * 1000; // ms
         private const Int64 Default_NotificationCheckIntervalTime = 24 * 60 * 60 * 1000; // ms
         private const int Default_NotificationCheckIntervalCount = 100;
@@ -193,9 +193,9 @@ namespace Com.AugustCellars.CoAP
         }
 
         /// <inheritdoc/>
-        public Int32 MarkAndSweepInterval
+        public Int64 MarkAndSweepInterval
         {
-            get => GetInt("MarkAndSweepInterval", Default_MarkAndSweepInterval);
+            get => GetInt64("MarkAndSweepInterval", Default_MarkAndSweepInterval);
             set => SetValue("MarkAndSweepInterval", value);
         }
 
@@ -368,11 +368,11 @@ namespace Com.AugustCellars.CoAP
         /// <inheritdoc/>
         public void Store(String configFile)
         {
-            using (StreamWriter w = new StreamWriter(new FileStream(configFile, FileMode.Create))) {
+            using (StreamWriter w = new StreamWriter(configFile))
+            {
                 foreach (string key in _values.Keys) {
                     w.WriteLine($"{key}={_values[key]}");
                 }
-                w.Dispose();
             }
         }
 
