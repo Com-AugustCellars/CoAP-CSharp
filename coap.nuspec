@@ -2,12 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>Com.AugustCellars.CoAP</id>
-        <version>1.1.8</version>
+        <version>1.1.8.1</version>
         <title>Com.AugustCellars.CoAP</title>
         <authors>Jim Schaad</authors>
         <owners>jimsch</owners>
-        <licenseUrl>https://github.com/jimsch/CoAP-CSharp/LICENSE</licenseUrl>
-        <projectUrl>https://github.com/jimsch/CoAP-CSharp</projectUrl>
+        <licenseUrl>https://github.com/Com-AugustCellars/CoAP-CSharp/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/Com-AugustCellars/CoAP-CSharp</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Com.AugustCellars.CoAP is an implementation in C# providing CoAP-based services to .NET applications.</description>
         <summary>.NET implementation of the Constrained Application Protocol (CoAP)</summary>
@@ -15,6 +15,8 @@
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
 This project is NOT to be used for commercial purposes.  It is intented only for research and verification work.
 
+1.1.8.1
+  - Put the strong name back
 1.1.8
   - Rewrite the LinkFormat code - introduce a strict parsing mode and setup for doing a resource directory.
 
