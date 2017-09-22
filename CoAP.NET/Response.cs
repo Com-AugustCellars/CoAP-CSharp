@@ -33,7 +33,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets the response status code.
         /// </summary>
-        public StatusCode StatusCode { get; }
+        public StatusCode StatusCode { get; internal set; }
 
         /// <summary>
         /// Gets the Round-Trip Time of this response.

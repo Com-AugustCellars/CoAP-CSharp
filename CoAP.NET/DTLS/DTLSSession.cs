@@ -189,7 +189,9 @@ namespace Com.AugustCellars.CoAP.DTLS
                 if (!_queue.TryDequeue(out q))
                     break;
 
-                _dtlsSession.Send(q.Data, 0, q.Data.Length);
+                if (_dtlsSession != null) {
+                    _dtlsSession.Send(q.Data, 0, q.Data.Length);
+                }
             }
 
             lock (_writeLock) {
