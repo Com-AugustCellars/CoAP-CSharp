@@ -50,7 +50,6 @@ namespace Com.AugustCellars.CoAP.Net
         private BlockwiseStatus _oscoap_requestBlockStatus;
         private BlockwiseStatus _oscoap_responseBlockStatus;
         private SecurityContext _oscoap_securityContext;
-        private byte[] _oscoap_sequenceNumber;
 #endif
 
         public event EventHandler Completed;
@@ -180,10 +179,9 @@ namespace Com.AugustCellars.CoAP.Net
         /// Gets or sets the sequence number used to link requests and responses
         /// in OSCOAP authentication
         /// </summary>
-        public byte[] OscoapSequenceNumber {
-            get { return _oscoap_sequenceNumber; }
-            set { _oscoap_sequenceNumber = value; }
-        }
+        public byte[] OscoapSequenceNumber { get; set; }
+
+        public byte[] OscoapSenderId { get; set; }
 #endif
 
         /// <summary>

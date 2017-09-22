@@ -7,7 +7,6 @@ using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.COSE;
-using Org.BouncyCastle.Asn1.Cms;
 using PeterO.Cbor;
 using Attributes = Com.AugustCellars.COSE.Attributes;
 
@@ -17,7 +16,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
     public class OscoapLayer : AbstractLayer
     {
         static readonly ILogger _Log = LogManager.GetLogger(typeof(OscoapLayer));
-        static readonly byte[] _FixedHeader = new byte[] { 0x40, 0x01, 0xff, 0xff };
+        static readonly byte[] _FixedHeader = new byte[] {0x40, 0x01, 0xff, 0xff};
         Boolean _replayWindow = true;
         readonly ConcurrentDictionary<Exchange.KeyUri, BlockHolder> _ongoingExchanges = new ConcurrentDictionary<Exchange.KeyUri, BlockHolder>();
 
@@ -55,12 +54,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             config.PropertyChanged += ConfigChanged;
 
-           // _replayWindow = false;
+            // _replayWindow = false;
         }
 
         void ConfigChanged(Object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            ICoapConfig config = (ICoapConfig)sender;
+            ICoapConfig config = (ICoapConfig) sender;
             if (String.Equals(e.PropertyName, "OSCOAP_ReplayWindow")) _replayWindow = config.OSCOAP_ReplayWindow;
         }
 
@@ -77,7 +76,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
 
                 Codec.IMessageEncoder me = Spec.NewMessageEncoder();
-                Request encryptedRequest = new Request(Method.GET);
+                Request encryptedRequest = new Request(request.Method);
 
                 if (request.Payload != null) {
                     hasPayload = true;
@@ -86,7 +85,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 MoveRequestHeaders(request, encryptedRequest);
 
-                    _Log.Info(m => m("New inner response message\n{0}", encryptedRequest.ToString()));
+                _Log.Info(m => m("New inner response message\n{0}", encryptedRequest.ToString()));
 
                 ctx.Sender.IncrementSequenceNumber();
 
@@ -99,22 +98,31 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 // Build AAD
                 CBORObject aad = CBORObject.NewArray();
-                aad.Add(CBORObject.FromObject(1));                      // version
-                aad.Add(CBORObject.FromObject(request.Code));           // code
-                aad.Add(CBORObject.FromObject(new byte[0]));            // options
+                aad.Add(CBORObject.FromObject(1)); // version
+                aad.Add(CBORObject.FromObject(request.Code)); // code
+                aad.Add(CBORObject.FromObject(new byte[0])); // options
                 aad.Add(CBORObject.FromObject(ctx.Sender.Algorithm));
                 aad.Add(CBORObject.FromObject(ctx.Sender.Id));
                 aad.Add(CBORObject.FromObject(ctx.Sender.PartialIV));
+                if (ctx.GroupId != null) {
+                    aad.Add(CBORObject.FromObject(ctx.GroupId));
+                }
 
 #if DEBUG
                 switch (SecurityContext.FutzError) {
-                    case 1: aad[0] = CBORObject.FromObject(2); break; // Change version #
-                    case 2: aad[1] = CBORObject.FromObject(request.Code + 1); break; // Change request code
-                    case 3: aad[2] = CBORObject.FromObject(ctx.Sender.Algorithm.AsInt32() + 1); break; // Change algorithm number
+                    case 1:
+                        aad[0] = CBORObject.FromObject(2);
+                        break; // Change version #
+                    case 2:
+                        aad[1] = CBORObject.FromObject(request.Code + 1);
+                        break; // Change request code
+                    case 3:
+                        aad[2] = CBORObject.FromObject(ctx.Sender.Algorithm.AsInt32() + 1);
+                        break; // Change algorithm number
                 }
 #endif
 
-                    _Log.Info(m => m("AAD = {0}", BitConverter.ToString(aad.EncodeToBytes())));
+                _Log.Info(m => m("AAD = {0}", BitConverter.ToString(aad.EncodeToBytes())));
 
                 enc.SetExternalData(aad.EncodeToBytes());
 #if DEBUG
@@ -154,9 +162,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 byte[] encBody;
                 encBody = DoCompression(enc);
 
-                if (hasPayload) {
+                if (!request.HasOption(OptionType.Oscoap)) {
                     request.Payload = encBody;
                     request.AddOption(new OscoapOption());
+                    request.Method = Method.POST;
                 }
                 else {
                     OscoapOption o = new OscoapOption();
@@ -222,12 +231,22 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 //  In which case we can just use the same one.
                 //  M00BUG - Multicast problem of recipient ID?
 
+                CBORObject gid = null;
                 if (exchange.OscoapContext != null) {
                     contexts.Add(exchange.OscoapContext);
+                    if (exchange.OscoapContext.GroupId != null) {
+                        gid = CBORObject.FromObject(exchange.OscoapContext.GroupId);
+                    }
+                    kid = CBORObject.FromObject(exchange.OscoapSenderId);
                 }
                 else {
-                    CBORObject gid = msg.FindAttribute(CBORObject.FromObject("gid"));
+                    gid = msg.FindAttribute(CBORObject.FromObject("gid"));
                     kid = msg.FindAttribute(HeaderKeys.KeyId);
+
+                    if (kid == null) {
+                        exchange.SendResponse(new Response(StatusCode.BadRequest));
+                        return;
+                    }
 
                     if (gid != null) {
                         contexts = SecurityContextSet.AllContexts.FindByGroupId(gid.GetByteString());
@@ -237,14 +256,16 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     }
 
                     if (contexts.Count == 0) {
-                        response = new Response(StatusCode.Unauthorized);
-                        response.PayloadString = "No Context Found - 1";
+                        response = new Response(StatusCode.Unauthorized)
+                        {
+                            PayloadString = "No Context Found - 1"
+                        };
                         exchange.SendResponse(response);
                         return; // Ignore messages that have no known security context.
                     }
                 }
 
-                String partialURI = request.URI.AbsoluteUri; // M00BUG?
+                byte[] partialIV = msg.FindAttribute(HeaderKeys.PartialIV).GetByteString();
 
                 //  Build AAD
                 CBORObject aad = CBORObject.NewArray();
@@ -252,11 +273,13 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 aad.Add(CBORObject.FromObject(request.Code));
                 aad.Add(CBORObject.FromObject(new byte[0])); // encoded I options
                 aad.Add(CBORObject.FromObject(0)); // Place holder for algorithm
-                aad.Add(CBORObject.FromObject(msg.FindAttribute(HeaderKeys.KeyId)));
+                aad.Add(CBORObject.FromObject(kid));
+                aad.Add(CBORObject.FromObject(partialIV));
+                if (gid != null) {
+                    aad.Add(gid);
+                }
 
                 byte[] payload = null;
-                byte[] partialIV = msg.FindAttribute(HeaderKeys.PartialIV).GetByteString();
-                aad.Add(CBORObject.FromObject(partialIV));
 
                 byte[] seqNoArray = new byte[8];
                 Array.Copy(partialIV, 0, seqNoArray, 8 - partialIV.Length, partialIV.Length);
@@ -322,6 +345,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 exchange.OscoapContext = ctx; // So we know it on the way back.
                 request.OscoapContext = ctx;
                 exchange.OscoapSequenceNumber = partialIV;
+                exchange.OscoapSenderId = kid.GetByteString();
 
                 byte[] newRequestData = new byte[payload.Length + _FixedHeader.Length];
                 Array.Copy(_FixedHeader, newRequestData, _FixedHeader.Length);
@@ -333,6 +357,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 //  Update headers is a pain
 
                 RestoreOptions(request, newRequest);
+                request.Method = newRequest.Method;
 
                 if (_Log.IsInfoEnabled) {
                     // log.Info(String.Format("Secure message post = " + Util.Utils.ToString(request)));
@@ -374,7 +399,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 SecurityContext ctx = exchange.OscoapContext;
 
                 Codec.IMessageEncoder me = Spec.NewMessageEncoder();
-                Response encryptedResponse = new Response((StatusCode)response.Code);
+                Response encryptedResponse = new Response((StatusCode) response.Code);
 
                 bool hasPayload = false;
                 if (response.Payload != null) {
@@ -385,23 +410,24 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 MoveResponseHeaders(response, encryptedResponse);
 
                 if (_Log.IsInfoEnabled) {
-                    _Log.Info("New inner response message");
+                    _Log.Info("SendResponse: New inner response message");
                     _Log.Info(encryptedResponse.ToString());
                 }
 
                 //  Build AAD
                 CBORObject aad = CBORObject.NewArray();
                 aad.Add(1);
-                aad.Add(response.Code);
-                aad.Add(CBORObject.FromObject(new byte[0]));        // This is a mess for observe.
+                aad.Add(CBORObject.FromObject(new byte[0])); // This is a mess for observe.
                 aad.Add(ctx.Sender.Algorithm);
-                aad.Add(ctx.Recipient.Id);
+                aad.Add(exchange.OscoapSenderId);
                 aad.Add(exchange.OscoapSequenceNumber);
                 if (ctx.GroupId != null) {
                     aad.Add(ctx.GroupId);
                 }
 
-                Console.WriteLine(BitConverter.ToString(aad.EncodeToBytes()));
+                if (_Log.IsInfoEnabled) {
+                    _Log.Info("SendResponse: AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
+                }
 
                 Encrypt0Message enc = new Encrypt0Message(false);
                 byte[] msg = me.Encode(encryptedResponse);
@@ -412,7 +438,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 enc.SetExternalData(aad.EncodeToBytes());
 
                 if (response.HasOption(OptionType.Observe) || ctx.GroupId != null) {
-                    enc.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV), Attributes.PROTECTED);
+                    enc.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV), Attributes.UNPROTECTED);
                     enc.AddAttribute(HeaderKeys.IV, ctx.Sender.GetIV(ctx.Sender.PartialIV), Attributes.DO_NOT_SEND);
                     ctx.Sender.IncrementSequenceNumber();
                     if (ctx.GroupId != null) {
@@ -422,27 +448,31 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 else {
                     CBORObject iv = ctx.Sender.GetIV(exchange.OscoapSequenceNumber);
                     byte[] ivX = iv.GetByteString();
-                    ivX[0] = (byte)( ivX[0] + 0x80);
+                    ivX[0] = (byte) (ivX[0] + 0x80);
 
                     enc.AddAttribute(HeaderKeys.IV, CBORObject.FromObject(ivX), Attributes.DO_NOT_SEND);
 
                 }
 
+                _Log.Info(m => m($"SendResponse: IV = {BitConverter.ToString(enc.FindAttribute(HeaderKeys.IV, Attributes.DO_NOT_SEND).GetByteString())}"));
+                _Log.Info(m =>m($"SendResponse: Key = {BitConverter.ToString(ctx.Sender.Key)}"));
+
                 enc.AddAttribute(HeaderKeys.Algorithm, ctx.Sender.Algorithm, Attributes.DO_NOT_SEND);
                 enc.Encrypt(ctx.Sender.Key);
 
-                byte[] finalBody;
-                finalBody = DoCompression(enc);
+                byte[] finalBody = DoCompression(enc);
 
                 OptionType xxx = exchange.Request.HasOption(OptionType.Oscoap2) ? OptionType.Oscoap2 : OptionType.Oscoap;
-                if (hasPayload) {
+                if (!response.HasOption(OptionType.Observe)) {
                     response.Payload = finalBody;
                     response.AddOption(new OscoapOption(xxx));
+                    response.StatusCode = StatusCode.Changed;
                 }
                 else {
                     OscoapOption o = new OscoapOption(xxx);
                     o.Set(finalBody);
                     response.AddOption(o);
+                    response.StatusCode = StatusCode.Content;
                 }
 
 
@@ -483,7 +513,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 SecurityContext ctx;
                 Option op = response.GetFirstOption(OptionType.Oscoap);
 
-                 if (exchange.OscoapContext == null) {
+                if (exchange.OscoapContext == null) {
                     return;
                 }
                 else ctx = exchange.OscoapContext;
@@ -495,8 +525,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 bool fServerIv = true;
 
 
-                    msg = Uncompress(raw);
-                    if (msg == null) return;
+                msg = Uncompress(raw);
+                if (msg == null) return;
 
                 SecurityContext.EntityContext recip = ctx.Recipient;
                 if (recip == null) {
@@ -532,15 +562,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 msg.AddAttribute(HeaderKeys.Algorithm, recip.Algorithm, Attributes.DO_NOT_SEND);
 
-               CBORObject fullIV = recip.GetIV(partialIV);
+                CBORObject fullIV = recip.GetIV(partialIV);
                 if (!fServerIv) fullIV.GetByteString()[0] += 0x80;
                 msg.AddAttribute(HeaderKeys.IV, fullIV, Attributes.DO_NOT_SEND);
 
                 //  build aad
                 CBORObject aad = CBORObject.NewArray();
                 aad.Add(CBORObject.FromObject(1));
-                aad.Add(CBORObject.FromObject(response.Code));
-                aad.Add(CBORObject.FromObject(new byte[0]));        // M00BUG
+                aad.Add(CBORObject.FromObject(new byte[0])); // M00BUG
                 aad.Add(recip.Algorithm);
                 aad.Add(ctx.Sender.Id);
                 aad.Add(ctx.Sender.PartialIV);
@@ -548,9 +577,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 msg.SetExternalData(aad.EncodeToBytes());
 
-                if (_Log.IsInfoEnabled) {
-                    _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
-                }
+                    _Log.Info(m => m("ReceiveResponse: AAD = " + BitConverter.ToString(aad.EncodeToBytes())));
+                _Log.Info(m => m($"ReceiveResponse: IV = {BitConverter.ToString(fullIV.GetByteString())}"));
+                _Log.Info(m => m($"ReceiveResponse: Key = {BitConverter.ToString(recip.Key)}"));
 
                 byte[] payload = msg.Decrypt(recip.Key);
 
@@ -564,6 +593,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 Response decryptedReq = me.DecodeResponse();
 
                 response.Payload = decryptedReq.Payload;
+                response.StatusCode = decryptedReq.StatusCode;
 
                 RestoreOptions(response, decryptedReq);
             }
@@ -585,7 +615,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 int port;
                 String strUri;
                 if (!unprotected.ProxyUri.IsAbsoluteUri) throw new Exception("Must be an absolute URI");
-                if (! string.IsNullOrEmpty(unprotected.ProxyUri.Fragment)) throw new Exception("Fragments not allowed in ProxyUri");
+                if (!string.IsNullOrEmpty(unprotected.ProxyUri.Fragment)) throw new Exception("Fragments not allowed in ProxyUri");
                 switch (unprotected.ProxyUri.Scheme) {
                     case "coap":
                         port = 5683;
@@ -647,8 +677,6 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         private static void MoveResponseHeaders(Response unprotected, Response encrypted)
         {
-            List<Option> deleteMe = new List<Option>();
-
             //  Deal with Proxy-Uri
             if (unprotected.ProxyUri != null) {
                 throw new Exception("Should not see Proxy-Uri on a response.");
@@ -713,7 +741,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             byte[] encBody;
 
             body = encMsg[2].GetByteString();
-            
+
 
             // Start with 0abc deee
             //  a, b, c and d are presence flags
@@ -766,20 +794,20 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             if (kid != null) {
                 if (kid.GetByteString().Length > 255) throw new Exception("KID too large");
                 encBody[cbSize] = (byte) kid.GetByteString().Length;
-                Array.Copy(kid.GetByteString(), 0, encBody, cbSize+1, kid.GetByteString().Length);
+                Array.Copy(kid.GetByteString(), 0, encBody, cbSize + 1, kid.GetByteString().Length);
                 cbSize += kid.GetByteString().Length + 1;
             }
 
             if (gid != null) {
                 if (gid.GetByteString().Length > 255) throw new Exception("GID too large");
                 encBody[cbSize] = (byte) gid.GetByteString().Length;
-                Array.Copy(gid.GetByteString(), 0, encBody, cbSize+1, gid.GetByteString().Length);
+                Array.Copy(gid.GetByteString(), 0, encBody, cbSize + 1, gid.GetByteString().Length);
                 cbSize += gid.GetByteString().Length + 1;
             }
 
             if (sig != null) {
                 if (sigBytes.Length > 255) throw new Exception("GID too large");
-                encBody[cbSize] = (byte)sigBytes.Length;
+                encBody[cbSize] = (byte) sigBytes.Length;
                 Array.Copy(sigBytes, 0, encBody, cbSize + 1, sig.GetByteString().Length);
                 cbSize += sigBytes.Length + 1;
             }
@@ -802,8 +830,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             //  Decode the wierd body
             //  First byte is of the form 0abcdeee where abcd are flags and eee is the the IV size.
-            if (0 != (raw[0] & 0x80)) return null;  // This is not legal
-            if (0 != (raw[0] & 0x40)) return null;  // These are not currently supported.
+            if (0 != (raw[0] & 0x80)) return null; // This is not legal
+            if (0 != (raw[0] & 0x40)) return null; // These are not currently supported.
 
             int iX = 1;
             if (0 != (raw[0] & 0x07)) {
@@ -843,11 +871,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             msgX.Add(map);
             msgX.Add(encBody);
 
-           Encrypt0Message msg = (Encrypt0Message)COSE.Message.DecodeFromBytes(msgX.EncodeToBytes(), Tags.Encrypt0);
+            Encrypt0Message msg = (Encrypt0Message) COSE.Message.DecodeFromBytes(msgX.EncodeToBytes(), Tags.Encrypt0);
 
             return msg;
 
         }
     }
 #endif
-            }
+}

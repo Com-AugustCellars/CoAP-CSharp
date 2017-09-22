@@ -278,7 +278,7 @@ namespace Com.AugustCellars.CoAP.Stack
             {
                 Request request = _exchange.Request;
                 if (!request.IsCancelled) {
-                    Request refresh = Request.NewGet();
+                    Request refresh = new Request(request.Method);
                     refresh.SetOptions(request.GetOptions());
                     // make sure Observe is set and zero
                     refresh.MarkObserve();

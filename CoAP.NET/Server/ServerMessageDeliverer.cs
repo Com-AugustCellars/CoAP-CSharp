@@ -89,7 +89,7 @@ namespace Com.AugustCellars.CoAP.Server
         private void CheckForObserveOption(Exchange exchange, IResource resource)
         {
             Request request = exchange.Request;
-            if (request.Method != Method.GET) {
+            if (request.Method != Method.GET && request.Method != Method.FETCH) {
                 return;
             }
 
