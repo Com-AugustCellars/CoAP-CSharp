@@ -9,31 +9,55 @@
  * Please see README for more information.
  */
 
+using Com.AugustCellars.CoAP.Server.Resources;
 using System;
+using System.Text;
 
 namespace Com.AugustCellars.CoAP.EndPoint.Resources
 {
-    public class RemoteResource : Resource
+    public partial class  RemoteResource : IComparable<RemoteResource>, IResource
     {
-        public RemoteResource(String resourceIdentifier)
-            : base(resourceIdentifier)
-        { }
-
-        public static RemoteResource NewRoot(String linkFormat)
+        public static RemoteResource NewRoot(String linkFormat, int mediaType = MediaType.ApplicationLinkFormat)
         {
-            return LinkFormat.Deserialize(linkFormat);
+            switch (mediaType) {
+                case MediaType.ApplicationLinkFormat:
+                    return LinkFormat.Deserialize(linkFormat);
+
+                case MediaType.ApplicationJson:
+                    return LinkFormat.DeserializeJson(linkFormat);
+
+                default:
+                    throw new ArgumentException("Unrecognized media type");
+            }
+        }
+
+        public static RemoteResource NewRoot(byte[] linkFormat, int mediaType = MediaType.ApplicationLinkFormat)
+        {
+            switch (mediaType) {
+                case MediaType.ApplicationLinkFormat:
+                    return LinkFormat.Deserialize(Encoding.UTF8.GetString(linkFormat));
+
+                case MediaType.ApplicationCbor:
+                    return LinkFormat.DeserializeCbor(linkFormat);
+
+                case MediaType.ApplicationJson:
+                    return LinkFormat.DeserializeJson(Encoding.UTF8.GetString(linkFormat));
+
+                default:
+                    throw new ArgumentException("Unrecognized media type");
+            }
         }
 
         /// <summary>
         /// Creates a resouce instance with proper subtype.
         /// </summary>
         /// <returns></returns>
-        protected override Resource CreateInstance(String name)
+        protected RemoteResource CreateInstance(String name)
         {
             return new RemoteResource(name);
         }
 
-        protected override void DoCreateSubResource(Request request, String newIdentifier)
+        protected  void DoCreateSubResource(Request request, String newIdentifier)
         { 
         }
     }

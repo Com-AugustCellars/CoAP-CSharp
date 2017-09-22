@@ -49,7 +49,7 @@ namespace Com.AugustCellars.CoAP
         {
             String expected = "</sensors>;title=\"Sensor Index\"," +
                     "</sensors/light>;if=\"sensor\";rt=\"light-lux\"," +
-                    "</sensors/temp>;bar=\"one two\";foo;if=\"sensor\";rt=\"temperature-c\"";
+                    "</sensors/temp>;bar=\"one\";bar=\"two\";foo;if=\"sensor\";rt=\"temperature-c\"";
             DiscoveryResource discovery = new DiscoveryResource(_root);
             String serialized = LinkFormat.Serialize(_root);
             Assert.AreEqual(expected, serialized);

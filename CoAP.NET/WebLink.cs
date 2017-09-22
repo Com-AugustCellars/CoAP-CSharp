@@ -63,10 +63,8 @@ namespace Com.AugustCellars.CoAP
                 }
             }
 
-            if (Attributes.Contains(LinkFormat.InterfaceDescription))
-            {
-                sb.Append("\n\t").Append(LinkFormat.InterfaceDescription)
-                    .Append(":\t");
+            if (Attributes.Contains(LinkFormat.InterfaceDescription)) {
+                sb.Append("\n\t").Append(LinkFormat.InterfaceDescription).Append(":\t");
                 foreach (string s in Attributes.GetInterfaceDescriptions()) {
                     sb.Append(s).Append(' ');
                 }

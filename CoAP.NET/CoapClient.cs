@@ -40,7 +40,7 @@ namespace Com.AugustCellars.CoAP
         /// Instantiates with default config.
         /// </summary>
         public CoapClient()
-            : this((System.Uri)null, null)
+            : this((Uri)null, null)
         { }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="config">the config</param>
         public CoapClient(ICoapConfig config)
-            : this((System.Uri) null, config)
+            : this((Uri) null, config)
         { }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// OSCOAP context to use for the message
         /// </summary>
-        public OSCOAP.OscoapOption Oscoap { get; set; }
+        public OSCOAP.SecurityContext OscoapContext { get; set; }
 
         /// <summary>
         /// Let the client use Confirmable requests.
@@ -201,23 +201,28 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Discovers remote resources.
         /// </summary>
+        /// <param name="mediaType">format to use - defaults to any</param>
         /// <returns>the descoverd <see cref="WebLink"/> representing remote resources, or null if no response</returns>
-        public IEnumerable<WebLink> Discover()
+        public IEnumerable<WebLink> Discover(int mediaType = MediaType.Undefined)
         {
-            return Discover(null);
+            return Discover(null, mediaType);
         }
 
         /// <summary>
         /// Discovers remote resources.
         /// </summary>
         /// <param name="query">the query to filter resources</param>
+        /// <param name="mediaType">format to use - defaults to any</param>
         /// <returns>the descoverd <see cref="WebLink"/> representing remote resources, or null if no response</returns>
-        public IEnumerable<WebLink> Discover(String query)
+        public IEnumerable<WebLink> Discover(String query, int mediaType = MediaType.Undefined)
         {
             Request discover = Prepare(Request.NewGet());
             discover.ClearUriPath().ClearUriQuery().UriPath = CoapConstants.DefaultWellKnownURI;
             if (!String.IsNullOrEmpty(query)) {
                 discover.UriQuery = query;
+            }
+            if (mediaType != MediaType.Undefined) {
+                discover.Accept = mediaType;
             }
 
             Response links = discover.Send().WaitForResponse(Timeout);
@@ -225,11 +230,19 @@ namespace Com.AugustCellars.CoAP
                 // if no response, return null (e.g., timeout)
                 return null;
             }
-            else if (links.ContentFormat != MediaType.ApplicationLinkFormat) {
-                return _EmptyLinks;
-            }
-            else {
-                return LinkFormat.Parse(links.PayloadString);
+
+            switch (links.ContentType) {
+                case MediaType.ApplicationLinkFormat:
+                    return LinkFormat.Parse(links.PayloadString);
+
+                case MediaType.ApplicationCbor:
+                    return LinkFormat.ParseCbor(links.Payload);
+
+                case MediaType.ApplicationJson:
+                    return LinkFormat.ParseJson(links.PayloadString);
+
+                default:
+                    return _EmptyLinks;
             }
         }
 
@@ -619,7 +632,7 @@ namespace Com.AugustCellars.CoAP
         {
             request.Type = _type;
             request.URI = Uri;
-            request.Oscoap = Oscoap;
+            request.OscoapContext = OscoapContext;
 
             if (UriPath != null) {
                 request.UriPath = UriPath;

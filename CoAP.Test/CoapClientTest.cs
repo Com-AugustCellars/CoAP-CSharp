@@ -2,15 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-#if !NETFX_CORE
 using NUnit.Framework;
 using TestClass = NUnit.Framework.TestFixtureAttribute;
 using TestMethod = NUnit.Framework.TestAttribute;
 using TestInitialize = NUnit.Framework.SetUpAttribute;
 using TestCleanup = NUnit.Framework.TearDownAttribute;
-#else
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-#endif
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Server;
 using Com.AugustCellars.CoAP.Server.Resources;
@@ -213,6 +209,25 @@ namespace Com.AugustCellars.CoAP
             client.UriPath = "/abc/def";
             r = client.Get();
             Assert.AreEqual("/abc/def", r.PayloadString);
+        }
+
+        [TestMethod]
+        public void TestCoapClient_Discover()
+        {
+            Uri uri = new Uri($"coap://localhost:{_serverPort}/");
+            CoapClient client = new CoapClient(uri);
+
+            IEnumerable<WebLink> resources = client.Discover();
+            Assert.AreEqual(4, resources.Count());
+
+            resources = client.Discover(MediaType.ApplicationLinkFormat);
+            Assert.AreEqual(4, resources.Count());
+
+            resources = client.Discover(MediaType.ApplicationCbor);
+            Assert.AreEqual(4, resources.Count());
+
+            resources = client.Discover(MediaType.ApplicationJson);
+            Assert.AreEqual(4, resources.Count());
         }
 
         [TestMethod]

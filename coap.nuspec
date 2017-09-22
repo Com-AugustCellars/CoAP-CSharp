@@ -2,12 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>Com.AugustCellars.CoAP</id>
-        <version>1.1.7</version>
+        <version>1.1.8.1</version>
         <title>Com.AugustCellars.CoAP</title>
         <authors>Jim Schaad</authors>
         <owners>jimsch</owners>
-        <licenseUrl>https://github.com/jimsch/CoAP-CSharp/LICENSE</licenseUrl>
-        <projectUrl>https://github.com/jimsch/CoAP-CSharp</projectUrl>
+        <licenseUrl>https://github.com/Com-AugustCellars/CoAP-CSharp/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/Com-AugustCellars/CoAP-CSharp</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Com.AugustCellars.CoAP is an implementation in C# providing CoAP-based services to .NET applications.</description>
         <summary>.NET implementation of the Constrained Application Protocol (CoAP)</summary>
@@ -15,10 +15,14 @@
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
 This project is NOT to be used for commercial purposes.  It is intented only for research and verification work.
 
+1.1.8.1
+  - Put the strong name back
+1.1.8
+  - Rewrite the LinkFormat code - introduce a strict parsing mode and setup for doing a resource directory.
+
 1.1.7
   - Missed the public on FileLogManager class
   - Add method and dispatch code for dealing with FETCH, PATCH and iPATCH.  These methods were defined in RFC 8132.
-
 1.1.6
   - Re-enable DTLS reliability layer.  It was removed for debugging purposes.
   - Re-enable observer reconnect attempts.  The ability to disable it remains, this just changes the default value.
@@ -49,15 +53,11 @@ This project is NOT to be used for commercial purposes.  It is intented only for
         </frameworkAssemblies>
         <dependencies>
           <dependency id="BouncyCastle" version="1.8.1"/>
-          <dependency id="Com.AugustCellars.COSE" version="1.0.5.2"/>
-          <dependency id="PeterO.CBOR" version="2.4.2"/>
-          <dependency id="PeterO.Numbers" version="0.2.2"/>
+          <dependency id="Com.AugustCellars.COSE" version="1.1.0"/>
+          <dependency id="PeterO.CBOR" version="3.0.0"/>
         </dependencies>
     </metadata>
     <files>
-        <file src="CoAP.NET\bin\Deploy\NET40\CoAP.dll" target="lib\portable-net40+sl5+win+wpa81+wp80\CoAP.dll" />
-        <file src="CoAP.NET\bin\Deploy\NET40\CoAP.pdb" target="lib\portable-net40+sl5+win+wpa81+wp80\CoAP.pdb" />
-        <file src="CoAP.NET\bin\Deploy\NET40\CoAP.XML" target="lib\portable-net40+sl5+win+wpa81+wp80\CoAP.XML" />
         <file src="CoAP.NET\bin\Deploy\NET45\CoAP.dll" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CoAP.dll" />
         <file src="CoAP.NET\bin\Deploy\NET45\CoAP.pdb" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CoAP.pdb" />
         <file src="CoAP.NET\bin\Deploy\NET45\CoAP.XML" target="lib\portable-net45+dnxcore50+netcore45+win+wpa81+wp80\CoAP.XML" />
