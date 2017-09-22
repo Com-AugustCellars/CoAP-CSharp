@@ -69,7 +69,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets the request method.
         /// </summary>
-        public Method Method { get; }
+        public Method Method { get; internal set;  }
 
         /// <summary>
         /// Gets or sets a value indicating whether this request is a multicast request or not.
