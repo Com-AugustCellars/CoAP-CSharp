@@ -122,7 +122,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
 #endif
 
-                _Log.Info(m => m("SendRequest: AAD = {0}", BitConverter.ToString(aad.EncodeToBytes())));
+                _Log.Info(m => m("AAD = {0}", BitConverter.ToString(aad.EncodeToBytes())));
 
                 enc.SetExternalData(aad.EncodeToBytes());
 #if DEBUG
@@ -142,9 +142,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
 
                 if (_Log.IsInfoEnabled) {
-                    _Log.Info("SendRequest: AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
-                    _Log.Info("SendRequest: IV = " + BitConverter.ToString(ctx.Sender.GetIV(ctx.Sender.PartialIV).GetByteString()));
-                    _Log.Info("SendRequest: Key = " + BitConverter.ToString(ctx.Sender.Key));
+                    _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
+                    _Log.Info("IV = " + BitConverter.ToString(ctx.Sender.GetIV(ctx.Sender.PartialIV).GetByteString()));
+                    _Log.Info("Key = " + BitConverter.ToString(ctx.Sender.Key));
                 }
 
                 enc.Encrypt(ctx.Sender.Key);
@@ -710,7 +710,6 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     case OptionType.Block1:
                     case OptionType.Block2:
                     case OptionType.Oscoap:
-                    case OptionType.MaxAge:
                         response.RemoveOptions(op.Type);
                         break;
 
