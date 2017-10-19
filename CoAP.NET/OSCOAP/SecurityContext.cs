@@ -252,9 +252,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
 
 
-        public void AddRecipient(byte[] recipientId)
+        public void AddRecipient(byte[] recipientId, OneKey signKey)
         {
             EntityContext x = DeriveEntityContext(_masterSecret, recipientId, _salt, Sender.Algorithm, null);
+            x.SigningKey = signKey;
 
             Recipients.Add(recipientId, x);
         }
@@ -377,10 +378,23 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         private static EntityContext DeriveEntityContext(byte[] masterSecret, byte[] entityId, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
         {
             EntityContext ctx = new EntityContext();
+            int keySize;
+            int ivSize;
 
-            ctx.Algorithm = algAEAD ?? AlgorithmValues.AES_CCM_64_64_128;
+            ctx.Algorithm = algAEAD ?? AlgorithmValues.AES_CCM_16_64_128;
             ctx.Id = entityId ?? throw new ArgumentNullException(nameof(entityId));
             if (algKeyAgree == null) algKeyAgree = AlgorithmValues.ECDH_SS_HKDF_256;
+
+            if (ctx.Algorithm.Type != CBORType.Number) throw new ArgumentException("algorithm is unknown" );
+            switch ((AlgorithmValuesInt) ctx.Algorithm.AsInt32()) {
+                case AlgorithmValuesInt.AES_CCM_16_64_128:
+                    keySize = 128 / 8;
+                    ivSize = 13;
+                    break;
+
+                default:
+                    throw new ArgumentException("algorithm is unknown");
+            }
 
             ctx.ReplayWindow = new ReplayWindow(0, 64);
 
@@ -391,11 +405,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             info.Add(entityId);                 // 0
             info.Add(ctx.Algorithm);            // 1
             info.Add("Key");                    // 2
-            info.Add(128 / 8);                  // 3 in bytes
+            info.Add(keySize);                  // 3 in bytes
 
 
             IDigest sha256;
-
+            
             if (algKeyAgree == null || algKeyAgree.Equals(AlgorithmValues.ECDH_SS_HKDF_256)) {
                 sha256 = new Sha256Digest();
             }
@@ -407,14 +421,21 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             IDerivationFunction hkdf = new HkdfBytesGenerator(sha256);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
 
-            ctx.Key = new byte[128 / 8];
+            ctx.Key = new byte[keySize];
             hkdf.GenerateBytes(ctx.Key, 0, ctx.Key.Length);
 
+            info[0] = CBORObject.Null;
             info[2] = CBORObject.FromObject("IV");
-            info[3] = CBORObject.FromObject(56 / 8);
+            info[3] = CBORObject.FromObject(ivSize);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
-            ctx.BaseIV = new byte[56 / 8];
+            ctx.BaseIV = new byte[ivSize];
             hkdf.GenerateBytes(ctx.BaseIV, 0, ctx.BaseIV.Length);
+
+            // Modify the context 
+
+            ctx.BaseIV[0] ^= (byte) entityId.Length;
+            int i1 = ivSize - 5 - entityId.Length - 1;
+            for (int i = 0; i < entityId.Length; i++) ctx.BaseIV[i1 + i] ^= entityId[i];
 
             return ctx;
         }
