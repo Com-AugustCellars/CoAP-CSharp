@@ -56,7 +56,7 @@ namespace Com.AugustCellars.CoAP.Examples
                     }
                     else if (arg.StartsWith("-oscoap=")) {
                         if (contextSet == null) {
-                            Console.WriteLine("Must have -oscoap-data bevore -oscoap");
+                            Console.WriteLine("Must have -oscoap-data before -oscoap");
                             Environment.Exit(1);
                         }
 

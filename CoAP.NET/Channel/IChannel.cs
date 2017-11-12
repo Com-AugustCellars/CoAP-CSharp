@@ -35,6 +35,16 @@ namespace Com.AugustCellars.CoAP.Channel
         /// </summary>
         void Stop();
         /// <summary>
+        /// Abort the session - may not be clean.
+        /// </summary>
+        /// <param name="session">Session to abort</param>
+        void Abort(ISession session);
+        /// <summary>
+        /// Clean shutdown for the session
+        /// </summary>
+        /// <param name="session">Session to shutdown</param>
+        void Release(ISession session);
+        /// <summary>
         /// Sends data through this channel. This method should be non-blocking.
         /// </summary>
         /// <param name="data">the bytes to send</param>

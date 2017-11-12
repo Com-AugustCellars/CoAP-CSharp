@@ -148,6 +148,18 @@ namespace Com.AugustCellars.CoAP.Codec
         }
 
         /// <inheritdoc/>
+        public SignalMessage DecodeSignal()
+        {
+            System.Diagnostics.Debug.Assert(IsSignal);
+            SignalMessage signal = new SignalMessage((SignalCode)m_code) {
+                Type = m_type,
+                ID = m_id
+            };
+            ParseMessage(signal);
+            return signal;
+        }
+
+        /// <inheritdoc/>
         public Message Decode()
         {
             if (IsRequest)

@@ -343,7 +343,7 @@ namespace Com.AugustCellars.CoAP.Server.Resources
             CoapExchange ce = new CoapExchange(exchange, this);
 
             if (RequireSecurity) {
-                if ((exchange.OscoapContext == null) && (null == (ISecureSession) exchange.Request.Session )) {
+                if ((exchange.OscoapContext == null) &&  (null == (exchange.Request.Session as ISecureSession))) {
                     ce.Respond(StatusCode.Unauthorized, RequireSecurityErrorText);
                     return;
                 }

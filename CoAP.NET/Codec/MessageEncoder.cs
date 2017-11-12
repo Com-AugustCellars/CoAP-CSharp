@@ -43,6 +43,14 @@ namespace Com.AugustCellars.CoAP.Codec
         }
 
         /// <inheritdoc/>
+        public byte[] Encode(SignalMessage message)
+        {
+            DatagramWriter writer = new DatagramWriter();
+            Serialize(writer, message, message.Code);
+            return writer.ToByteArray();
+        }
+
+        /// <inheritdoc/>
         public Byte[] Encode(Message message)
         {
             if (message.IsRequest)
@@ -51,6 +59,9 @@ namespace Com.AugustCellars.CoAP.Codec
                 return Encode((Response)message);
             else if (message is EmptyMessage)
                 return Encode((EmptyMessage)message);
+            else if (message is SignalMessage) {
+                return Encode((SignalMessage)message);
+            }
             else
                 return null;
         }

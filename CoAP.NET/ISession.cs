@@ -17,5 +17,15 @@ namespace Com.AugustCellars.CoAP
         /// Is the session reliable?
         /// </summary>
         bool IsReliable { get; }
+
+        /// <summary>
+        /// True means that it is supported, False means that it may be supported.
+        /// </summary>
+        bool BlockTransfer { get; set; }
+
+        /// <summary>
+        /// Max message size 
+        /// </summary>
+        int MaxSendSize { get; set; }
     }
 }

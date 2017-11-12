@@ -274,10 +274,39 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <returns></returns>
         public static SecurityContext DeriveContext(byte[] masterSecret, byte[] senderId, byte[] recipientId, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
         {
+            int cbKey;
+            int cbIV;
             SecurityContext ctx = new SecurityContext();
 
-            if (algAEAD == null) ctx.Sender.Algorithm = AlgorithmValues.AES_CCM_64_64_128;
+            if (algAEAD == null) ctx.Sender.Algorithm = AlgorithmValues.AES_CCM_16_64_128;
             else ctx.Sender.Algorithm = algAEAD;
+
+            if (ctx.Sender.Algorithm.Type != CBORType.Number) throw new Exception("Unsupported algorithm");
+            switch ((AlgorithmValuesInt) ctx.Sender.Algorithm.AsInt32()) {
+                case AlgorithmValuesInt.AES_CCM_16_64_128:
+                    cbKey = 128/8;
+                    cbIV = 13;
+                    break;
+
+                case AlgorithmValuesInt.AES_CCM_64_64_128:
+                    cbKey = 128/8;
+                    cbIV = 56/8;
+                    break;
+
+                case AlgorithmValuesInt.AES_CCM_64_128_128:
+                    cbKey = 128 / 8;
+                    cbIV = 56 / 8;
+                    break;
+
+                case AlgorithmValuesInt.AES_CCM_16_128_128:
+                    cbKey = 128 / 8;
+                    cbIV = 13;
+                    break;
+
+                default:
+                    throw new Exception("Unsupproted algorithm");
+            }
+
             ctx.Sender.Id = senderId ?? throw new ArgumentNullException(nameof(senderId));
 
             ctx.Recipient = new EntityContext {
@@ -292,7 +321,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             info.Add(senderId); // 0
             info.Add(ctx.Sender.Algorithm); // 1
             info.Add("Key"); // 2
-            info.Add(128 / 8); // 3 in bytes
+            info.Add(cbKey); // 3 in bytes
 
             IDigest sha256;
 
@@ -308,24 +337,31 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             IDerivationFunction hkdf = new HkdfBytesGenerator(sha256);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
 
-            ctx.Sender.Key = new byte[128 / 8];
+            ctx.Sender.Key = new byte[cbKey];
             hkdf.GenerateBytes(ctx.Sender.Key, 0, ctx.Sender.Key.Length);
 
             info[0] = CBORObject.FromObject(recipientId);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
-            ctx.Recipient.Key = new byte[128 / 8];
+            ctx.Recipient.Key = new byte[cbKey];
             hkdf.GenerateBytes(ctx.Recipient.Key, 0, ctx.Recipient.Key.Length);
 
+            info[0] = CBORObject.Null;
             info[2] = CBORObject.FromObject("IV");
-            info[3] = CBORObject.FromObject(56 / 8);
+            info[3] = CBORObject.FromObject(cbIV);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
-            ctx.Recipient.BaseIV = new byte[56 / 8];
+            ctx.Recipient.BaseIV = new byte[cbIV];
             hkdf.GenerateBytes(ctx.Recipient.BaseIV, 0, ctx.Recipient.BaseIV.Length);
+            ctx.Sender.BaseIV = (byte[]) ctx.Recipient.BaseIV.Clone();
 
-            info[0] = CBORObject.FromObject(senderId);
-            hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
-            ctx.Sender.BaseIV = new byte[56 / 8];
-            hkdf.GenerateBytes(ctx.Sender.BaseIV, 0, ctx.Sender.BaseIV.Length);
+            int iIv = cbIV - 5 - senderId.Length;
+            if (cbIV - 6 < senderId.Length) throw new Exception("Sender Id too long");
+            ctx.Sender.BaseIV[0] ^= (byte) senderId.Length;
+            for (int i = 0; i < senderId.Length; i++) ctx.Sender.BaseIV[iIv + i] ^= senderId[i];
+
+            iIv = cbIV - 5 - recipientId.Length;
+            if (cbIV - 6 < recipientId.Length) throw new Exception("Recipient Id too long");
+            ctx.Recipient.BaseIV[0] ^= (byte) recipientId.Length;
+            for (int i = 0; i < recipientId.Length; i++) ctx.Recipient.BaseIV[iIv + i] ^= recipientId[i];
 
             //  Give a unique context number for doing comparisons
 
@@ -433,6 +469,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             // Modify the context 
 
+            if (ivSize - 6 < entityId.Length) throw new Exception("Entity id is too long");
             ctx.BaseIV[0] ^= (byte) entityId.Length;
             int i1 = ivSize - 5 - entityId.Length - 1;
             for (int i = 0; i < entityId.Length; i++) ctx.BaseIV[i1 + i] ^= entityId[i];

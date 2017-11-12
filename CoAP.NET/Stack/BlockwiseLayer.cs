@@ -32,8 +32,7 @@ namespace Com.AugustCellars.CoAP.Stack
             _maxMessageSize = config.MaxMessageSize;
             _defaultBlockSize = config.DefaultBlockSize;
             _blockTimeout = config.BlockwiseStatusLifetime;
-            if (log.IsDebugEnabled)
-                log.Debug("BlockwiseLayer uses MaxMessageSize: " + _maxMessageSize + " and DefaultBlockSize:" + _defaultBlockSize);
+            log.Debug(m => m("BlockwiseLayer uses MaxMessageSize: {0} and DefaultBlockSize: {1}", _maxMessageSize, _defaultBlockSize));
 
             config.PropertyChanged += ConfigChanged;
         }
@@ -41,12 +40,15 @@ namespace Com.AugustCellars.CoAP.Stack
         void ConfigChanged(Object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             ICoapConfig config = (ICoapConfig)sender;
-            if (String.Equals(e.PropertyName, "MaxMessageSize"))
+            if (String.Equals(e.PropertyName, "MaxMessageSize")) {
                 _maxMessageSize = config.MaxMessageSize;
-            else if (String.Equals(e.PropertyName, "DefaultBlockSize"))
+            }
+            else if (String.Equals(e.PropertyName, "DefaultBlockSize")) {
                 _defaultBlockSize = config.DefaultBlockSize;
-            else if (String.Equals(e.PropertyName, "BlockwiseStatusLifetime"))
+            }
+            else if (String.Equals(e.PropertyName, "BlockwiseStatusLifetime")) {
                 _blockTimeout = config.BlockwiseStatusLifetime;
+            }
         }
 
         /// <inheritdoc/>
@@ -88,44 +90,35 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <inheritdoc/>
         public override void ReceiveRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
-            if (request.HasOption(OptionType.Block1))
-            {
+            if (request.HasOption(OptionType.Block1)) {
                 // This must be a large POST or PUT request
                 BlockOption block1 = request.Block1;
-                if (log.IsDebugEnabled)
-                    log.Debug("Request contains block1 option " + block1);
+                    log.Debug(m => m("Request contains block1 option {0}", block1));
 
                 BlockwiseStatus status = FindRequestBlockStatus(exchange, request);
-                if (block1.NUM == 0 && status.CurrentNUM > 0)
-                {
+                if (block1.NUM == 0 && status.CurrentNUM > 0) {
                     // reset the blockwise transfer
-                    if (log.IsDebugEnabled)
                         log.Debug("Block1 num is 0, the client has restarted the blockwise transfer. Reset status.");
                     status = new BlockwiseStatus(request.ContentType);
                     exchange.RequestBlockStatus = status;
                 }
 
-                if (block1.NUM == status.CurrentNUM)
-                {
-                    if (request.ContentType == status.ContentFormat)
-                    {
+                if (block1.NUM == status.CurrentNUM) {
+                    if (request.ContentType == status.ContentFormat) {
                         status.AddBlock(request.Payload);
                     }
-                    else
-                    {
+                    else {
                         Response error = Response.CreateResponse(request, StatusCode.RequestEntityIncomplete);
                         error.AddOption(new BlockOption(OptionType.Block1, block1.NUM, block1.SZX, block1.M));
                         error.SetPayload("Changed Content-Format");
-                        
+
                         exchange.CurrentResponse = error;
                         base.SendResponse(nextLayer, exchange, error);
                         return;
                     }
 
                     status.CurrentNUM = status.CurrentNUM + 1;
-                    if (block1.M)
-                    {
-                        if (log.IsDebugEnabled)
+                    if (block1.M) {
                             log.Debug("There are more blocks to come. Acknowledge this block.");
 
                         Response piggybacked = Response.CreateResponse(request, StatusCode.Continue);
@@ -137,9 +130,7 @@ namespace Com.AugustCellars.CoAP.Stack
 
                         // do not assemble and deliver the request yet
                     }
-                    else
-                    {
-                        if (log.IsDebugEnabled)
+                    else {
                             log.Debug("This was the last block. Deliver request");
 
                         // Remember block to acknowledge. TODO: We might make this a boolean flag in status.
@@ -156,11 +147,9 @@ namespace Com.AugustCellars.CoAP.Stack
                         base.ReceiveRequest(nextLayer, exchange, assembled);
                     }
                 }
-                else
-                {
+                else {
                     // ERROR, wrong number, Incomplete
-                    if (log.IsWarnEnabled)
-                        log.Warn("Wrong block number. Expected " + status.CurrentNUM + " but received " + block1.NUM + ". Respond with 4.08 (Request Entity Incomplete).");
+                        log.Warn(m => m("Wrong block number. Expected {0} but received {1}. Respond with 4.08 (Request Entity Incomplete).", status.CurrentNUM, block1.NUM));
                     Response error = Response.CreateResponse(request, StatusCode.RequestEntityIncomplete);
                     error.AddOption(new BlockOption(OptionType.Block1, block1.NUM, block1.SZX, block1.M));
                     error.SetPayload("Wrong block number");
@@ -168,8 +157,7 @@ namespace Com.AugustCellars.CoAP.Stack
                     base.SendResponse(nextLayer, exchange, error);
                 }
             }
-            else if (exchange.Response != null && request.HasOption(OptionType.Block2))
-            {
+            else if (exchange.Response != null && request.HasOption(OptionType.Block2)) {
                 // The response has already been generated and the client just wants
                 // the next block of it
                 BlockOption block2 = request.Block2;
@@ -182,26 +170,21 @@ namespace Com.AugustCellars.CoAP.Stack
                 block.Token = request.Token;
                 block.RemoveOptions(OptionType.Observe);
 
-                if (status.Complete)
-                {
+                if (status.Complete) {
                     // clean up blockwise status
-                    if (log.IsDebugEnabled)
-                        log.Debug("Ongoing is complete " + status);
+                        log.Debug(m => m("Ongoing is complete {0}", status));
                     exchange.ResponseBlockStatus = null;
                     ClearBlockCleanup(exchange);
                 }
-                else
-                {
-                    if (log.IsDebugEnabled)
-                        log.Debug("Ongoing is continuing " + status);
+                else {
+                        log.Debug(m => m("Ongoing is continuing {0}", status));
                 }
 
                 exchange.CurrentResponse = block;
                 base.SendResponse(nextLayer, exchange, block);
 
             }
-            else
-            {
+            else {
                 EarlyBlock2Negotiation(exchange, request);
 
                 exchange.Request = request;
@@ -438,18 +421,15 @@ namespace Com.AugustCellars.CoAP.Stack
         private BlockwiseStatus FindRequestBlockStatus(Exchange exchange, Request request)
         {
             BlockwiseStatus status = exchange.RequestBlockStatus;
-            if (status == null)
-            {
-                status = new BlockwiseStatus(request.ContentType);
-                status.CurrentSZX = BlockOption.EncodeSZX(_defaultBlockSize);
+            if (status == null) {
+                status = new BlockwiseStatus(request.ContentType) {
+                    CurrentSZX = BlockOption.EncodeSZX(_defaultBlockSize)
+                };
                 exchange.RequestBlockStatus = status;
-                if (log.IsDebugEnabled)
-                    log.Debug("There is no assembler status yet. Create and set new Block1 status: " + status);
+                log.Debug(m => m("There is no assembler status yet. Create and set new Block1 status: {0}", status));
             }
-            else
-            {
-                if (log.IsDebugEnabled)
-                    log.Debug("Current Block1 status: " + status);
+            else {
+                log.Debug(m => m("Current Block1 status: {0}", status));
             }
             // sets a timeout to complete exchange
             PrepareBlockCleanup(exchange);
@@ -584,7 +564,7 @@ namespace Com.AugustCellars.CoAP.Stack
 
         private Boolean RequiresBlockwise(Request request)
         {
-            if (request.Method == Method.PUT || request.Method == Method.POST)
+            if (request.Method == Method.PUT || request.Method == Method.POST || request.Method == Method.FETCH || request.Method == Method.PATCH || request.Method == Method.iPATCH)
                 return request.PayloadSize > _maxMessageSize;
             else
                 return false;
