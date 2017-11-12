@@ -303,8 +303,13 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     cbIV = 13;
                     break;
 
+                case AlgorithmValuesInt.AES_GCM_128:
+                    cbKey = 128 / 8;
+                    cbIV = 96 / 8;
+                    break;
+
                 default:
-                    throw new Exception("Unsupproted algorithm");
+                    throw new Exception("Unsupported algorithm");
             }
 
             ctx.Sender.Id = senderId ?? throw new ArgumentNullException(nameof(senderId));
@@ -427,6 +432,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     keySize = 128 / 8;
                     ivSize = 13;
                     break;
+
+                case AlgorithmValuesInt.AES_GCM_128:
+                    keySize = 128 / 8;
+                    ivSize = 96 / 8;
+                    break;                       
 
                 default:
                     throw new ArgumentException("algorithm is unknown");
