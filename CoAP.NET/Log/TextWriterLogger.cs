@@ -242,17 +242,25 @@ namespace Com.AugustCellars.CoAP.Log
 
         private void Log(String level, Object message, Exception exception)
         {
-            String log = "";
-            if (_logName != null) {
-                log = "[" + _logName + "]";
-            }
+            try {
+                String log = "";
+                if (_logName != null) {
+                    log = "[" + _logName + "]";
+                }
 
-            String text = $"{DateTime.Now.ToLongTimeString()} {log} {level} - {message}";
-            if (exception != null) {
-                text += exception.ToString();
+                String text = $"{DateTime.Now.ToLongTimeString()} {log} {level} - {message}";
+                if (exception != null) {
+                    text += exception.ToString();
+                }
+
+                _Writer.WriteLine(text);
+                _Writer.Flush();
             }
-            _Writer.WriteLine(text);
-            _Writer.Flush();
+            catch (Exception e) {
+                //  should never get here
+                ;
+                Console.WriteLine("PANIC!!!!");
+            }
         }
     }
 }

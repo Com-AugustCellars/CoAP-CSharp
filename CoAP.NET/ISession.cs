@@ -24,8 +24,10 @@ namespace Com.AugustCellars.CoAP
         bool BlockTransfer { get; set; }
 
         /// <summary>
-        /// Max message size 
+        /// Size of maximum message the other size is able to process 
         /// </summary>
         int MaxSendSize { get; set; }
+
+
     }
 }

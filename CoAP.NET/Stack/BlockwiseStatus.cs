@@ -19,114 +19,93 @@ namespace Com.AugustCellars.CoAP.Stack
     /// </summary>
     public class BlockwiseStatus
     {
-        public const Int32 NoObserve = -1;
-
-        private Int32 _currentNUM;
-        private Int32 _currentSZX;
-        private Boolean _randomAccess;
-        private readonly Int32 _contentFormat;
-        private Boolean _complete;
-        private Int32 _observe = NoObserve;
-        private List<Byte[]> _blocks = new List<Byte[]>();
+        public const int NoObserve = -1;
+        private List<byte[]> _blocks = new List<byte[]>();
 
         /// <summary>
         /// Instantiates a new blockwise status.
         /// </summary>
-        public BlockwiseStatus(Int32 contentFormat)
+        public BlockwiseStatus(int contentFormat)
         {
-            _contentFormat = contentFormat;
+            ContentFormat = contentFormat;
         }
 
         /// <summary>
         /// Instantiates a new blockwise status.
         /// </summary>
-        public BlockwiseStatus(Int32 contentFormat, Int32 num, Int32 szx)
+        public BlockwiseStatus(int contentFormat, int num, int szx)
         {
-            _contentFormat = contentFormat;
-            _currentNUM = num;
-            _currentSZX = szx;
+            ContentFormat = contentFormat;
+            CurrentNUM = num;
+            CurrentSZX = szx;
         }
 
         /// <summary>
         /// Gets or sets the current num.
         /// </summary>
-        public Int32 CurrentNUM
-        {
-            get { return _currentNUM; }
-            set { _currentNUM = value; }
-        }
+        public int CurrentNUM { get; set; }
 
         /// <summary>
         /// Gets or sets the current szx.
         /// </summary>
-        public Int32 CurrentSZX
-        {
-            get { return _currentSZX; }
-            set { _currentSZX = value; }
-        }
+        public int CurrentSZX { get; set; }
 
         /// <summary>
         /// Gets or sets if this status is for random access.
         /// </summary>
-        public Boolean IsRandomAccess
-        {
-            get { return _randomAccess; }
-            set { _randomAccess = value; }
-        }
+        public bool IsRandomAccess { get; set; }
 
         /// <summary>
         /// Gets the initial Content-Format, which must stay the same for the whole transfer.
         /// </summary>
-        public Int32 ContentFormat
-        {
-            get { return _contentFormat; }
-        }
+        public int ContentFormat { get; }
 
         /// <summary>
         /// Gets or sets a value indicating if this is complete.
         /// </summary>
-        public Boolean Complete
-        {
-            get { return _complete; }
-            set { _complete = value; }
-        }
+        public bool Complete { get; set; }
 
-        public Int32 Observe
-        {
-            get { return _observe; }
-            set { _observe = value; }
-        }
+        /// <summary>
+        /// Get/Set the observation number
+        /// </summary>
+        public int Observe { get; set; } = -1;
 
         /// <summary>
         /// Gets the number of blocks.
         /// </summary>
-        public Int32 BlockCount
+        public int BlockCount
         {
-            get { return _blocks.Count; }
+            get =>_blocks.Count;
         }
 
         /// <summary>
         /// Gets all blocks.
         /// </summary>
-        public IEnumerable<Byte[]> Blocks
+        public IEnumerable<byte[]> Blocks
         {
-            get { return _blocks; }
+            get =>_blocks;
         }
+
+        /// <summary>
+        /// Get the size in bytes of all blocks accumulated.
+        /// </summary>
+        public int BlocksByteCount { get; private set; }
 
         /// <summary>
         /// Adds the specified block to the current list of blocks.
         /// </summary>
-        public void AddBlock(Byte[] block)
+        public void AddBlock(byte[] block)
         {
-            if (block != null)
+            if (block != null) {
                 _blocks.Add(block);
+                BlocksByteCount += block.Length;
+            }
         }
 
         /// <inheritdoc/>
         public override String ToString()
         {
-            return String.Format("[CurrentNum={0}, CurrentSzx={1}, Complete={2}, RandomAccess={3}]",
-                _currentNUM, _currentSZX, _complete, _randomAccess);
+            return $"[CurrentNum={CurrentNUM}, CurrentSzx={CurrentSZX}, Complete={Complete}, RandomAccess={IsRandomAccess}]";
         }
     }
 }

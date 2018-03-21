@@ -218,6 +218,13 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public byte[] GroupId { get; set; }
 
         /// <summary>
+        /// Location for a user to place significant information.
+        /// For contexts that are created by the system this will be a list of
+        /// COSE Web Tokens for authorization
+        /// </summary>
+        public Object UserData { get; set; }
+
+        /// <summary>
         /// Create a new empty security context
         /// </summary>
         public SecurityContext() { }

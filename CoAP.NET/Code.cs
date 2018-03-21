@@ -339,11 +339,11 @@ namespace Com.AugustCellars.CoAP
                     return $"Unknown Response [code {code}]";
                 }
                 else {
-                    return $"Reserved [code {code}]";
+                    return $"Reserved [code {code/32}.{code%32}]";
                 }
             }
             else {
-                return $"Invalid Message [code {code}]";
+                return $"Invalid Message [code {code/32}.{code%32}]";
             }
         }
     }

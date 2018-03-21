@@ -59,6 +59,9 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public event EventHandler<MessageEventArgs<EmptyMessage>> ReceivingEmptyMessage;
 
+        /// <inheritdoc/>
+        public event EventHandler<MessageEventArgs<SignalMessage>> ReceivingSignalMessage;
+
         /// <summary>
         /// Instantiates a new endpoint.
         /// </summary>
@@ -378,11 +381,15 @@ namespace Com.AugustCellars.CoAP.Net
                     return;
                 }
 
+                message.Source = e.EndPoint;
+
                 _Log.Info(m => m("Processing signal message {1} from {0}", e.EndPoint, message.ToString()));
+
+                Fire(ReceivingSignalMessage, message);
 
                 switch (message.SignalCode) {
                     default:
-                        _Log.Info(m => m("Unknown signal received.  Code is {0}", message.SignalCode));
+                        _Log.Info(m => m("Unknown signal received.  Code is {0}.{1}", ((int)message.SignalCode)/32, ((int)message.SignalCode)%32));
                         break;
 
                     case SignalCode.CSM:
@@ -412,10 +419,12 @@ namespace Com.AugustCellars.CoAP.Net
 
                     case SignalCode.Ping:
                         signal = new SignalMessage(SignalCode.Pong);
+                        signal.Token = message.Token;
                         _channel.Send(Serialize(signal), e.Session, e.EndPoint);
                         break;
 
                     case SignalCode.Pong:
+                        _Log.Info(m => m("PONG"));
                         break;
 
                     case SignalCode.Release:
@@ -439,7 +448,7 @@ namespace Com.AugustCellars.CoAP.Net
             Fire(SendingEmptyMessage, rst);
 
             if (!rst.IsCancelled)
-                _channel.Send(Serialize(rst), null /*message.Session*/, rst.Destination);
+                _channel.Send(Serialize(rst),  null /*message.Session*/, rst.Destination);
         }
 
         private Byte[] Serialize(EmptyMessage message)

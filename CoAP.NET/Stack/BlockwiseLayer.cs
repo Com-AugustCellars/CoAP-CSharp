@@ -13,6 +13,7 @@ using System;
 using System.Timers;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
+using Org.BouncyCastle.Crypto.Prng;
 
 namespace Com.AugustCellars.CoAP.Stack
 {
@@ -20,9 +21,9 @@ namespace Com.AugustCellars.CoAP.Stack
     {
         static readonly ILogger log = LogManager.GetLogger(typeof(BlockwiseLayer));
 
-        private Int32 _maxMessageSize;
-        private Int32 _defaultBlockSize;
-        private Int32 _blockTimeout;
+        private int _maxMessageSize;
+        private int _defaultBlockSize;
+        private int _blockTimeout;
 
         /// <summary>
         /// Constructs a new blockwise layer.
@@ -32,21 +33,22 @@ namespace Com.AugustCellars.CoAP.Stack
             _maxMessageSize = config.MaxMessageSize;
             _defaultBlockSize = config.DefaultBlockSize;
             _blockTimeout = config.BlockwiseStatusLifetime;
-            log.Debug(m => m("BlockwiseLayer uses MaxMessageSize: {0} and DefaultBlockSize: {1}", _maxMessageSize, _defaultBlockSize));
+            log.Debug(m => m("BlockwiseLayer uses MaxMessageSize: {0} and DefaultBlockSize: {1}", _maxMessageSize,
+                             _defaultBlockSize));
 
             config.PropertyChanged += ConfigChanged;
         }
 
-        void ConfigChanged(Object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        void ConfigChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            ICoapConfig config = (ICoapConfig)sender;
-            if (String.Equals(e.PropertyName, "MaxMessageSize")) {
+            ICoapConfig config = (ICoapConfig) sender;
+            if (string.Equals(e.PropertyName, "MaxMessageSize")) {
                 _maxMessageSize = config.MaxMessageSize;
             }
-            else if (String.Equals(e.PropertyName, "DefaultBlockSize")) {
+            else if (string.Equals(e.PropertyName, "DefaultBlockSize")) {
                 _defaultBlockSize = config.DefaultBlockSize;
             }
-            else if (String.Equals(e.PropertyName, "BlockwiseStatusLifetime")) {
+            else if (string.Equals(e.PropertyName, "BlockwiseStatusLifetime")) {
                 _blockTimeout = config.BlockwiseStatusLifetime;
             }
         }
@@ -93,12 +95,12 @@ namespace Com.AugustCellars.CoAP.Stack
             if (request.HasOption(OptionType.Block1)) {
                 // This must be a large POST or PUT request
                 BlockOption block1 = request.Block1;
-                    log.Debug(m => m("Request contains block1 option {0}", block1));
+                log.Debug(m => m("Request contains block1 option {0}", block1));
 
                 BlockwiseStatus status = FindRequestBlockStatus(exchange, request);
                 if (block1.NUM == 0 && status.CurrentNUM > 0) {
                     // reset the blockwise transfer
-                        log.Debug("Block1 num is 0, the client has restarted the blockwise transfer. Reset status.");
+                    log.Debug("Block1 num is 0, the client has restarted the blockwise transfer. Reset status.");
                     status = new BlockwiseStatus(request.ContentType);
                     exchange.RequestBlockStatus = status;
                 }
@@ -119,7 +121,7 @@ namespace Com.AugustCellars.CoAP.Stack
 
                     status.CurrentNUM = status.CurrentNUM + 1;
                     if (block1.M) {
-                            log.Debug("There are more blocks to come. Acknowledge this block.");
+                        log.Debug("There are more blocks to come. Acknowledge this block.");
 
                         Response piggybacked = Response.CreateResponse(request, StatusCode.Continue);
                         piggybacked.AddOption(new BlockOption(OptionType.Block1, block1.NUM, block1.SZX, true));
@@ -131,7 +133,7 @@ namespace Com.AugustCellars.CoAP.Stack
                         // do not assemble and deliver the request yet
                     }
                     else {
-                            log.Debug("This was the last block. Deliver request");
+                        log.Debug("This was the last block. Deliver request");
 
                         // Remember block to acknowledge. TODO: We might make this a boolean flag in status.
                         exchange.Block1ToAck = block1;
@@ -149,7 +151,8 @@ namespace Com.AugustCellars.CoAP.Stack
                 }
                 else {
                     // ERROR, wrong number, Incomplete
-                        log.Warn(m => m("Wrong block number. Expected {0} but received {1}. Respond with 4.08 (Request Entity Incomplete).", status.CurrentNUM, block1.NUM));
+                    log.Warn(m => m("Wrong block number. Expected {0} but received {1}. Respond with 4.08 (Request Entity Incomplete).",
+                                     status.CurrentNUM, block1.NUM));
                     Response error = Response.CreateResponse(request, StatusCode.RequestEntityIncomplete);
                     error.AddOption(new BlockOption(OptionType.Block1, block1.NUM, block1.SZX, block1.M));
                     error.SetPayload("Wrong block number");
@@ -172,12 +175,12 @@ namespace Com.AugustCellars.CoAP.Stack
 
                 if (status.Complete) {
                     // clean up blockwise status
-                        log.Debug(m => m("Ongoing is complete {0}", status));
+                    log.Debug(m => m("Ongoing is complete {0}", status));
                     exchange.ResponseBlockStatus = null;
                     ClearBlockCleanup(exchange);
                 }
                 else {
-                        log.Debug(m => m("Ongoing is continuing {0}", status));
+                    log.Debug(m => m("Ongoing is continuing {0}", status));
                 }
 
                 exchange.CurrentResponse = block;
@@ -245,12 +248,9 @@ namespace Com.AugustCellars.CoAP.Stack
         public override void ReceiveResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
             // do not continue fetching blocks if canceled
-            if (exchange.Request.IsCancelled)
-            {
+            if (exchange.Request.IsCancelled) {
                 // reject (in particular for Block+Observe)
-                if (response.Type != MessageType.ACK)
-                {
-                    if (log.IsDebugEnabled)
+                if (response.Type != MessageType.ACK) {
                         log.Debug("Rejecting blockwise transfer for canceled Exchange");
                     EmptyMessage rst = EmptyMessage.NewRST(response);
                     SendEmptyMessage(nextLayer, exchange, rst);
@@ -259,8 +259,7 @@ namespace Com.AugustCellars.CoAP.Stack
                 return;
             }
 
-            if (!response.HasOption(OptionType.Block1) && !response.HasOption(OptionType.Block2))
-            {
+            if (!response.HasOption(OptionType.Block1) && !response.HasOption(OptionType.Block2)) {
                 // There is no block1 or block2 option, therefore it is a normal response
                 exchange.Response = response;
                 base.ReceiveResponse(nextLayer, exchange, response);
@@ -268,19 +267,16 @@ namespace Com.AugustCellars.CoAP.Stack
             }
 
             BlockOption block1 = response.Block1;
-            if (block1 != null)
-            {
+            if (block1 != null) {
                 // TODO: What if request has not been sent blockwise (server error)
-                if (log.IsDebugEnabled)
-                    log.Debug("Response acknowledges block " + block1);
+                    log.Debug(m => m("Response acknowledges block " + block1));
 
                 BlockwiseStatus status = exchange.RequestBlockStatus;
-                if (!status.Complete)
-                {
+                if (!status.Complete) {
                     // TODO: the response code should be CONTINUE. Otherwise deliver
                     // Send next block
-                    Int32 currentSize = 1 << (4 + status.CurrentSZX);
-                    Int32 nextNum = status.CurrentNUM + currentSize / block1.Size;
+                    int currentSize = 1 << (4 + status.CurrentSZX);
+                    int nextNum = status.CurrentNUM + currentSize / block1.Size;
                     if (log.IsDebugEnabled)
                         log.Debug("Send next block num = " + nextNum);
                     status.CurrentNUM = nextNum;
@@ -292,50 +288,68 @@ namespace Com.AugustCellars.CoAP.Stack
                     base.SendRequest(nextLayer, exchange, nextBlock);
                     // do not deliver response
                 }
-                else if (!response.HasOption(OptionType.Block2))
-                {
+                else if (!response.HasOption(OptionType.Block2)) {
                     // All request block have been acknowledged and we receive a piggy-backed
                     // response that needs no blockwise transfer. Thus, deliver it.
                     base.ReceiveResponse(nextLayer, exchange, response);
                 }
-                else
-                {
-                    if (log.IsDebugEnabled)
+                else {
                         log.Debug("Response has Block2 option and is therefore sent blockwise");
                 }
             }
 
             BlockOption block2 = response.Block2;
-            if (block2 != null)
-            {
+            if (block2 != null) {
                 BlockwiseStatus status = FindResponseBlockStatus(exchange, response);
 
-                if (block2.NUM == status.CurrentNUM)
-                {
+                if (block2.NUM == status.CurrentNUM) {
                     // We got the block we expected :-)
-                    status.AddBlock(response.Payload);
-                    Int32? obs = response.Observe;
-                    if (obs.HasValue)
+                    int? obs = response.Observe;
+                    if (obs.HasValue) {
                         status.Observe = obs.Value;
+                    }
+
+                    //  Is the block sized as we expect it
+                    int blockCount = 1;
+                    int blockSize = 1 << (block2.SZX + 4);
+
+                    if (block2.SZX == 7) {
+                        blockSize = 1024;
+                        blockCount = (response.Payload.Length + 1023) / 1024;
+                    }
+
+                    if (response.Payload.Length != blockSize * blockCount) {
+                        if (!block2.M) {
+                            if ((blockCount - 1) * blockSize >= response.Payload.Length ||
+                                response.Payload.Length >= blockSize * blockCount) {
+                                //  This is problem as the body size is wrong.
+                                return;
+
+                            }
+                        }
+                        else {
+                            //  The body size is wrong
+                            return;
+                        }
+                    }
+
+                    status.AddBlock(response.Payload);
 
                     // notify blocking progress
                     exchange.Request.FireResponding(response);
 
-                    if (status.IsRandomAccess)
-                    {
+                    if (status.IsRandomAccess) {
                         // The client has requested this specifc block and we deliver it
                         exchange.Response = response;
                         base.ReceiveResponse(nextLayer, exchange, response);
                     }
-                    else if (block2.M)
-                    {
-                        if (log.IsDebugEnabled)
-                            log.Debug("Request the next response block");
+                    else if (block2.M) {
+                        log.Debug("Request the next response block");
 
                         Request request = exchange.Request;
-                        Int32 num = block2.NUM + 1;
-                        Int32 szx = block2.SZX;
-                        Boolean m = false;
+                        int num = block2.NUM + blockCount;
+                        int szx = block2.SZX;
+                        bool m = false;
 
                         Request block = new Request(request.Method);
                         // NON could make sense over SMS or similar transports
@@ -354,10 +368,9 @@ namespace Com.AugustCellars.CoAP.Stack
                         exchange.CurrentRequest = block;
                         base.SendRequest(nextLayer, exchange, block);
                     }
-                    else
-                    {
-                        if (log.IsDebugEnabled)
-                            log.Debug("We have received all " + status.BlockCount + " blocks of the response. Assemble and deliver.");
+                    else {
+                        log.Debug(m => m("We have received all {0} blocks of the response. Assemble and deliver.",
+                                         status.BlockCount));
                         Response assembled = new Response(response.StatusCode);
                         AssembleMessage(status, assembled, response);
                         assembled.Type = response.Type;
@@ -366,31 +379,26 @@ namespace Com.AugustCellars.CoAP.Stack
                         assembled.RTT = (DateTime.Now - exchange.Timestamp).TotalMilliseconds;
 
                         // Check if this response is a notification
-                        Int32 observe = status.Observe;
-                        if (observe != BlockwiseStatus.NoObserve)
-                        {
+                        int observe = status.Observe;
+                        if (observe != BlockwiseStatus.NoObserve) {
                             assembled.AddOption(Option.Create(OptionType.Observe, observe));
                             // This is necessary for notifications that are sent blockwise:
                             // Reset block number AND container with all blocks
                             exchange.ResponseBlockStatus = null;
                         }
 
-                        if (log.IsDebugEnabled)
-                            log.Debug("Assembled response: " + assembled);
+                        log.Debug(m => m("Assembled response: {0}", assembled));
                         exchange.Response = assembled;
                         base.ReceiveResponse(nextLayer, exchange, assembled);
                     }
-
                 }
-                else
-                {
+                else {
                     // ERROR, wrong block number (server error)
                     // TODO: This scenario is not specified in the draft.
                     // Currently, we reject it and cancel the request.
-                    if (log.IsWarnEnabled)
-                        log.Warn("Wrong block number. Expected " + status.CurrentNUM + " but received " + block2.NUM + ". Reject response; exchange has failed.");
-                    if (response.Type == MessageType.CON)
-                    {
+                    log.Warn(m => m("Wrong block number. Expected {0} but received {1}" +
+                                    ". Reject response; exchange has failed.", status.CurrentNUM, block2.NUM));
+                    if (response.Type == MessageType.CON) {
                         EmptyMessage rst = EmptyMessage.NewRST(response);
                         base.SendEmptyMessage(nextLayer, exchange, rst);
                     }
@@ -403,12 +411,12 @@ namespace Com.AugustCellars.CoAP.Stack
         {
             // Call this method when a request has completely arrived (might have
             // been sent in one piece without blockwise).
-            if (request.HasOption(OptionType.Block2))
-            {
+            if (request.HasOption(OptionType.Block2)) {
                 BlockOption block2 = request.Block2;
                 BlockwiseStatus status2 = new BlockwiseStatus(request.ContentType, block2.NUM, block2.SZX);
                 if (log.IsDebugEnabled)
-                    log.Debug("Request with early block negotiation " + block2 + ". Create and set new Block2 status: " + status2);
+                    log.Debug("Request with early block negotiation " + block2 +
+                              ". Create and set new Block2 status: " + status2);
                 exchange.ResponseBlockStatus = status2;
             }
         }
@@ -446,15 +454,19 @@ namespace Com.AugustCellars.CoAP.Stack
             BlockwiseStatus status = exchange.ResponseBlockStatus;
 
             if (status == null) {
+                int blockSize = _defaultBlockSize;
+                if (response.Session != null &&  response.Session.IsReliable) {
+                    blockSize = response.Session.MaxSendSize - 100;
+                }
                 status = new BlockwiseStatus(response.ContentType) {
-                    CurrentSZX = BlockOption.EncodeSZX(_defaultBlockSize)
+                    CurrentSZX = BlockOption.EncodeSZX(blockSize)
                 };
                 exchange.ResponseBlockStatus = status;
 
-                log.Debug(m=> m("There is no blockwise status yet. Create and set new Block2 status: {0}", status));
+                log.Debug(m => m("There is no blockwise status yet. Create and set new Block2 status: {0}", status));
             }
             else {
-                    log.Debug(m => m("Current Block2 status: {0}", status));
+                log.Debug(m => m("Current Block2 status: {0}", status));
             }
 
             // sets a timeout to complete exchange
@@ -465,8 +477,8 @@ namespace Com.AugustCellars.CoAP.Stack
 
         private Request GetNextRequestBlock(Request request, BlockwiseStatus status)
         {
-            Int32 num = status.CurrentNUM;
-            Int32 szx = status.CurrentSZX;
+            int num = status.CurrentNUM;
+            int szx = status.CurrentSZX;
             Request block = new Request(request.Method);
             block.SetOptions(request.GetOptions());
             block.Destination = request.Destination;
@@ -474,16 +486,22 @@ namespace Com.AugustCellars.CoAP.Stack
             block.Type = MessageType.CON;
             block.Session = request.Session;
 
-            Int32 currentSize = 1 << (4 + szx);
-            Int32 from = num * currentSize;
-            Int32 to = Math.Min((num + 1) * currentSize, request.PayloadSize);
-            Int32 length = to - from;
-            Byte[] blockPayload = new Byte[length];
+            int blockCount = 1;
+            if (szx == 7 || (szx == 6 && block.Session != null && block.Session.IsReliable && block.Session.BlockTransfer)) {
+                szx = 6;
+                blockCount = block.Session.MaxSendSize / 1024;
+            }
+
+            int currentSize = 1 << (4 + szx);
+            int from = num * currentSize;
+            int to = Math.Min((num + blockCount) * currentSize, request.PayloadSize);
+            int length = to - from;
+            byte[] blockPayload = new byte[length];
             Array.Copy(request.Payload, from, blockPayload, 0, length);
             block.Payload = blockPayload;
 
-            Boolean m = to < request.PayloadSize;
-            block.AddOption(new BlockOption(OptionType.Block1, num, szx, m));
+            bool m = to < request.PayloadSize;
+            block.AddOption(new BlockOption(OptionType.Block1, num, blockCount == 1 ? szx : 7, m));
 
             status.Complete = !m;
             return block;
@@ -492,8 +510,8 @@ namespace Com.AugustCellars.CoAP.Stack
         private Response GetNextResponseBlock(Response response, BlockwiseStatus status)
         {
             Response block;
-            Int32 szx = status.CurrentSZX;
-            Int32 num = status.CurrentNUM;
+            int szx = status.CurrentSZX;
+            int num = status.CurrentNUM;
 
             if (response.HasOption(OptionType.Observe)) {
                 // a blockwise notification transmits the first block only
@@ -503,21 +521,29 @@ namespace Com.AugustCellars.CoAP.Stack
                 block = new Response(response.StatusCode) {
                     Destination = response.Destination,
                     Token = response.Token,
-                    Session =  response.Session
+                    Session = response.Session
                 };
                 block.SetOptions(response.GetOptions());
                 block.TimedOut += (o, e) => response.IsTimedOut = true;
             }
 
-            Int32 payloadSize = response.PayloadSize;
-            Int32 currentSize = 1 << (4 + szx);
-            Int32 from = num * currentSize;
+            if (szx == 7) szx = 6;
+            int payloadSize = response.PayloadSize;
+            int currentSize = 1 << (4 + szx);
+            int from = num * currentSize;
 
             if (payloadSize > 0 && payloadSize > from) {
-                Int32 to = Math.Min((num + 1) * currentSize, response.PayloadSize);
-                Int32 length = to - from;
-                Byte[] blockPayload = new Byte[length];
-                Boolean m = to < response.PayloadSize;
+                int blockCount = 1;
+                if (response.Session.BlockTransfer && response.Session.MaxSendSize > 1152) {
+                    blockCount = response.Session.MaxSendSize / 1024;
+                }
+
+                int to = Math.Min((num + blockCount) * currentSize, response.PayloadSize);
+                int length = to - from;
+                byte[] blockPayload = new byte[length];
+                bool m = to < response.PayloadSize;
+
+                if (length > 1024) szx = 7;
                 block.SetBlock2(szx, m, num);
 
                 // crop payload -- do after calculation of m in case block==response
@@ -547,14 +573,13 @@ namespace Com.AugustCellars.CoAP.Stack
             message.Type = last.Type;
             message.SetOptions(last.GetOptions());
 
-            Int32 length = 0;
-            foreach (Byte[] block in status.Blocks)
+            int length = 0;
+            foreach (byte[] block in status.Blocks)
                 length += block.Length;
 
-            Byte[] payload = new Byte[length];
-            Int32 offset = 0;
-            foreach (Byte[] block in status.Blocks)
-            {
+            byte[] payload = new byte[length];
+            int offset = 0;
+            foreach (byte[] block in status.Blocks) {
                 Array.Copy(block, 0, payload, offset, block.Length);
                 offset += block.Length;
             }
@@ -562,18 +587,31 @@ namespace Com.AugustCellars.CoAP.Stack
             message.Payload = payload;
         }
 
-        private Boolean RequiresBlockwise(Request request)
+        private bool RequiresBlockwise(Request request)
         {
-            if (request.Method == Method.PUT || request.Method == Method.POST || request.Method == Method.FETCH || request.Method == Method.PATCH || request.Method == Method.iPATCH)
+            if (request.Method == Method.PUT || request.Method == Method.POST || request.Method == Method.FETCH ||
+                request.Method == Method.PATCH || request.Method == Method.iPATCH) {
+
+                ISession session = request.Session;
+                if (session != null && session.IsReliable && session.BlockTransfer) {
+                    return request.PayloadSize + 128 > session.MaxSendSize;
+                }
                 return request.PayloadSize > _maxMessageSize;
-            else
+            }
                 return false;
         }
 
-        private Boolean RequiresBlockwise(Exchange exchange, Response response)
+        private bool RequiresBlockwise(Exchange exchange, Response response)
         {
-            return response.PayloadSize > _maxMessageSize
-                    || exchange.ResponseBlockStatus != null;
+            //  If it is forced - then yes
+            if (exchange.ResponseBlockStatus != null) return true;
+
+            //  If reliable, use a different value to check against
+            if (response.Session != null && response.Session.IsReliable && response.Session.BlockTransfer) {
+                return response.PayloadSize + 128 > response.Session.MaxSendSize;
+            }
+
+            return response.PayloadSize > _maxMessageSize;
         }
 
         /// <summary>

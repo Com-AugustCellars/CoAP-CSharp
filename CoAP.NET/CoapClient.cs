@@ -110,7 +110,8 @@ namespace Com.AugustCellars.CoAP
 
         /// <summary>
         /// Gets or sets the timeout how long synchronous method calls will wait
-        /// until they give up and return anyways. The default value is <see cref="System.Threading.Timeout.Infinite"/>.
+        /// until they give up and return anyways. Time is in milliseconds.
+        /// The default value is <see cref="System.Threading.Timeout.Infinite"/>.
         /// </summary>
         public Int32 Timeout { get; set; } = System.Threading.Timeout.Infinite;
 
