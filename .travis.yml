@@ -2,18 +2,14 @@
 # see travis-ci.org for details
 
 language: csharp
-dist: trusty
+os:
+  - linux
+  - osx
 
 env:
-#  - SLN=CoAP.NET40.2010.sln
-#    TARGET=NET40
-#    VERSION=Release
   - SLN=CoAP.NET45.sln
     TARGET=NET45
     VERSION=Release
-#  - SLN=CoAP.NET45.sln
-#    TARGET=NET45
-#    VERSION=Debug
 
 install:
    - curl -L -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe

@@ -66,6 +66,11 @@ namespace Com.AugustCellars.CoAP.Codec
         /// <returns>the decoded empty message</returns>
         EmptyMessage DecodeEmptyMessage();
         /// <summary>
+        /// Decodes as a <see cref="SignalMessage"/>
+        /// </summary>
+        /// <returns>the decoded signal</returns>
+        SignalMessage DecodeSignal();
+        /// <summary>
         /// Decodes as a CoAP message.
         /// </summary>
         /// <returns>the decoded message, or null if not be recognized.</returns>

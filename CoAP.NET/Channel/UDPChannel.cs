@@ -93,6 +93,16 @@ namespace Com.AugustCellars.CoAP.Channel
         /// </summary>
         public Int32 ReceivePacketSize { get; set; } = DefaultReceivePacketSize;
 
+        /// <summary>
+        /// True means that it is supported, False means that it may be supported.
+        /// </summary>
+        public bool BlockTransfer { get; set; } = false;
+
+        /// <summary>
+        /// Max message size 
+        /// </summary>
+        public int MaxSendSize { get; set; }
+
         /// <inheritdoc/>
         public void Start()
         {
@@ -182,6 +192,24 @@ namespace Com.AugustCellars.CoAP.Channel
                 _socketBackup.Dispose();
                 _socketBackup = null;
             }
+        }
+
+        /// <summary>
+        /// We don't do anything for this right now because we don't have sessions.
+        /// </summary>
+        /// <param name="session"></param>
+        public void Abort(ISession session)
+        {
+            return;
+        }
+
+        /// <summary>
+        /// We don't do anything for this right now because we don't have sessions.
+        /// </summary>
+        /// <param name="session"></param>
+        public void Release(ISession session)
+        {
+            return;
         }
 
         /// <inheritdoc/>

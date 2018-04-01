@@ -56,7 +56,7 @@ namespace Com.AugustCellars.CoAP.Examples
                     }
                     else if (arg.StartsWith("-oscoap=")) {
                         if (contextSet == null) {
-                            Console.WriteLine("Must have -oscoap-data bevore -oscoap");
+                            Console.WriteLine("Must have -oscoap-data before -oscoap");
                             Environment.Exit(1);
                         }
 
@@ -286,7 +286,7 @@ namespace Com.AugustCellars.CoAP.Examples
                         else if (usage == "oscoap-group") {
                             SecurityContext ctx = SecurityContext.DeriveGroupContext(key[CoseKeyParameterKeys.Octet_k].GetByteString(), key[CBORObject.FromObject(2)].GetByteString(), key[CBORObject.FromObject("SenderID")].GetByteString(), null, null, key[CoseKeyKeys.Algorithm]);
                             foreach (CBORObject recipient in key[CBORObject.FromObject("recipients")].Values) {
-                                ctx.AddRecipient(recipient[CBORObject.FromObject("RecipID")].GetByteString());
+                                ctx.AddRecipient(recipient[CBORObject.FromObject("RecipID")].GetByteString(), new OneKey( recipient[CBORObject.FromObject("sign")]));
                             }
                             SecurityContextSet.AllContexts.Add(ctx);
                         }
