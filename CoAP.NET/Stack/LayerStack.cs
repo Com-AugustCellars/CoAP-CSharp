@@ -9,15 +9,20 @@
  * Please see README for more information.
  */
 
+using System;
+using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 
 namespace Com.AugustCellars.CoAP.Stack
 {
+    
     /// <summary>
     /// Stack of layers.
     /// </summary>
     public class LayerStack : Chain<LayerStack, ILayer, INextLayer>
     {
+        private static readonly ILogger log = LogManager.GetLogger(typeof(LayerStack));
+
         /// <summary>
         /// Instantiates.
         /// </summary>
@@ -44,7 +49,13 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="response">the response to send</param>
         public void SendResponse(Exchange exchange, Response response)
         {
-            Head.Filter.SendResponse(Head.NextFilter, exchange, response);
+            try {
+                Head.Filter.SendResponse(Head.NextFilter, exchange, response);
+            }
+            catch (Exception ex) {
+                log.Error("LayerStack.SendResponse - Exception during processing ", ex);
+                throw;
+            }
         }
 
         /// <summary>

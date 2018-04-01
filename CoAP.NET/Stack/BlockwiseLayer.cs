@@ -145,7 +145,9 @@ namespace Com.AugustCellars.CoAP.Stack
                         Request assembled = new Request(request.Method);
                         AssembleMessage(status, assembled, request);
 
+                        assembled.Session = request.Session;
                         exchange.Request = assembled;
+                        exchange.CurrentRequest = assembled;
                         base.ReceiveRequest(nextLayer, exchange, assembled);
                     }
                 }
@@ -313,23 +315,25 @@ namespace Com.AugustCellars.CoAP.Stack
                     int blockCount = 1;
                     int blockSize = 1 << (block2.SZX + 4);
 
-                    if (block2.SZX == 7) {
-                        blockSize = 1024;
-                        blockCount = (response.Payload.Length + 1023) / 1024;
-                    }
-
-                    if (response.Payload.Length != blockSize * blockCount) {
-                        if (!block2.M) {
-                            if ((blockCount - 1) * blockSize >= response.Payload.Length ||
-                                response.Payload.Length >= blockSize * blockCount) {
-                                //  This is problem as the body size is wrong.
-                                return;
-
-                            }
+                    if (response.Payload != null) {
+                        if (block2.SZX == 7) {
+                            blockSize = 1024;
+                            blockCount = (response.Payload.Length + 1023) / 1024;
                         }
-                        else {
-                            //  The body size is wrong
-                            return;
+
+                        if (response.Payload.Length != blockSize * blockCount) {
+                            if (!block2.M) {
+                                if ((blockCount - 1) * blockSize >= response.Payload.Length ||
+                                    response.Payload.Length >= blockSize * blockCount) {
+                                    //  This is problem as the body size is wrong.
+                                    return;
+
+                                }
+                            }
+                            else {
+                                //  The body size is wrong
+                                return;
+                            }
                         }
                     }
 
@@ -535,7 +539,7 @@ namespace Com.AugustCellars.CoAP.Stack
             if (payloadSize > 0 && payloadSize > from) {
                 int blockCount = 1;
                 if (response.Session.BlockTransfer && response.Session.MaxSendSize > 1152) {
-                    blockCount = response.Session.MaxSendSize / 1024;
+                    blockCount = (response.Session.MaxSendSize - 100) / 1024;
                 }
 
                 int to = Math.Min((num + blockCount) * currentSize, response.PayloadSize);

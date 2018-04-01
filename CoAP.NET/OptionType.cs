@@ -119,7 +119,6 @@ namespace Com.AugustCellars.CoAP
         /// <remarks>RFC 7252</remarks>
         /// </summary>
         ProxyScheme = 39,
-
         /// <summary>
         /// <remarks>RFC 7252</remarks>
         /// </summary>
@@ -147,6 +146,11 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         Oscoap = 21,
 #endif
+
+        /// <summary>
+        /// <remarks>RFC 7967</remarks>
+        /// </summary>
+        NoResponse = 258,
 
 #if FRESHNESS
         /// <summary>

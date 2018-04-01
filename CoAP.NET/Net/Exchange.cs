@@ -255,6 +255,7 @@ namespace Com.AugustCellars.CoAP.Net
         {
             response.Destination = _request.Source;
             Response = response;
+            response.Session = _request.Session;
             _endpoint.SendResponse(this, response);
         }
 

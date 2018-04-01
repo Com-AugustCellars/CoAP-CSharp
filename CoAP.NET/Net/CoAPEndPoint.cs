@@ -10,11 +10,13 @@
  */
 
 using System;
+using System.Diagnostics;
 using Com.AugustCellars.CoAP.Channel;
 using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.CoAP.Threading;
+using DataReceivedEventArgs = Com.AugustCellars.CoAP.Channel.DataReceivedEventArgs;
 
 namespace Com.AugustCellars.CoAP.Net
 {
@@ -247,6 +249,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public void SendResponse(Exchange exchange, Response response)
         {
+            Debug.Assert(response.Session != null);
             _executor.Start(() => _coapStack.SendResponse(exchange, response));
         }
 

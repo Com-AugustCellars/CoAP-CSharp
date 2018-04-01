@@ -97,7 +97,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 // Build AAD
                 CBORObject aad = CBORObject.NewArray();
                 aad.Add(CBORObject.FromObject(1)); // version
-                aad.Add(CBORObject.FromObject(ctx.Sender.Algorithm));
+                aad.Add(CBORObject.NewArray());
+                aad[1].Add(CBORObject.FromObject(ctx.Sender.Algorithm));
                 aad.Add(CBORObject.FromObject(ctx.Sender.Id));
                 aad.Add(CBORObject.FromObject(ctx.Sender.PartialIV));
                 aad.Add(CBORObject.FromObject(new byte[0]));
@@ -243,7 +244,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 //  Build AAD
                 CBORObject aad = CBORObject.NewArray();
                 aad.Add(CBORObject.FromObject(1)); // M00BUG
-                aad.Add(CBORObject.FromObject(0)); // Place holder for algorithm
+                aad.Add(CBORObject.NewArray());  // Array place holder
+                aad[1].Add(CBORObject.FromObject(0)); // Place holder for algorithm
                 aad.Add(CBORObject.FromObject(kid));
                 aad.Add(CBORObject.FromObject(partialIV));
                 aad.Add(CBORObject.FromObject(new byte[0])); // encoded I options
@@ -274,7 +276,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         continue;
                     }
 
-                    aad[1] = recip.Algorithm;
+                    aad[1][0] = recip.Algorithm;
 
                     if (_Log.IsInfoEnabled) {
                         _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
@@ -388,7 +390,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 //  Build AAD
                 CBORObject aad = CBORObject.NewArray();
                 aad.Add(1);
-                aad.Add(ctx.Sender.Algorithm);
+                aad.Add(CBORObject.NewArray());
+                aad[1].Add(ctx.Sender.Algorithm);
                 aad.Add(exchange.OscoapSenderId);
                 aad.Add(exchange.OscoapSequenceNumber);
                 aad.Add(CBORObject.FromObject(new byte[0])); // Options
@@ -527,7 +530,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 //  build aad
                 CBORObject aad = CBORObject.NewArray();
                 aad.Add(1);
-                aad.Add(recip.Algorithm);
+                aad.Add(CBORObject.NewArray());
+                aad[1].Add(recip.Algorithm);
                 aad.Add(ctx.Sender.Id);
                 aad.Add(ctx.Sender.PartialIV);
                 aad.Add(CBORObject.FromObject(new byte[0])); // OPTIONS
@@ -620,6 +624,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     case OptionType.ProxyUri:
                     case OptionType.ProxyScheme:
                     case OptionType.Observe:
+                        break;
+
+                    case OptionType.NoResponse:
+                        encrypted.AddOption(op);
                         break;
 
                     default:
@@ -751,7 +759,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
 
             if (sig != null) {
-                if (sigBytes.Length > 255) throw new Exception("GID too large");
+                if (sigBytes.Length > 255) throw new Exception("SIG too large");
                 encBody[cbSize] = (byte) sigBytes.Length;
                 Array.Copy(sigBytes, 0, encBody, cbSize + 1, sig.GetByteString().Length);
                 cbSize += sigBytes.Length + 1;

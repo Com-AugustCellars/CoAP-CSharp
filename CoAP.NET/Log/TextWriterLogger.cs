@@ -259,7 +259,7 @@ namespace Com.AugustCellars.CoAP.Log
             catch (Exception e) {
                 //  should never get here
                 ;
-                Console.WriteLine("PANIC!!!!");
+                Console.WriteLine("PANIC!!!!" + e.Message);
             }
         }
     }
