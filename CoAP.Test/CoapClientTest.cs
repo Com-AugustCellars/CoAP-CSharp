@@ -223,10 +223,10 @@ namespace Com.AugustCellars.CoAP
             resources = client.Discover(MediaType.ApplicationLinkFormat);
             Assert.AreEqual(4, resources.Count());
 
-            resources = client.Discover(MediaType.ApplicationCbor);
+            resources = client.Discover(MediaType.ApplicationLinkFormatCbor);
             Assert.AreEqual(4, resources.Count());
 
-            resources = client.Discover(MediaType.ApplicationJson);
+            resources = client.Discover(MediaType.ApplicationLinkFormatJson);
             Assert.AreEqual(4, resources.Count());
         }
 

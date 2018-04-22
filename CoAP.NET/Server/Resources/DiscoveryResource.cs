@@ -55,11 +55,11 @@ namespace Com.AugustCellars.CoAP.Server.Resources
                         payload = Encoding.UTF8.GetBytes(LinkFormat.Serialize(_root, req.UriQueries));
                         break;
 
-                    case MediaType.ApplicationCbor:
+                    case MediaType.ApplicationLinkFormatCbor:
                         payload = LinkFormat.SerializeCbor(_root, req.UriQueries);
                         break;
 
-                    case MediaType.ApplicationJson:
+                    case MediaType.ApplicationLinkFormatJson:
                         payload = Encoding.UTF8.GetBytes(LinkFormat.SerializeJson(_root, req.UriQueries));
                         break;
 

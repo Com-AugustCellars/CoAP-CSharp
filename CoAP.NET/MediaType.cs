@@ -118,6 +118,14 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public const int ApplicationCbor = 60;
         /// <summary>
+        /// application/link-format+cbor - [RFC TBD]
+        /// </summary>
+        public const int ApplicationLinkFormatCbor = 64;
+        /// <summary>
+        /// application/link-format+json - [RFC TBD]
+        /// </summary>
+        public const int ApplicationLinkFormatJson = 504;
+        /// <summary>
         /// any
         /// </summary>
         public const Int32 Any = 0xFF;

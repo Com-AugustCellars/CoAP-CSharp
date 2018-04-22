@@ -262,8 +262,32 @@ namespace Com.AugustCellars.CoAP
             List<Option> opts = new List<Option>();
             if (!String.IsNullOrEmpty(s))
                 s = s.TrimStart('/');
+            if (!String.IsNullOrEmpty(s) &&  s.Contains("%")) {
+                s = s.Replace("%22", "\"");
+            }
             if (!String.IsNullOrEmpty(s)) {
+                string combined = null;
                 foreach (String segment in s.Split(new String[] { delimiter }, StringSplitOptions.None)) {
+                    // Combine segments which are quoted
+                    if (!string.IsNullOrEmpty(segment) && segment[0] == '"') {
+                        if (segment[segment.Length - 1] == '"') {
+                            opts.Add(Create(type, segment.Substring(1, segment.Length - 1)));
+                            continue;
+                        }
+                        combined = segment.Substring(1);
+                    }
+
+                    if (combined != null) {
+                        combined += delimiter;
+                        combined += segment;
+                        if (!string.IsNullOrEmpty(segment) && segment[segment.Length - 1] == '"') {
+                            combined = combined.Substring(1, combined.Length - 1);
+                            opts.Add(Create(type, combined));
+                            combined = null;
+                        }
+
+                        continue;
+                    }
                     // empty path segments are allowed (e.g., /test vs /test/)
                     if ("/".Equals(delimiter) || !String.IsNullOrEmpty(segment)) {
                         opts.Add(Create(type, segment));
