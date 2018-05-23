@@ -134,6 +134,24 @@ namespace Com.AugustCellars.CoAP.DTLS
         }
 
         /// <summary>
+        /// We don't do anything for this right now because we don't have sessions.
+        /// </summary>
+        /// <param name="session"></param>
+        public void Abort(ISession session)
+        {
+            return;
+        }
+
+        /// <summary>
+        /// We don't do anything for this right now because we don't have sessions.
+        /// </summary>
+        /// <param name="session"></param>
+        public void Release(ISession session)
+        {
+            return;
+        }
+
+        /// <summary>
         /// Tell the channel to release all of it's resources
         /// </summary>
         public void Dispose()

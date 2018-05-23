@@ -119,7 +119,6 @@ namespace Com.AugustCellars.CoAP
         /// <remarks>RFC 7252</remarks>
         /// </summary>
         ProxyScheme = 39,
-
         /// <summary>
         /// <remarks>RFC 7252</remarks>
         /// </summary>
@@ -145,9 +144,13 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// <remarks>draft-ietf-core-oscoap</remarks>
         /// </summary>
-        Oscoap = 65025,
-        Oscoap2 = 21,
+        Oscoap = 21,
 #endif
+
+        /// <summary>
+        /// <remarks>RFC 7967</remarks>
+        /// </summary>
+        NoResponse = 258,
 
 #if FRESHNESS
         /// <summary>
@@ -162,6 +165,31 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         Request_ETag = 65027,
 #endif
+
+        /// <summary>
+        /// Maximum message size option - only for SignalCode.CMS
+        /// </summary>
+        Signal_MaxMessageSize = 2,
+        /// <summary>
+        /// Block Transfer Support - only for SignalCode.CMS
+        /// </summary>
+        Signal_BlockTransfer = 4,
+        /// <summary>
+        /// Custody option - only for SignalCode.Ping and SignalCode.Pong
+        /// </summary>
+        Signal_Custody = 2,
+        /// <summary>
+        /// Use Alternate Address option - only for SignalCode.Release
+        /// </summary>
+        Signal_AltAddress = 2,
+        /// <summary>
+        /// Dont reconnect for option - only for SignalCode.Release
+        /// </summary>
+        Signal_HoldOff = 4,
+        /// <summary>
+        /// BAD CSM option - only for SignalCode.Abort
+        /// </summary>
+        Signal_BadCSMOption = 2,
 
         /// <summary>
         /// no-op for fenceposting

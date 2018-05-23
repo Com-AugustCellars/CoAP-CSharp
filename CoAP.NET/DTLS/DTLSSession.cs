@@ -67,6 +67,16 @@ namespace Com.AugustCellars.CoAP.DTLS
         }
 
         /// <summary>
+        /// True means that it is supported, False means that it may be supported.
+        /// </summary>
+        public bool BlockTransfer { get; set; } = true;
+
+        /// <summary>
+        /// Max message size 
+        /// </summary>
+        public int MaxSendSize { get; set; } = 1152;
+
+        /// <summary>
         /// Queue of items to be written on the session.
         /// </summary>
         public ConcurrentQueue<QueueItem> Queue

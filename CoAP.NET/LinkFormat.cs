@@ -107,7 +107,7 @@ namespace Com.AugustCellars.CoAP
         private static readonly ILogger _Log = LogManager.GetLogger(typeof(LinkFormat));
 
         //  Mapping defined in the RFC
-        private static readonly Dictionary<string, CBORObject> _CborAttributeKeys = new Dictionary<string, CBORObject>() {
+        public static readonly Dictionary<string, CBORObject> _CborAttributeKeys = new Dictionary<string, CBORObject>() {
             ["href"] = CBORObject.FromObject(1),
             ["rel"] = CBORObject.FromObject(2),
             ["anchor"] = CBORObject.FromObject(3),
@@ -329,7 +329,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        private static void SerializeResource(IResource resource, StringBuilder sb)
+        public static void SerializeResource(IResource resource, StringBuilder sb)
         {
             sb.Append("<")
                 .Append(resource.Path)
@@ -338,7 +338,7 @@ namespace Com.AugustCellars.CoAP
             SerializeAttributes(resource.Attributes, sb);
         }
 
-        private static void SerializeResource(IResource resource, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
+        public static void SerializeResource(IResource resource, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
         {
             CBORObject obj = CBORObject.NewMap();
 

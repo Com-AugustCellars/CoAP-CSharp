@@ -120,6 +120,24 @@ namespace Com.AugustCellars.CoAP.DTLS
             _udpChannel.Stop();
         }
 
+        /// <summary>
+        /// We don't do anything for this right now because we don't have sessions.
+        /// </summary>
+        /// <param name="session"></param>
+        public void Abort(ISession session)
+        {
+            return;
+        }
+
+        /// <summary>
+        /// We don't do anything for this right now because we don't have sessions.
+        /// </summary>
+        /// <param name="session"></param>
+        public void Release(ISession session)
+        {
+            return;
+        }
+
         public void Dispose()
         {
             _udpChannel.Dispose();

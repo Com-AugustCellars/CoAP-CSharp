@@ -93,6 +93,16 @@ namespace Com.AugustCellars.CoAP.Channel
         /// </summary>
         public Int32 ReceivePacketSize { get; set; } = DefaultReceivePacketSize;
 
+        /// <summary>
+        /// True means that it is supported, False means that it may be supported.
+        /// </summary>
+        public bool BlockTransfer { get; set; } = false;
+
+        /// <summary>
+        /// Max message size 
+        /// </summary>
+        public int MaxSendSize { get; set; }
+
         /// <inheritdoc/>
         public void Start()
         {
@@ -182,6 +192,24 @@ namespace Com.AugustCellars.CoAP.Channel
                 _socketBackup.Dispose();
                 _socketBackup = null;
             }
+        }
+
+        /// <summary>
+        /// We don't do anything for this right now because we don't have sessions.
+        /// </summary>
+        /// <param name="session"></param>
+        public void Abort(ISession session)
+        {
+            return;
+        }
+
+        /// <summary>
+        /// We don't do anything for this right now because we don't have sessions.
+        /// </summary>
+        /// <param name="session"></param>
+        public void Release(ISession session)
+        {
+            return;
         }
 
         /// <inheritdoc/>
@@ -318,12 +346,24 @@ namespace Com.AugustCellars.CoAP.Channel
         {
             UDPSocket socket = NewUDPSocket(addressFamily, bufferSize);
 
-            // do not throw SocketError.ConnectionReset by ignoring ICMP Port Unreachable
-            const Int32 SIO_UDP_CONNRESET = -1744830452;
-            try {
-                socket.Socket.IOControl(SIO_UDP_CONNRESET, new Byte[] { 0 }, null);
-            }
-            catch (Exception) {
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT ||
+                Environment.OSVersion.Platform == PlatformID.WinCE) {
+                // do not throw SocketError.ConnectionReset by ignoring ICMP Port Unreachable
+                const Int32 SIO_UDP_CONNRESET = -1744830452;
+                try {
+                    // Set the SIO_UDP_CONNRESET ioctl to true for this UDP socket. If this UDP socket
+                    //    ever sends a UDP packet to a remote destination that exists but there is
+                    //    no socket to receive the packet, an ICMP port unreachable message is returned
+                    //    to the sender. By default, when this is received the next operation on the
+                    //    UDP socket that send the packet will receive a SocketException. The native
+                    //    (Winsock) error that is received is WSAECONNRESET (10054). Since we don't want
+                    //    to wrap each UDP socket operation in a try/except, we'll disable this error
+                    //    for the socket with this ioctl call.
+
+                    socket.Socket.IOControl(SIO_UDP_CONNRESET, new Byte[] {0}, null);
+                }
+                catch (Exception) {
+                }
             }
             return socket;
         }

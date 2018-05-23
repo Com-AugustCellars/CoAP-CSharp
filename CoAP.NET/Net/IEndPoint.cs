@@ -63,6 +63,12 @@ namespace Com.AugustCellars.CoAP.Net
         /// Occurs when an empty message has been received.
         /// </summary>
         event EventHandler<MessageEventArgs<EmptyMessage>> ReceivingEmptyMessage;
+  
+        /// <summary>
+        /// Occurs when a signal message has been received.
+        /// </summary>
+        event EventHandler<MessageEventArgs<SignalMessage>> ReceivingSignalMessage;
+
         /// <summary>
         /// Starts this endpoint and all its components.
         /// </summary>

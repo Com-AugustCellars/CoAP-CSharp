@@ -10,11 +10,13 @@
  */
 
 using System;
+using System.Diagnostics;
 using Com.AugustCellars.CoAP.Channel;
 using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.CoAP.Threading;
+using DataReceivedEventArgs = Com.AugustCellars.CoAP.Channel.DataReceivedEventArgs;
 
 namespace Com.AugustCellars.CoAP.Net
 {
@@ -58,6 +60,9 @@ namespace Com.AugustCellars.CoAP.Net
         public event EventHandler<MessageEventArgs<Response>> ReceivingResponse;
         /// <inheritdoc/>
         public event EventHandler<MessageEventArgs<EmptyMessage>> ReceivingEmptyMessage;
+
+        /// <inheritdoc/>
+        public event EventHandler<MessageEventArgs<SignalMessage>> ReceivingSignalMessage;
 
         /// <summary>
         /// Instantiates a new endpoint.
@@ -244,6 +249,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public void SendResponse(Exchange exchange, Response response)
         {
+            Debug.Assert(response.Session != null);
             _executor.Start(() => _coapStack.SendResponse(exchange, response));
         }
 
@@ -366,6 +372,73 @@ namespace Com.AugustCellars.CoAP.Net
                     }
                 }
             }
+            else if (decoder.IsSignal) {
+                SignalMessage message;
+                SignalMessage signal;
+
+                try {
+                    message = decoder.DecodeSignal();
+                }
+                catch (Exception ex) {
+                    _Log.Debug(m => m("ReceiveData: Decode Signal Failed  data={0}\nException={1}", BitConverter.ToString(e.Data), ex.ToString()));
+                    return;
+                }
+
+                message.Source = e.EndPoint;
+
+                _Log.Info(m => m("Processing signal message {1} from {0}", e.EndPoint, message.ToString()));
+
+                Fire(ReceivingSignalMessage, message);
+
+                switch (message.SignalCode) {
+                    default:
+                        _Log.Info(m => m("Unknown signal received.  Code is {0}.{1}", ((int)message.SignalCode)/32, ((int)message.SignalCode)%32));
+                        break;
+
+                    case SignalCode.CSM:
+                        foreach (Option op in message.GetOptions()) {
+                            switch (op.Type) {
+                                case OptionType.Signal_BlockTransfer:
+                                    e.Session.BlockTransfer = true;
+                                    break;
+
+                                case OptionType.Signal_MaxMessageSize:
+                                    e.Session.MaxSendSize = op.IntValue;
+                                    break;
+
+                                default:
+                                    _Log.Info(m => m("Bad CSM Option {0} received", op.Type));
+                                    signal = new SignalMessage(SignalCode.Abort);
+                                    Option op2 = Option.Create(OptionType.Signal_BadCSMOption);
+                                    op2.IntValue = (int) op.Type;
+                                    signal.AddOption(op2);
+
+                                    _channel.Send(Serialize(signal), e.Session, e.EndPoint);
+                                    _channel.Abort(e.Session);
+                                    break;
+                            }
+                        }
+                        break;
+
+                    case SignalCode.Ping:
+                        signal = new SignalMessage(SignalCode.Pong);
+                        signal.Token = message.Token;
+                        _channel.Send(Serialize(signal), e.Session, e.EndPoint);
+                        break;
+
+                    case SignalCode.Pong:
+                        _Log.Info(m => m("PONG"));
+                        break;
+
+                    case SignalCode.Release:
+                        _channel.Release(e.Session);
+                        break;
+
+                    case SignalCode.Abort:
+                        _channel.Abort(e.Session);
+                        break;
+                }
+            }
             else {
                 _Log.Debug(m => m("Silently ignoring non-CoAP message from {0}", e.EndPoint));
             }
@@ -378,7 +451,7 @@ namespace Com.AugustCellars.CoAP.Net
             Fire(SendingEmptyMessage, rst);
 
             if (!rst.IsCancelled)
-                _channel.Send(Serialize(rst), null /*message.Session*/, rst.Destination);
+                _channel.Send(Serialize(rst),  null /*message.Session*/, rst.Destination);
         }
 
         private Byte[] Serialize(EmptyMessage message)
@@ -407,6 +480,16 @@ namespace Com.AugustCellars.CoAP.Net
             if (bytes == null) {
                 bytes = MessageEncoder().Encode(response); // Spec.NewMessageEncoder().Encode(response);
                 response.Bytes = bytes;
+            }
+            return bytes;
+        }
+
+        private byte[] Serialize(SignalMessage signal)
+        {
+            byte[] bytes = signal.Bytes;
+            if (bytes == null) {
+                bytes = MessageEncoder().Encode(signal);
+                signal.Bytes = bytes;
             }
             return bytes;
         }
