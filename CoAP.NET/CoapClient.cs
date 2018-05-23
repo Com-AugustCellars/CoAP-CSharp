@@ -84,7 +84,9 @@ namespace Com.AugustCellars.CoAP
         /// <param name="config">the config</param>
         public CoapClient(Uri uri, ICoapConfig config)
         {
-            Uri = uri;
+            UriPath = uri.AbsolutePath;
+            UriQuery = uri.Query;
+            Uri = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.SafeUnescaped));
             _config = config ?? CoapConfig.Default;
         }
 
@@ -209,16 +211,22 @@ namespace Com.AugustCellars.CoAP
             return Discover(null, mediaType);
         }
 
+        public IEnumerable<WebLink> Discover(string query, int mediaType = MediaType.Undefined)
+        {
+            return Discover(CoapConstants.DefaultWellKnownURI, query, mediaType);
+        }
+
         /// <summary>
         /// Discovers remote resources.
         /// </summary>
+        /// <param name="uriPath">path to be queried</param>
         /// <param name="query">the query to filter resources</param>
         /// <param name="mediaType">format to use - defaults to any</param>
         /// <returns>the descoverd <see cref="WebLink"/> representing remote resources, or null if no response</returns>
-        public IEnumerable<WebLink> Discover(String query, int mediaType = MediaType.Undefined)
+        public IEnumerable<WebLink> Discover(string uriPath, String query, int mediaType = MediaType.Undefined)
         {
             Request discover = Prepare(Request.NewGet());
-            discover.ClearUriPath().ClearUriQuery().UriPath = CoapConstants.DefaultWellKnownURI;
+            discover.ClearUriPath().ClearUriQuery().UriPath = uriPath;
             if (!String.IsNullOrEmpty(query)) {
                 discover.UriQuery = query;
             }
@@ -236,10 +244,10 @@ namespace Com.AugustCellars.CoAP
                 case MediaType.ApplicationLinkFormat:
                     return LinkFormat.Parse(links.PayloadString);
 
-                case MediaType.ApplicationCbor:
+                case MediaType.ApplicationLinkFormatCbor:
                     return LinkFormat.ParseCbor(links.Payload);
 
-                case MediaType.ApplicationJson:
+                case MediaType.ApplicationLinkFormatJson:
                     return LinkFormat.ParseJson(links.PayloadString);
 
                 default:

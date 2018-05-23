@@ -79,10 +79,11 @@ namespace Com.AugustCellars.CoAP.Codec
         /// <inheritdoc/>
         public virtual Boolean IsResponse
         {
-            get
+            get 
             {
-                return m_code >= CoapConstants.ResponseCodeLowerBound &&
-                  m_code <= CoapConstants.ResponseCodeUpperBound;
+                return (m_code >= CoapConstants.ResponseCodeLowerBound &&
+                        m_code <= CoapConstants.ResponseCodeUpperBound) ||
+                       m_code == (int) SignalCode.Pong;
             }
         }
 

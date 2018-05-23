@@ -54,7 +54,16 @@ namespace Com.AugustCellars.CoAP
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
             sb.Append('<').Append(Uri).Append('>')
-                .Append(' ').Append(Attributes.Title);
+                .Append(' ').Append(Attributes.Title).Append("\n");
+            foreach (string key in Attributes.Keys) {
+                sb.Append("\t").Append(key).Append(":\t");
+                foreach (string s in Attributes.GetValues(key)) {
+                    sb.Append(s).Append(' ');
+                }
+
+                sb.Append("\n");
+            }
+#if false
             if (Attributes.Contains(LinkFormat.ResourceType)) {
                 sb.Append("\n\t").Append(LinkFormat.ResourceType)
                     .Append(":\t");
@@ -86,6 +95,7 @@ namespace Com.AugustCellars.CoAP
             if (Attributes.Observable) {
                 sb.Append("\n\t").Append(LinkFormat.Observable);
             }
+#endif
 
             return sb.ToString();
         }
