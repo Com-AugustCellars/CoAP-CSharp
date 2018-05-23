@@ -113,6 +113,13 @@ namespace Com.AugustCellars.CoAP.DTLS
                 this._mContext = context;
             }
 
+#if SUPPORT_RPK
+            public virtual void NotifyServerCertificate(AbstractCertificate x)
+            {
+
+            }
+#endif
+
             public virtual void NotifyServerCertificate(Certificate serverCertificate)
             {
 /*                

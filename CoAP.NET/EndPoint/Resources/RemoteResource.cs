@@ -23,7 +23,7 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
                 case MediaType.ApplicationLinkFormat:
                     return LinkFormat.Deserialize(linkFormat);
 
-                case MediaType.ApplicationJson:
+                case MediaType.ApplicationLinkFormatJson:
                     return LinkFormat.DeserializeJson(linkFormat);
 
                 default:
@@ -37,10 +37,10 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
                 case MediaType.ApplicationLinkFormat:
                     return LinkFormat.Deserialize(Encoding.UTF8.GetString(linkFormat));
 
-                case MediaType.ApplicationCbor:
+                case MediaType.ApplicationLinkFormatCbor:
                     return LinkFormat.DeserializeCbor(linkFormat);
 
-                case MediaType.ApplicationJson:
+                case MediaType.ApplicationLinkFormatJson:
                     return LinkFormat.DeserializeJson(Encoding.UTF8.GetString(linkFormat));
 
                 default:

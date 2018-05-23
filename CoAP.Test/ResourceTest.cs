@@ -41,7 +41,7 @@ namespace Com.AugustCellars.CoAP
                 0x0C, 0x62, 0x34, 0x31,
                 0x09, 0x6C, 0x54, 0x65, 0x6D, 0x70, 0x65, 0x72, 0x61, 0x74, 0x75, 0x72, 0x65, 0x43
             };
-            RemoteResource root = RemoteResource.NewRoot(input, MediaType.ApplicationCbor);
+            RemoteResource root = RemoteResource.NewRoot(input, MediaType.ApplicationLinkFormatCbor);
 
             RemoteResource res = root.GetResource("/sensors/temp");
             Assert.IsNotNull(res);
@@ -56,7 +56,7 @@ namespace Com.AugustCellars.CoAP
         public void SimpleTest_JSON()
         {
             String input = "[{\"href\":\"/sensors/temp\",\"ct\":\"41\",\"rt\":\"TemperatureC\"}]";
-            RemoteResource root = RemoteResource.NewRoot(input, MediaType.ApplicationJson);
+            RemoteResource root = RemoteResource.NewRoot(input, MediaType.ApplicationLinkFormatJson);
 
             RemoteResource res = root.GetResource("/sensors/temp");
             Assert.IsNotNull(res);
@@ -179,7 +179,7 @@ namespace Com.AugustCellars.CoAP
             string jsonOut = LinkFormat.SerializeJson(res, null);
             Assert.AreEqual(jsonOut, jsonX);
 
-            res = RemoteResource.NewRoot(jsonX, MediaType.ApplicationJson);
+            res = RemoteResource.NewRoot(jsonX, MediaType.ApplicationLinkFormatJson);
             jsonOut = LinkFormat.Serialize(res, null);
             Assert.AreEqual(jsonOut, link);
         }
