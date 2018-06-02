@@ -63,5 +63,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
             return new Spec.MessageEncoder18();
         }
+
+        public EventHandler<TlsEvent> TlsEventHandler;
     }
 }

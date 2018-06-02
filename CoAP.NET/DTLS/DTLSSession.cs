@@ -34,6 +34,8 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         private readonly EventHandler<SessionEventArgs> _sessionEvents;
 
+        public EventHandler<TlsEvent> TlsEventHandler;
+
         /// <summary>
         /// List of event handlers to inform about session events.
         /// </summary>
@@ -112,9 +114,17 @@ namespace Com.AugustCellars.CoAP.DTLS
                     else {
                         pskIdentity = new BasicTlsPskIdentity(new byte[0], _userKey[CoseKeyParameterKeys.Octet_k].GetByteString());
                     }
-                }   
+                    _client = new DtlsClient(null, pskIdentity);
+                }
+                else if (_userKey.HasKeyType((int) COSE.GeneralValuesInt.KeyType_EC2)) {
+                    _client = new DtlsClient(null, _userKey);
+                }
             }
-            _client = new DtlsClient(null, pskIdentity);
+            else {
+                _client = new DtlsClient(null, pskIdentity);
+            }
+
+            _client.TlsEventHandler += OnTlsEvent;
 
             DtlsClientProtocol clientProtocol = new DtlsClientProtocol(new SecureRandom());
 
@@ -142,6 +152,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             DtlsServerProtocol serverProtocol = new DtlsServerProtocol(new SecureRandom());
 
             DtlsServer server = new DtlsServer(_serverKeys, _userKeys);
+            server.TlsEventHandler += OnTlsEvent;
 
             _transport.UDPChannel = udpChannel;
             _transport.Receive(message);
@@ -255,9 +266,11 @@ namespace Com.AugustCellars.CoAP.DTLS
                         }
                     }
                 }
-                byte[] buf2 = new byte[size];
-                Array.Copy(buf, buf2, size);
-                FireDataReceived(buf2, _ipEndPoint);
+                else {
+                    byte[] buf2 = new byte[size];
+                    Array.Copy(buf, buf2, size);
+                    FireDataReceived(buf2, _ipEndPoint);
+                }
             }
         }
 
@@ -267,6 +280,15 @@ namespace Com.AugustCellars.CoAP.DTLS
             if (h != null) {
                 h(this, new DataReceivedEventArgs(data, ep, this));
             }
+        }
+
+        private void OnTlsEvent(Object o, TlsEvent e)
+        {
+            EventHandler<TlsEvent> handler = TlsEventHandler;
+            if (handler != null) {
+                handler(o, e);
+            }
+
         }
 
         private class OurTransport : DatagramTransport
