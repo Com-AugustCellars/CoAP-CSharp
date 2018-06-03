@@ -3,6 +3,7 @@ using System.Collections;
 
 using System.Threading.Tasks;
 using Com.AugustCellars.COSE;
+using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Crypto.Tls;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Asn1.X9;
@@ -10,6 +11,7 @@ using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.Utilities.Encoders;
 using Org.BouncyCastle.X509;
@@ -46,18 +48,12 @@ namespace Com.AugustCellars.CoAP.DTLS
             }
         }
 
-        public override ProtocolVersion MinimumVersion {
-            get { return ProtocolVersion.DTLSv10; }
-        }
+        public override ProtocolVersion MinimumVersion => ProtocolVersion.DTLSv10;
 
-        public override ProtocolVersion ClientVersion
-        {
-            get { return ProtocolVersion.DTLSv12; }
-        }
+        public override ProtocolVersion ClientVersion => ProtocolVersion.DTLSv12;
 
         public override int[] GetCipherSuites()
         {
-            
             int[] i;
 
             if (_rawPublicKey != null) {
@@ -118,6 +114,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             return e.Dictionary;
         }
+
         public override TlsAuthentication GetAuthentication()
         {
             return new MyTlsAuthentication(mContext, _rawPublicKey);
@@ -209,14 +206,13 @@ namespace Com.AugustCellars.CoAP.DTLS
         }
 
 
-
-
         internal class MyTlsAuthentication
             : TlsAuthentication
         {
             private readonly TlsContext _mContext;
             public EventHandler<TlsEvent> TlsEventHandler;
             private OneKey _rawPublicKey;
+            private KeySet _serverKeys;
 
             internal MyTlsAuthentication(TlsContext context, OneKey rawPublicKey)
             {
@@ -224,25 +220,106 @@ namespace Com.AugustCellars.CoAP.DTLS
                 _rawPublicKey = rawPublicKey;
             }
 
-#if SUPPORT_RPK
-            public virtual void NotifyServerCertificate(AbstractCertificate x)
-            {
+            public OneKey AuthenticationKey { get; private set; }
 
+#if SUPPORT_RPK
+
+            public virtual void NotifyServerCertificate(AbstractCertificate serverCertificate)
+            {
+                if (serverCertificate is RawPublicKey) {
+                    GetRpkKey((RawPublicKey)serverCertificate);
+                }
+                else {
+                    TlsEvent e = new TlsEvent(TlsEvent.EventCode.ServerCertificate) {
+                        Certificate = serverCertificate
+                    };
+
+                    EventHandler<TlsEvent> handler = TlsEventHandler;
+                    if (handler != null) {
+                        handler(this, e);
+                    }
+
+                    if (!e.Processed) {
+                        throw new TlsFatalAlert(AlertDescription.certificate_unknown);
+                    }
+                }
             }
+
+            public void GetRpkKey(RawPublicKey rpk)
+            {
+                AsymmetricKeyParameter key;
+
+                try {
+                    key = PublicKeyFactory.CreateKey(rpk.SubjectPublicKeyInfo());
+                }
+                catch (Exception e) {
+                    throw new TlsFatalAlert(AlertDescription.unsupported_certificate, e);
+                }
+
+                if (key is ECPublicKeyParameters) {
+                    ECPublicKeyParameters ecKey = (ECPublicKeyParameters)key;
+
+                    string s = ecKey.AlgorithmName;
+                    OneKey newKey = new OneKey();
+                    newKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_EC);
+                    if (ecKey.Parameters.Curve.Equals(NistNamedCurves.GetByName("P-256").Curve)) {
+                        newKey.Add(CoseKeyParameterKeys.EC_Curve, GeneralValues.P256);
+                    }
+
+                    newKey.Add(CoseKeyParameterKeys.EC_X, CBORObject.FromObject(ecKey.Q.Normalize().XCoord.ToBigInteger().ToByteArrayUnsigned()));
+                    newKey.Add(CoseKeyParameterKeys.EC_Y, CBORObject.FromObject(ecKey.Q.Normalize().YCoord.ToBigInteger().ToByteArrayUnsigned()));
+
+                    foreach (OneKey k in _serverKeys) {
+                        if (k.Compare(newKey)) {
+                            AuthenticationKey = k;
+                            return;
+                        }
+                    }
+                }
+                else {
+                    // throw new TlsFatalAlert(AlertDescription.certificate_unknown);
+                }
+
+                TlsEvent ev = new TlsEvent(TlsEvent.EventCode.ServerCertificate) {
+                    Certificate = rpk
+                };
+
+                EventHandler<TlsEvent> handler = TlsEventHandler;
+                if (handler != null) {
+                    handler(this, ev);
+                }
+
+                if (!ev.Processed) {
+                    throw new TlsFatalAlert(AlertDescription.certificate_unknown);
+                }
+            }
+
 #endif
 
             public virtual void NotifyServerCertificate(Certificate serverCertificate)
             {
-/*                
-                X509CertificateStructure[] chain = serverCertificate.GetCertificateList();
-                Console.WriteLine("DTLS client received server certificate chain of length " + chain.Length);
-                for (int i = 0; i != chain.Length; i++) {
-                    X509CertificateStructure entry = chain[i];
-                    // TODO Create fingerprint based on certificate signature algorithm digest
-                    Console.WriteLine("    fingerprint:SHA-256 " + TlsTestUtilities.Fingerprint(entry) + " ("
-                                      + entry.Subject + ")");
+                /*                
+                                X509CertificateStructure[] chain = serverCertificate.GetCertificateList();
+                                Console.WriteLine("DTLS client received server certificate chain of length " + chain.Length);
+                                for (int i = 0; i != chain.Length; i++) {
+                                    X509CertificateStructure entry = chain[i];
+                                    // TODO Create fingerprint based on certificate signature algorithm digest
+                                    Console.WriteLine("    fingerprint:SHA-256 " + TlsTestUtilities.Fingerprint(entry) + " ("
+                                                      + entry.Subject + ")");
+                                }
+                                */
+                TlsEvent e = new TlsEvent(TlsEvent.EventCode.ServerCertificate) {
+                    Certificate = serverCertificate
+                };
+
+                EventHandler<TlsEvent> handler = TlsEventHandler;
+                if (handler != null) {
+                    handler(this, e);
                 }
-                */
+
+                if (!e.Processed) {
+                    throw new TlsFatalAlert(AlertDescription.certificate_unknown);
+                }
             }
 
             private BigInteger ConvertBigNum(CBORObject cbor)
