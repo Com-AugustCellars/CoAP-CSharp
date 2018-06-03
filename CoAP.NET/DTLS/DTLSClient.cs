@@ -162,8 +162,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         protected TlsSignerCredentials GetECDsaSignerCredentials()
         {
-            AsymmetricKeyParameter privateKey = null;
-
+#if SUPPORT_RPK
             if (_rawPublicKey != null) {
                 OneKey k = _rawPublicKey;
                 if (k.HasKeyType((int)COSE.GeneralValuesInt.KeyType_EC2) &&
@@ -181,6 +180,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                     return new DefaultTlsSignerCredentials(mContext, new RawPublicKey(spi), privKey, new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
                 }
             }
+#endif
 
             TlsEvent e = new TlsEvent(TlsEvent.EventCode.SignCredentials) {
                 CipherSuite = KeyExchangeAlgorithm.ECDH_ECDSA
@@ -340,6 +340,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                     return null;
                 }
 
+#if SUPPORT_RPK
                 if (_rawPublicKey != null) {
                     OneKey k = _rawPublicKey;
                     if (k.HasKeyType((int)COSE.GeneralValuesInt.KeyType_EC2) &&
@@ -366,7 +367,20 @@ namespace Com.AugustCellars.CoAP.DTLS
                 return TlsTestUtilities.LoadSignerCredentials(mContext, certificateRequest.SupportedSignatureAlgorithms,
                     SignatureAlgorithm.rsa, "x509-client.pem", "x509-client-key.pem");
                     */
-                return null;
+#endif
+                // If we did not fine appropriate signer credientials - ask for help
+
+                TlsEvent e = new TlsEvent(TlsEvent.EventCode.SignCredentials) {
+                    CipherSuite = KeyExchangeAlgorithm.ECDHE_ECDSA
+                };
+
+                EventHandler<TlsEvent> handler = TlsEventHandler;
+                if (handler != null) {
+                    handler(this, e);
+                }
+
+                if (e.SignerCredentials != null) return e.SignerCredentials;
+                throw new TlsFatalAlert(AlertDescription.internal_error);
             }
 
 

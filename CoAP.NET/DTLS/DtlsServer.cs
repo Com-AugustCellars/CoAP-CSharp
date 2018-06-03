@@ -120,8 +120,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         protected override TlsSignerCredentials GetECDsaSignerCredentials()
         {
-            AsymmetricKeyParameter privateKey = null;
-
+#if SUPPORT_RPK
             foreach (OneKey k in _serverKeys) {
                 if (k.HasKeyType((int) COSE.GeneralValuesInt.KeyType_EC2) &&
                     k.HasAlgorithm(COSE.AlgorithmValues.ECDSA_256)) {
@@ -138,6 +137,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                     return new DefaultTlsSignerCredentials(mContext, new RawPublicKey(spi), privKey, new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa) );
                 }
             }
+#endif
 
             // If we did not fine appropriate signer credientials - ask for help
 
