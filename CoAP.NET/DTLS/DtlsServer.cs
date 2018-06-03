@@ -37,13 +37,12 @@ namespace Com.AugustCellars.CoAP.DTLS
             mPskIdentityManager.TlsEventHandler += OnTlsEvent;
         }
 
-        protected override ProtocolVersion MinimumVersion { get {return ProtocolVersion.DTLSv10;} }
-        protected override ProtocolVersion MaximumVersion { get {return ProtocolVersion.DTLSv12;} }
+        protected override ProtocolVersion MinimumVersion => ProtocolVersion.DTLSv10;
+        protected override ProtocolVersion MaximumVersion => ProtocolVersion.DTLSv12;
 
-        public OneKey AuthenticationKey
-        {
-            get => mPskIdentityManager.AuthenticationKey; 
-        }
+        public OneKey AuthenticationKey => mPskIdentityManager.AuthenticationKey;
+
+        // Chain all of our events to the next level up.
 
         private void OnTlsEvent(Object o, TlsEvent e)
         {
@@ -60,6 +59,8 @@ namespace Com.AugustCellars.CoAP.DTLS
                 CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
                 CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8
             };
+
+            //  Give the outside code a chance to change this.
 
             TlsEvent e = new TlsEvent(TlsEvent.EventCode.GetCipherSuites) {
                 IntValues = i
@@ -90,20 +91,20 @@ namespace Com.AugustCellars.CoAP.DTLS
             int keyExchangeAlgorithm = TlsUtilities.GetKeyExchangeAlgorithm(mSelectedCipherSuite);
 
             switch (keyExchangeAlgorithm) {
-                case KeyExchangeAlgorithm.DHE_PSK:
-                case KeyExchangeAlgorithm.ECDHE_PSK:
-                case KeyExchangeAlgorithm.PSK:
-                    return null;
+            case KeyExchangeAlgorithm.DHE_PSK:
+            case KeyExchangeAlgorithm.ECDHE_PSK:
+            case KeyExchangeAlgorithm.PSK:
+                return null;
 
-                case KeyExchangeAlgorithm.RSA_PSK:
-                    return GetRsaEncryptionCredentials();
+            case KeyExchangeAlgorithm.RSA_PSK:
+                return GetRsaEncryptionCredentials();
 
             case KeyExchangeAlgorithm.ECDHE_ECDSA:
                 return GetECDsaSignerCredentials();
 
-                default:
-                    /* Note: internal error here; selected a key exchange we don't implement! */
-                    throw new TlsFatalAlert(AlertDescription.internal_error);
+            default:
+                /* Note: internal error here; selected a key exchange we don't implement! */
+                throw new TlsFatalAlert(AlertDescription.internal_error);
             }
         }
 
@@ -139,8 +140,10 @@ namespace Com.AugustCellars.CoAP.DTLS
                 }
             }
 
+            // If we did not fine appropriate signer credientials - ask for help
+
             TlsEvent e = new TlsEvent(TlsEvent.EventCode.SignCredentials) {
-                CipherSuite = KeyExchangeAlgorithm.ECDH_ECDSA
+                CipherSuite = KeyExchangeAlgorithm.ECDHE_ECDSA
             };
 
             EventHandler<TlsEvent> handler = TlsEventHandler;
@@ -196,16 +199,46 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         public override byte GetClientCertificateType(byte[] certificateTypes)
         {
-            foreach (byte type in certificateTypes) {
-                if (type == 2) return type;  // Assume we only support X.509 certificates
+            TlsEvent e = new TlsEvent(TlsEvent.EventCode.ClientCertType) {
+                Bytes = certificateTypes,
+                Byte = (byte) 0xff
+            };
+
+            EventHandler<TlsEvent> handler = TlsEventHandler;
+            if (handler != null) {
+                handler(this, e);
             }
+
+            if (e.Byte != 0xff) {
+                return e.Byte;
+            }
+
+            foreach (byte type in certificateTypes) {
+                if (type == 2) return type;  // Assume we only support Raw Public Key
+            }
+
+
             throw new TlsFatalAlert(AlertDescription.handshake_failure);
         }
 
         public override byte GetServerCertificateType(byte[] certificateTypes)
         {
+            TlsEvent e = new TlsEvent(TlsEvent.EventCode.ServerCertType) {
+                Bytes = certificateTypes,
+                Byte = (byte)0xff
+            };
+
+            EventHandler<TlsEvent> handler = TlsEventHandler;
+            if (handler != null) {
+                handler(this, e);
+            }
+
+            if (e.Byte != 0xff) {
+                return e.Byte;
+            }
+
             foreach (byte type in certificateTypes) {
-                if (type == 2) return type;  // Assume we only support X.509 certificates
+                if (type == 2) return type;  // Assume we only support Raw Public Key
             }
             throw new TlsFatalAlert(AlertDescription.handshake_failure);
         }
@@ -232,16 +265,17 @@ namespace Com.AugustCellars.CoAP.DTLS
                 TlsEvent e = new TlsEvent(TlsEvent.EventCode.ClientCertificate) {
                     Certificate = clientCertificate
                 };
+
+                EventHandler<TlsEvent> handler = TlsEventHandler;
+                if (handler != null) {
+                    handler(this, e);
+                }
+
+                if (!e.Processed) {
+                    throw new TlsFatalAlert(AlertDescription.certificate_unknown);
+                }
             }
         }
-
-#if false
-        protected override TlsSignerCredentials GetECDsaSignerCredentials()
-        {
-            return TlsTestUtilities.LoadSignerCredentials(mContext, mSupportedSignatureAlgorithms, SignatureAlgorithm.rsa,
-                "x509-server.pem", "x509-server-key.pem");
-        }
-#endif
 
         private MyIdentityManager mPskIdentityManager;
 
@@ -297,6 +331,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                         return (byte[]) e.KeyValue[CoseKeyParameterKeys.Octet_k].GetByteString().Clone();
                     }
                 }
+
                 return null;
             }
 
@@ -330,14 +365,25 @@ namespace Com.AugustCellars.CoAP.DTLS
                             return;
                         }
                     }
-
-                    throw new TlsFatalAlert(AlertDescription.certificate_unknown);
                 }
                 else {
+                    // throw new TlsFatalAlert(AlertDescription.certificate_unknown);
+                }
+
+                TlsEvent ev = new TlsEvent(TlsEvent.EventCode.ClientCertificate) {
+                    Certificate = rpk
+                };
+
+                EventHandler<TlsEvent> handler = TlsEventHandler;
+                if (handler != null) {
+                    handler(this, ev);
+                }
+
+                if (!ev.Processed) {
                     throw new TlsFatalAlert(AlertDescription.certificate_unknown);
                 }
             }
-            
+
         }
     }
 }
