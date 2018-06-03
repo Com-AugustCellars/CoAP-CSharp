@@ -279,7 +279,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             }
         }
 #else
-        public override void NotifyClientCertificate(AbstractCertificate clientCertificate)
+        public override void NotifyClientCertificate(Certificate clientCertificate)
         {
                 TlsEvent e = new TlsEvent(TlsEvent.EventCode.ClientCertificate) {
                     Certificate = clientCertificate
