@@ -13,7 +13,6 @@ using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Crypto.Tls.Tests;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
@@ -197,6 +196,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 mServerECPointFormats);
         }
 
+#if SUPPORT_RPK
         public override byte GetClientCertificateType(byte[] certificateTypes)
         {
             TlsEvent e = new TlsEvent(TlsEvent.EventCode.ClientCertType) {
@@ -242,6 +242,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             }
             throw new TlsFatalAlert(AlertDescription.handshake_failure);
         }
+#endif
 
         public override CertificateRequest GetCertificateRequest()
         {
@@ -256,6 +257,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             return new CertificateRequest(certificateTypes, serverSigAlgs, null);
         }
 
+#if SUPPORT_RPK
         public override void NotifyClientCertificate(AbstractCertificate clientCertificate)
         {
             if (clientCertificate is RawPublicKey) {
@@ -276,6 +278,24 @@ namespace Com.AugustCellars.CoAP.DTLS
                 }
             }
         }
+#else
+        public override void NotifyClientCertificate(AbstractCertificate clientCertificate)
+        {
+                TlsEvent e = new TlsEvent(TlsEvent.EventCode.ClientCertificate) {
+                    Certificate = clientCertificate
+                };
+
+                EventHandler<TlsEvent> handler = TlsEventHandler;
+                if (handler != null) {
+                    handler(this, e);
+                }
+
+                if (!e.Processed) {
+                    throw new TlsFatalAlert(AlertDescription.certificate_unknown);
+                }
+            
+        }
+#endif
 
         private MyIdentityManager mPskIdentityManager;
 
@@ -335,6 +355,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 return null;
             }
 
+#if SUPPORT_RPK
             public void GetRpkKey(RawPublicKey rpk)
             {
                 AsymmetricKeyParameter key;
@@ -383,7 +404,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                     throw new TlsFatalAlert(AlertDescription.certificate_unknown);
                 }
             }
-
+#endif
         }
     }
 }

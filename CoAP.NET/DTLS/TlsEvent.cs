@@ -72,7 +72,11 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         public IDictionary Dictionary { get; set; }
 
+#if SUPPORT_RPK
         public AbstractCertificate Certificate { get; set; }
+#else
+        public Certificate Certificate { get; set; }
+#endif
 
         public byte[] Bytes { get; set; }
         public byte Byte { get; set; }
