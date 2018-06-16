@@ -52,6 +52,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             MessageEncoder = UdpCoapMesageEncoder;
             MessageDecoder = UdpCoapMessageDecoder;
             EndpointSchema = "coaps";
+            channel.TlsEventHandler += OnTlsEvent;
         }
 
         static IMessageDecoder UdpCoapMessageDecoder(byte[] data)
@@ -65,5 +66,14 @@ namespace Com.AugustCellars.CoAP.DTLS
         }
 
         public EventHandler<TlsEvent> TlsEventHandler;
+
+        private void OnTlsEvent(Object o, TlsEvent e)
+        {
+            EventHandler<TlsEvent> handler = TlsEventHandler;
+            if (handler != null) {
+                handler(o, e);
+            }
+        }
+
     }
 }
