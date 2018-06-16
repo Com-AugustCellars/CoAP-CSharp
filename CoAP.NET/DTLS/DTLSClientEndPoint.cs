@@ -14,6 +14,7 @@ namespace Com.AugustCellars.CoAP.DTLS
     /// </summary>
     public class DTLSClientEndPoint : CoAPEndPoint
     {
+        public EventHandler<TlsEvent> TlsEventHandler;
 
         /// <summary>
         /// Instantiates a new DTLS endpoint with the specific channel and configuration
@@ -80,6 +81,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             MessageEncoder = UdpCoapMesageEncoder;
             MessageDecoder = UdpCoapMessageDecoder;
             EndpointSchema = "coaps";
+            channel.TlsEventHandler += OnTlsEvent;
         }
 
         /// <summary>
@@ -101,6 +103,15 @@ namespace Com.AugustCellars.CoAP.DTLS
         static IMessageEncoder UdpCoapMesageEncoder()
         {
             return new Spec.MessageEncoder18();
+        }
+
+        private void OnTlsEvent(Object o, TlsEvent e)
+        {
+            EventHandler<TlsEvent> handler = TlsEventHandler;
+            if (handler != null) {
+                handler(o, e);
+            }
+
         }
     }
 }

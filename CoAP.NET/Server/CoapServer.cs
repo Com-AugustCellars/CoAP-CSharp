@@ -26,6 +26,7 @@ namespace Com.AugustCellars.CoAP.Server
         private static readonly ILogger _Log = LogManager.GetLogger(typeof(CoapServer));
         private readonly IResource _root;
         private readonly List<IEndPoint> _endpoints = new List<IEndPoint>();
+        private readonly System.Net.EndPoint _endPointSupplied;
         private IMessageDeliverer _deliverer;
 
         /// <summary>
@@ -52,7 +53,12 @@ namespace Com.AugustCellars.CoAP.Server
         /// <param name="config">the configuration, or <code>null</code> for default</param>
         /// <param name="ports">the ports to bind to</param>
         public CoapServer(ICoapConfig config, params Int32[] ports)
-            : this(config, null, ports)
+            : this(config, null, null, ports)
+        {
+        }
+
+        public CoapServer(ICoapConfig config, System.Net.EndPoint endPoint, params Int32[] ports)
+            : this(config, null, endPoint, ports)
         {
         }
 
@@ -79,6 +85,22 @@ namespace Com.AugustCellars.CoAP.Server
 
         }
 
+        public CoapServer(ICoapConfig config, IResource rootResource, System.Net.EndPoint endPoint, params int[] ports)
+        {
+            Config = config ?? CoapConfig.Default;
+            _root = rootResource ?? new RootResource(this);
+            _deliverer = new ServerMessageDeliverer(Config, _root);
+
+            Resource wellKnown = new Resource(".well-known", false);
+            wellKnown.Add(new DiscoveryResource(_root));
+            _root.Add(wellKnown);
+
+            _endPointSupplied = endPoint;
+            foreach (int port in ports) {
+                Bind(port);
+            }
+        }
+
         /// <summary>
         /// Return the configuration interface used by the server.
         /// </summary>
@@ -86,7 +108,12 @@ namespace Com.AugustCellars.CoAP.Server
 
         private void Bind(Int32 port)
         {
-            AddEndPoint(new CoAPEndPoint(port, Config));
+            if (_endPointSupplied != null) {
+                AddEndPoint(new CoAPEndPoint(new System.Net.IPEndPoint(((System.Net.IPEndPoint) _endPointSupplied).Address, port), Config));
+            }
+            else {
+                AddEndPoint(new CoAPEndPoint(port, Config));
+            }
         }
 
         /// <inheritdoc/>

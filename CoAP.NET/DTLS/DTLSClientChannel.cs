@@ -24,6 +24,8 @@ namespace Com.AugustCellars.CoAP.DTLS
         private UDPChannel _udpChannel;
         private readonly OneKey _userKey;
 
+        public EventHandler<TlsEvent> TlsEventHandler;
+
         /// <summary>
         /// Create a client only channel and use a randomly assigned port on
         /// the client UDP port.
@@ -179,6 +181,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 //  No session - create a new one.
 
                 session = new DTLSSession(ipEndPoint, DataReceived, _userKey);
+                session.TlsEventHandler += OnTlsEvent;
                 AddSession(session);
 
 
@@ -190,6 +193,15 @@ namespace Com.AugustCellars.CoAP.DTLS
 
 
             return session;
+        }
+
+        private void OnTlsEvent(Object o, TlsEvent e)
+        {
+            EventHandler<TlsEvent> handler = TlsEventHandler;
+            if (handler != null) {
+                handler(o, e);
+            }
+
         }
 
         /// <summary>
