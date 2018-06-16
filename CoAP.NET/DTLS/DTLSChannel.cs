@@ -27,6 +27,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         private UDPChannel _udpChannel;
         private KeySet _serverKeys;
         private KeySet _userKeys;
+        
 
         public DTLSChannel(KeySet serverKeys, KeySet userKeys) : this(serverKeys, userKeys, 0)
         {
@@ -85,6 +86,8 @@ namespace Com.AugustCellars.CoAP.DTLS
         }
 
         private Int32 _running;
+
+        public EventHandler<TlsEvent> TlsEventHandler;
 
         public void Start()
         {
@@ -164,6 +167,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                 session = new DTLSSession(ipEndPoint, DataReceived, _serverKeys, _userKeys);
                 AddSession(session);
+                session.TlsEventHandler += MyTlsEventHandler;
 
 
                 session.Connect(_udpChannel);
@@ -175,6 +179,14 @@ namespace Com.AugustCellars.CoAP.DTLS
             return session;
         }
 
+        private void MyTlsEventHandler(Object o, TlsEvent e)
+        {
+            EventHandler<TlsEvent> handler = TlsEventHandler;
+            if (handler != null) {
+                handler(o, e);
+            }
+        }
+
         public void Send(byte[] data, ISession sessionReceive, System.Net.EndPoint ep)
         {
             try {
@@ -184,6 +196,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 if (session == null) {
 
                     session = new DTLSSession(ipEP, DataReceived, _serverKeys, _userKeys);
+                    session.TlsEventHandler += MyTlsEventHandler;
                     AddSession(session);
                     session.Connect(_udpChannel);
                 }
@@ -211,6 +224,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 }
 
                 DTLSSession sessionNew = new DTLSSession((IPEndPoint) e.EndPoint, DataReceived, _serverKeys, _userKeys);
+                sessionNew.TlsEventHandler = MyTlsEventHandler;
                 _sessionList.Add(sessionNew);
                 new Thread(() => Accept(sessionNew, e.Data)).Start();
             }
