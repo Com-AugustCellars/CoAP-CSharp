@@ -17,10 +17,16 @@ This project is NOT to be used for commercial purposes.  It is intented only for
 
 1.1.9
   - Change to 4.6.2 NET FrameWork
-  - Setup to allow TCP transports to be used.  No support exists for WebSockets nor is it planned.
+  - Allow for a server to specify an IP Address to monitor rather than monitoring all addresses associated with the machine.
+  - Setup to allow TCP transports to be used.  The protocol itself is in a separate module.  No support exists for WebSockets nor is it planned.
+  - Setup for TCP signal messages to be sent.
   - Correct seriziation to allow for resolving againist a URL
   - Move to latest version of OSCORE
   - Fix blockwise to use the current session to work w/ TCP and BERT
+  - Start implementing the TLSEvent code.  This code allows for some events in the TLS protocol to be sent to the client or server.  Currently server can get unrecognized PSK notifications and process along with some setup events.
+  - Update to a more current version of the COSE draft.  Probably not at -12 yet as I have not been following this recently.
+  - Move the link format code for CBOR and JSON to the most recent version.  May change without warning in the future.
+  - Implement the code needed for doing Raw Public Keys.  Unfortunately the public distribution of BouncyCastle does not have this implemented yet.  Currently there are no plans to distribute our own BC drop.
 1.1.8.1
   - Put the strong name back
 1.1.8
