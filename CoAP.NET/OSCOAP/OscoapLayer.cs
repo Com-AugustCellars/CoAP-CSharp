@@ -102,9 +102,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 aad.Add(CBORObject.FromObject(ctx.Sender.Id));
                 aad.Add(CBORObject.FromObject(ctx.Sender.PartialIV));
                 aad.Add(CBORObject.FromObject(new byte[0]));
+                /*
                 if (ctx.GroupId != null) {
                     aad.Add(CBORObject.FromObject(ctx.GroupId));
                 }
+                */
 
 #if DEBUG
                 switch (SecurityContext.FutzError) {
@@ -249,9 +251,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 aad.Add(CBORObject.FromObject(kid));
                 aad.Add(CBORObject.FromObject(partialIV));
                 aad.Add(CBORObject.FromObject(new byte[0])); // encoded I options
+                /*
                 if (gid != null) {
                     aad.Add(gid);
                 }
+                */
 
                 byte[] payload = null;
 
@@ -395,9 +399,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 aad.Add(exchange.OscoapSenderId);
                 aad.Add(exchange.OscoapSequenceNumber);
                 aad.Add(CBORObject.FromObject(new byte[0])); // Options
+                /*
                 if (ctx.GroupId != null) {
                     aad.Add(ctx.GroupId);
                 }
+                */
 
                 if (_Log.IsInfoEnabled) {
                     _Log.Info("SendResponse: AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
@@ -535,7 +541,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 aad.Add(ctx.Sender.Id);
                 aad.Add(ctx.Sender.PartialIV);
                 aad.Add(CBORObject.FromObject(new byte[0])); // OPTIONS
+                /*
                 if (ctx.GroupId != null) aad.Add(ctx.GroupId);
+                */
 
                 msg.SetExternalData(aad.EncodeToBytes());
 
@@ -619,21 +627,24 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             List<Option> toDelete = new List<Option>();
             foreach (Option op in unprotected.GetOptions()) {
                 switch (op.Type) {
-                    case OptionType.UriHost:
-                    case OptionType.UriPort:
-                    case OptionType.ProxyUri:
-                    case OptionType.ProxyScheme:
-                    case OptionType.Observe:
-                        break;
+                case OptionType.UriHost:
+                case OptionType.UriPort:
+                case OptionType.ProxyUri:
+                case OptionType.ProxyScheme:
+                case OptionType.Observe:
+                    break;
 
-                    case OptionType.NoResponse:
-                        encrypted.AddOption(op);
-                        break;
+                case OptionType.NoResponse:
+                    encrypted.AddOption(op);
+                    break;
 
-                    default:
-                        encrypted.AddOption(op);
-                        toDelete.Add(op);
-                        break;
+                // Section 4.1.3.1 - MAY set outer to zero for OSCORE error responses.  -- we will not do anything.
+                case OptionType.MaxAge:
+
+                default:
+                    encrypted.AddOption(op);
+                    toDelete.Add(op);
+                    break;
                 }
             }
 
@@ -651,17 +662,20 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             List<Option> toDelete = new List<Option>();
             foreach (Option op in unprotected.GetOptions()) {
                 switch (op.Type) {
-                    case OptionType.UriHost:
-                    case OptionType.UriPort:
-                    case OptionType.ProxyUri:
-                    case OptionType.ProxyScheme:
-                    case OptionType.Observe:
-                        break;
+                case OptionType.UriHost:
+                case OptionType.UriPort:
+                case OptionType.ProxyUri:
+                case OptionType.ProxyScheme:
+                case OptionType.Observe:
+                    break;
 
-                    default:
-                        encrypted.AddOption(op);
-                        toDelete.Add(op);
-                        break;
+                // Section 4.1.3.1 - MAY set outer to zero for OSCORE error responses.  -- we will not do anything.
+                case OptionType.MaxAge:
+
+                default:
+                    encrypted.AddOption(op);
+                    toDelete.Add(op);
+                    break;
                 }
             }
 
@@ -677,6 +691,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     case OptionType.Block2:
                     case OptionType.Oscoap:
                     case OptionType.MaxAge:
+                    case OptionType.NoResponse:
                         response.RemoveOptions(op.Type);
                         break;
 

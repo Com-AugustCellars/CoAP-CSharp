@@ -2,8 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
-using Com.AugustCellars.CoAP.Util;
 using PeterO.Cbor;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -188,7 +186,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             public OneKey SigningKey { get; set; }
         }
 
-        static int _ContextNumber;
+        private static int _ContextNumber;
         private byte[] _masterSecret;
         private byte[] _salt;
 
@@ -261,7 +259,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         public void AddRecipient(byte[] recipientId, OneKey signKey)
         {
-            EntityContext x = DeriveEntityContext(_masterSecret, recipientId, _salt, Sender.Algorithm, null);
+            EntityContext x = DeriveEntityContext(_masterSecret, null, recipientId, _salt, Sender.Algorithm, null);
             x.SigningKey = signKey;
 
             Recipients.Add(recipientId, x);
@@ -331,9 +329,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             CBORObject info = CBORObject.NewArray();
 
             info.Add(senderId); // 0
-            info.Add(ctx.Sender.Algorithm); // 1
-            info.Add("Key"); // 2
-            info.Add(cbKey); // 3 in bytes
+            info.Add(CBORObject.Null); // 1
+            info.Add(ctx.Sender.Algorithm); // 2
+            info.Add("Key"); // 3
+            info.Add(cbKey); // 4 in bytes
 
             IDigest sha256;
 
@@ -357,9 +356,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             ctx.Recipient.Key = new byte[cbKey];
             hkdf.GenerateBytes(ctx.Recipient.Key, 0, ctx.Recipient.Key.Length);
 
-            info[0] = CBORObject.Null;
-            info[2] = CBORObject.FromObject("IV");
-            info[3] = CBORObject.FromObject(cbIV);
+            info[0] = CBORObject.FromObject(new byte[0]);
+            info[3] = CBORObject.FromObject("IV");
+            info[4] = CBORObject.FromObject(cbIV);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
             ctx.Recipient.BaseIV = new byte[cbIV];
             hkdf.GenerateBytes(ctx.Recipient.BaseIV, 0, ctx.Recipient.BaseIV.Length);
@@ -400,15 +399,15 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             ctx._masterSecret = masterSecret;
             ctx._salt = masterSalt;
 
-            ctx.Sender = DeriveEntityContext(masterSecret, senderId, masterSalt, algAEAD, algKeyAgree);
+            ctx.Sender = DeriveEntityContext(masterSecret, groupID, senderId, masterSalt, algAEAD, algKeyAgree);
             if (recipientIds != null) {
+                ctx.Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
                 foreach (byte[] id in recipientIds) {
-                    ctx.Recipients.Add(id, DeriveEntityContext(masterSecret, id, masterSalt, algAEAD, algKeyAgree));
+                    ctx.Recipients.Add(id, DeriveEntityContext(masterSecret, groupID, id, masterSalt, algAEAD, algKeyAgree));
                 }
             }
 
             ctx.GroupId = groupID;
-            ctx.Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
 
             return ctx;
         }
@@ -423,7 +422,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <param name="algAEAD">encryption algorithm</param>
         /// <param name="algKeyAgree">key agreement algorithm</param>
         /// <returns></returns>
-        private static EntityContext DeriveEntityContext(byte[] masterSecret, byte[] entityId, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
+        private static EntityContext DeriveEntityContext(byte[] masterSecret, byte[] groupId, byte[] entityId, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
         {
             EntityContext ctx = new EntityContext();
             int keySize;
@@ -456,9 +455,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             // M00TODO - add the group id into this
 
             info.Add(entityId);                 // 0
-            info.Add(ctx.Algorithm);            // 1
-            info.Add("Key");                    // 2
-            info.Add(keySize);                  // 3 in bytes
+            info.Add(groupId);                  // 1
+            info.Add(ctx.Algorithm);            // 2
+            info.Add("Key");                    // 3
+            info.Add(keySize);                  // 4 in bytes
 
 
             IDigest sha256;
@@ -477,9 +477,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             ctx.Key = new byte[keySize];
             hkdf.GenerateBytes(ctx.Key, 0, ctx.Key.Length);
 
-            info[0] = CBORObject.Null;
-            info[2] = CBORObject.FromObject("IV");
-            info[3] = CBORObject.FromObject(ivSize);
+            info[0] = CBORObject.FromObject(new byte[0]);
+            info[3] = CBORObject.FromObject("IV");
+            info[4] = CBORObject.FromObject(ivSize);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
             ctx.BaseIV = new byte[ivSize];
             hkdf.GenerateBytes(ctx.BaseIV, 0, ctx.BaseIV.Length);
