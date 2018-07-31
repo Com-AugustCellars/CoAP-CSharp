@@ -84,9 +84,12 @@ namespace Com.AugustCellars.CoAP
         /// <param name="config">the config</param>
         public CoapClient(Uri uri, ICoapConfig config)
         {
-            UriPath = uri.AbsolutePath;
-            UriQuery = uri.Query;
-            Uri = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.SafeUnescaped));
+            if (uri != null) {
+                UriPath = uri.AbsolutePath;
+                UriQuery = uri.Query;
+                Uri = new Uri(uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.SafeUnescaped));
+            }
+
             _config = config ?? CoapConfig.Default;
         }
 

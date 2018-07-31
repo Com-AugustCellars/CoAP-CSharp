@@ -104,7 +104,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets the code of this CoAP message.
         /// </summary>
-        public Int32 Code { get; }
+        public Int32 Code { get; set;  }
 
         /// <summary>
         /// Gets the code's string representation of this CoAP message.

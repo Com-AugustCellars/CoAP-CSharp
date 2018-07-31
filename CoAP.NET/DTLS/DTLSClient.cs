@@ -4,6 +4,7 @@ using System.Collections;
 using System.Threading.Tasks;
 using Com.AugustCellars.COSE;
 using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Asn1.Sec;
 using Org.BouncyCastle.Crypto.Tls;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Asn1.X9;
@@ -117,7 +118,17 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         public override TlsAuthentication GetAuthentication()
         {
-            return new MyTlsAuthentication(mContext, _rawPublicKey);
+            MyTlsAuthentication auth = new MyTlsAuthentication(mContext, _rawPublicKey);
+            auth.TlsEventHandler += MyTlsEventHandler;
+            return auth;
+        }
+
+        private void MyTlsEventHandler(object sender, TlsEvent tlsEvent)
+        {
+            EventHandler<TlsEvent> handler = TlsEventHandler;
+            if (handler != null) {
+                handler(sender, tlsEvent);
+            }
         }
 
         public override TlsKeyExchange GetKeyExchange()
@@ -269,29 +280,32 @@ namespace Com.AugustCellars.CoAP.DTLS
                     newKey.Add(CoseKeyParameterKeys.EC_X, CBORObject.FromObject(ecKey.Q.Normalize().XCoord.ToBigInteger().ToByteArrayUnsigned()));
                     newKey.Add(CoseKeyParameterKeys.EC_Y, CBORObject.FromObject(ecKey.Q.Normalize().YCoord.ToBigInteger().ToByteArrayUnsigned()));
 
-                    foreach (OneKey k in _serverKeys) {
-                        if (k.Compare(newKey)) {
-                            AuthenticationKey = k;
-                            return;
+                    if (_serverKeys != null) {
+                        foreach (OneKey k in _serverKeys) {
+                            if (k.Compare(newKey)) {
+                                AuthenticationKey = k;
+                                return;
+                            }
                         }
+                    }
+
+                    TlsEvent ev = new TlsEvent(TlsEvent.EventCode.ServerCertificate) {
+                        KeyValue = newKey
+                    };
+
+                    EventHandler<TlsEvent> handler = TlsEventHandler;
+                    if (handler != null) {
+                        handler(this, ev);
+                    }
+
+                    if (!ev.Processed) {
+                        //                    throw new TlsFatalAlert(AlertDescription.certificate_unknown);
                     }
                 }
                 else {
                     // throw new TlsFatalAlert(AlertDescription.certificate_unknown);
                 }
 
-                TlsEvent ev = new TlsEvent(TlsEvent.EventCode.ServerCertificate) {
-                    Certificate = rpk
-                };
-
-                EventHandler<TlsEvent> handler = TlsEventHandler;
-                if (handler != null) {
-                    handler(this, ev);
-                }
-
-                if (!ev.Processed) {
-                    throw new TlsFatalAlert(AlertDescription.certificate_unknown);
-                }
             }
 
 #endif
@@ -351,7 +365,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                         ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(k[CoseKeyParameterKeys.EC_D]), parameters);
 
                         ECPoint point = k.GetPoint();
-                        ECPublicKeyParameters param = new ECPublicKeyParameters(point, parameters);
+                        ECPublicKeyParameters param = new ECPublicKeyParameters("ECDSA", point, /*parameters*/ SecObjectIdentifiers.SecP256r1);
 
                         SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(param);
 
