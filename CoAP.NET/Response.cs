@@ -27,13 +27,12 @@ namespace Com.AugustCellars.CoAP
         public Response(StatusCode code)
             : base(MessageType.Unknown, (Int32)code)
         {
-            StatusCode = code;
         }
 
         /// <summary>
         /// Gets the response status code.
         /// </summary>
-        public StatusCode StatusCode { get; internal set; }
+        public StatusCode StatusCode => (StatusCode) Code;
 
         /// <summary>
         /// Gets the Round-Trip Time of this response.

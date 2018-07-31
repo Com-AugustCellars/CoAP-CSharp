@@ -6,6 +6,7 @@ using System.Text;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Stack;
+using Com.AugustCellars.CoAP.Util;
 using Com.AugustCellars.COSE;
 using PeterO.Cbor;
 using Attributes = Com.AugustCellars.COSE.Attributes;
@@ -413,17 +414,19 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 byte[] msg = me.Encode(encryptedResponse);
                 int tokenSize = msg[0] & 0xf;
                 byte[] msg2 = new byte[msg.Length - (3 + tokenSize)];
-                Array.Copy(msg, 4 + tokenSize, msg2, 1, msg2.Length-1);
+                Array.Copy(msg, 4 + tokenSize, msg2, 1, msg2.Length - 1);
                 msg2[0] = msg[1];
                 enc.SetContent(msg2);
                 enc.SetExternalData(aad.EncodeToBytes());
 
                 if (response.HasOption(OptionType.Observe) || ctx.GroupId != null) {
-                    enc.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV), Attributes.UNPROTECTED);
+                    enc.AddAttribute(HeaderKeys.PartialIV, CBORObject.FromObject(ctx.Sender.PartialIV),
+                                     Attributes.UNPROTECTED);
                     enc.AddAttribute(HeaderKeys.IV, ctx.Sender.GetIV(ctx.Sender.PartialIV), Attributes.DO_NOT_SEND);
                     ctx.Sender.IncrementSequenceNumber();
                     if (ctx.GroupId != null) {
-                        enc.AddAttribute(HeaderKeys.KeyId, CBORObject.FromObject(ctx.Sender.Id), Attributes.UNPROTECTED);
+                        enc.AddAttribute(HeaderKeys.KeyId, CBORObject.FromObject(ctx.Sender.Id),
+                                         Attributes.UNPROTECTED);
                     }
                 }
                 else {
@@ -433,18 +436,20 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 }
 
-                _Log.Info(m => m($"SendResponse: IV = {BitConverter.ToString(enc.FindAttribute(HeaderKeys.IV, Attributes.DO_NOT_SEND).GetByteString())}"));
-                _Log.Info(m =>m($"SendResponse: Key = {BitConverter.ToString(ctx.Sender.Key)}"));
+                _Log.Info(
+                    m => m(
+                        $"SendResponse: IV = {BitConverter.ToString(enc.FindAttribute(HeaderKeys.IV, Attributes.DO_NOT_SEND).GetByteString())}"));
+                _Log.Info(m => m($"SendResponse: Key = {BitConverter.ToString(ctx.Sender.Key)}"));
 
                 enc.AddAttribute(HeaderKeys.Algorithm, ctx.Sender.Algorithm, Attributes.DO_NOT_SEND);
                 enc.Encrypt(ctx.Sender.Key);
 
                 byte[] finalBody = DoCompression(enc);
 
-                    OscoapOption o = new OscoapOption(OptionType.Oscoap);
-                    o.Set(finalBody);
-                    response.AddOption(o);
-                    response.StatusCode = StatusCode.Content;
+                OscoapOption o = new OscoapOption(OptionType.Oscoap);
+                o.Set(finalBody);
+                response.AddOption(o);
+                response.Code = (int) StatusCode.Changed;
                 response.Payload = enc.GetEncryptedContent();
 
                 //  Need to be able to retrieve this again undersome cirumstances.
@@ -454,24 +459,27 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, null, response.Destination);
 
                     //  Observe notification only send the first block, hence do not store them as ongoing
-                    if (exchange.OSCOAP_ResponseBlockStatus != null && !encryptedResponse.HasOption(OptionType.Observe)) {
+                    if (exchange.OSCOAP_ResponseBlockStatus != null &&
+                        !encryptedResponse.HasOption(OptionType.Observe)) {
                         //  Remember ongoing blockwise GET requests
                         BlockHolder blockInfo = new BlockHolder(exchange);
                         if (Util.Utils.Put(_ongoingExchanges, keyUri, blockInfo) == null) {
-                            if (_Log.IsInfoEnabled) _Log.Info("Ongoing Block2 started late, storing " + keyUri + " for " + request);
+                            if (_Log.IsInfoEnabled)
+                                _Log.Info("Ongoing Block2 started late, storing " + keyUri + " for " + request);
 
                         }
                         else {
-                            if (_Log.IsInfoEnabled) _Log.Info("Ongoing Block2 continued, storing " + keyUri + " for " + request);
+                            if (_Log.IsInfoEnabled)
+                                _Log.Info("Ongoing Block2 continued, storing " + keyUri + " for " + request);
                         }
                     }
                     else {
-                        if (_Log.IsInfoEnabled) _Log.Info("Ongoing Block2 completed, cleaning up " + keyUri + " for " + request);
+                        if (_Log.IsInfoEnabled)
+                            _Log.Info("Ongoing Block2 completed, cleaning up " + keyUri + " for " + request);
                         BlockHolder exc;
                         _ongoingExchanges.TryRemove(keyUri, out exc);
                     }
                 }
-
             }
 
             base.SendResponse(nextLayer, exchange, response);
@@ -485,6 +493,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 if (exchange.OscoapContext == null) {
                     return;
                 }
+
+                _Log.Info($"Incoming mesage for OSCORE\n{Utils.ToString(response)}");
 
                 SecurityContext ctx = exchange.OscoapContext;
 
@@ -563,10 +573,22 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 Codec.IMessageDecoder me = Spec.NewMessageDecoder(rgb);
                 Response decryptedReq = me.DecodeResponse();
 
+                _Log.Info($"Inner mesage for OSCORE{Utils.ToString(decryptedReq)}");
+
                 response.Payload = decryptedReq.Payload;
-                response.StatusCode = decryptedReq.StatusCode;
+                response.Code = (int) decryptedReq.StatusCode;
 
                 RestoreOptions(response, decryptedReq);
+                if (decryptedReq.HasOption(OptionType.Observe)) {
+                    if (partialIV.Length > 3) {
+                        byte[] x = new byte[3];
+                        Array.Copy(partialIV, partialIV.Length-3, x, 0, 3);
+                        partialIV = x;
+                    }
+                    response.AddOption(Option.Create(OptionType.Observe, partialIV));
+                }
+
+                _Log.Info($"Outgoing mesage for OSCORE{Utils.ToString(response)}");
             }
             base.ReceiveResponse(nextLayer, exchange, response);
         }
@@ -631,10 +653,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 case OptionType.UriPort:
                 case OptionType.ProxyUri:
                 case OptionType.ProxyScheme:
-                case OptionType.Observe:
                     break;
 
+                    // Put these options on both the inner and outer messages.
                 case OptionType.NoResponse:
+                case OptionType.Observe:
                     encrypted.AddOption(op);
                     break;
 
@@ -666,7 +689,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 case OptionType.UriPort:
                 case OptionType.ProxyUri:
                 case OptionType.ProxyScheme:
+                    break;
+
+                    //  Always supposed to be set to 0 for minimal size.
                 case OptionType.Observe:
+                    encrypted.AddOption(Option.Create(OptionType.Observe));
                     break;
 
                 // Section 4.1.3.1 - MAY set outer to zero for OSCORE error responses.  -- we will not do anything.
@@ -684,7 +711,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         private static void RestoreOptions(Message response, Message decryptedReq)
         {
-
+            List<Option> toDelete = new List<Option>();
             foreach (Option op in response.GetOptions()) {
                 switch (op.Type) {
                     case OptionType.Block1:
@@ -692,7 +719,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     case OptionType.Oscoap:
                     case OptionType.MaxAge:
                     case OptionType.NoResponse:
-                        response.RemoveOptions(op.Type);
+                    case OptionType.Observe:
+                        toDelete.Add(op);
                         break;
 
                     case OptionType.UriHost:
@@ -702,10 +730,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         break;
 
                     default:
-                        response.RemoveOptions(op.Type);
+                        toDelete.Add(op);
                         break;
                 }
             }
+
+            foreach (Option op in toDelete) response.RemoveOptions(op.Type);
 
             foreach (Option op in decryptedReq.GetOptions()) {
                 switch (op.Type) {

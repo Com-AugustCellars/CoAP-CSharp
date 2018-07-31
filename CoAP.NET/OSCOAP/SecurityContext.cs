@@ -208,7 +208,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <summary>
         /// Get the set of all recipients for group.
         /// </summary>
-        public Dictionary<byte[], EntityContext> Recipients { get; private set; } 
+        public Dictionary<byte[], EntityContext> Recipients { get; private set; } = new Dictionary<byte[], EntityContext>();
 
         /// <summary>
         /// Group ID for multi-cast.
@@ -488,7 +488,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             if (ivSize - 6 < entityId.Length) throw new Exception("Entity id is too long");
             ctx.BaseIV[0] ^= (byte) entityId.Length;
-            int i1 = ivSize - 5 - entityId.Length - 1;
+            int i1 = ivSize - 5 - entityId.Length /*- 1*/;
             for (int i = 0; i < entityId.Length; i++) ctx.BaseIV[i1 + i] ^= entityId[i];
 
             return ctx;
