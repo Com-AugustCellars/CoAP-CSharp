@@ -7,8 +7,8 @@ os:
   - osx
 
 env:
-  - SLN=CoAP.NET45.sln
-    TARGET=NET45
+  - SLN=CoAP.Std10.sln
+    TARGET=Std10
     VERSION=Release
 
 install:
