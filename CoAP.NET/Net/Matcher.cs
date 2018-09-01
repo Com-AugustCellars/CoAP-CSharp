@@ -13,7 +13,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
+#if NETSTANDARD1_3 == false
 using System.Diagnostics.Contracts;
+#endif
 using Com.AugustCellars.CoAP.Deduplication;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Observe;

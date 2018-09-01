@@ -13,6 +13,7 @@ using System;
 
 namespace Com.AugustCellars.CoAP.Log
 {
+#if COMMON_LOGGER
     class CommonLoggingManager : ILogManager
     {
         public ILogger GetLogger(Type type)
@@ -272,4 +273,5 @@ namespace Com.AugustCellars.CoAP.Log
             }
         }
     }
+#endif
 }

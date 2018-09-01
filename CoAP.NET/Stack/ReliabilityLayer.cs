@@ -11,8 +11,12 @@
 
 using System;
 using System.ComponentModel;
+#if NETSTANDARD1_3
+using System.Threading;
+#else
 using System.Diagnostics.Contracts;
 using System.Timers;
+#endif
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 
@@ -279,11 +283,14 @@ namespace Com.AugustCellars.CoAP.Stack
                 _retransmit = retransmit;
                 _maxRetransmitCount = maxRetransmitCount;
                 CurrentTimeout = message.AckTimeout;
+#if NETSTANDARD1_3
+#else
                 _timer = new Timer() {
                     AutoReset = false
                 };
 
                 _timer.Elapsed += timer_Elapsed;
+#endif
             }
 
             public Int32 FailedTransmissionCount { get; private set; }
@@ -292,16 +299,38 @@ namespace Com.AugustCellars.CoAP.Stack
 
             public void Start()
             {
+#if NETSTANDARD1_3
+                Stop();
+#else
                 _timer.Stop();
+#endif
 
                 if (CurrentTimeout > 0) {
+#if NETSTANDARD1_3
+                    _timer = new Timer(timer_Elapsed, this, CurrentTimeout, Timeout.Infinite);
+#else
                     _timer.Interval = CurrentTimeout;
                     _timer.Start();
+#endif
+                }
+            }
+
+            public void Stop()
+            {
+                Timer t = System.Threading.Interlocked.Exchange(ref _timer, null);
+
+                // avoid race condition of multiple responses (e.g., notifications)
+
+                if (t != null) {
+                    t.Dispose();
                 }
             }
 
             public void Cancel()
             {
+#if NETSTANDARD1_3
+                Stop();
+#else
                 Timer t = System.Threading.Interlocked.Exchange(ref _timer, null);
 
                 // avoid race condition of multiple responses (e.g., notifications)
@@ -316,6 +345,7 @@ namespace Com.AugustCellars.CoAP.Stack
                 catch (ObjectDisposedException) {
                     // ignore
                 }
+#endif
 
                 if (_Log.IsDebugEnabled) {
                     _Log.Debug("Cancel retransmission for -->");
@@ -333,6 +363,45 @@ namespace Com.AugustCellars.CoAP.Stack
                 Cancel();
             }
 
+#if NETSTANDARD1_3
+            static void timer_Elapsed(Object obj)
+            {
+                TransmissionContext sender = (TransmissionContext)obj;
+                /*
+			     * Do not retransmit a message if it has been acknowledged,
+			     * rejected, canceled or already been retransmitted for the maximum
+			     * number of times.
+			     */
+                Int32 failedCount = ++sender.FailedTransmissionCount;
+
+                if (sender._message.IsAcknowledged) {
+                    _Log.Debug(m => m("Timeout: message already acknowledged, cancel retransmission of {0}", sender._message));
+                }
+                else if (sender._message.IsRejected) {
+                    _Log.Debug(m => m("Timeout: message already rejected, cancel retransmission of {0}", sender._message));
+                }
+                else if (sender._message.IsCancelled) {
+                    _Log.Debug(m => m("Timeout: canceled (ID={0}), do not retransmit", sender._message.ID));
+                }
+                else if (failedCount <= (sender._message.MaxRetransmit != 0 ? sender._message.MaxRetransmit : sender._maxRetransmitCount)) {
+                    _Log.Debug(m => m("Timeout: retransmit message, failed: {0}, message: {1}", failedCount, sender._message));
+
+                    sender._message.FireRetransmitting();
+
+                    // message might have canceled
+                    if (!sender._message.IsCancelled) {
+                        sender._retransmit(sender);
+                    }
+                }
+                else {
+                    _Log.Debug(m => m("Timeout: retransmission limit reached, exchange failed, message: {0}", sender._message));
+                    sender._exchange.TimedOut = true;
+                    sender._message.IsTimedOut = true;
+                    sender._exchange.Remove(_TransmissionContextKey);
+                    sender.Cancel();
+                }
+            }
+#else
             void timer_Elapsed(Object sender, ElapsedEventArgs e)
             {
                 /*
@@ -369,6 +438,7 @@ namespace Com.AugustCellars.CoAP.Stack
                     Cancel();
                 }
             }
+#endif
         }
     }
 }

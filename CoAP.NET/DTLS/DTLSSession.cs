@@ -335,11 +335,17 @@ namespace Com.AugustCellars.CoAP.DTLS
                 lock (_receivingQueue) {
                     if (_receivingQueue.Count < 1) {
                         try {
-                          Monitor.Wait(_receivingQueue, waitMillis);
+                            Monitor.Wait(_receivingQueue, waitMillis);
                         }
+#if NETSTANDARD1_3
+                        catch (ThreadStateException) {
+                            // TODO keep waitin until full wait expired?
+                        }
+#else
                         catch (ThreadInterruptedException) {
                             // TODO Keep waiting until full wait expired?
                         }
+#endif
                         if (_receivingQueue.Count < 1) {
                             return -1;
                         }
@@ -349,16 +355,16 @@ namespace Com.AugustCellars.CoAP.DTLS
                     _receivingQueue.TryDequeue(out packet);
                     int copyLength = Math.Min(len, packet.Length);
                     Array.Copy(packet, 0, buf, off, copyLength);
-                    Debug.Print($"OurTransport::Receive - EP:{_ep} Data Length: {packet.Length}");
-                    Debug.Print(BitConverter.ToString(buf, off, copyLength));
+                    // Debug.Print($"OurTransport::Receive - EP:{_ep} Data Length: {packet.Length}");
+                    // Debug.Print(BitConverter.ToString(buf, off, copyLength));
                     return copyLength;
                 }
             }
 
             public void Send(byte[] buf, int off, int len)
             {
-                Debug.Print($"OurTransport::Send Data Length: {len}");
-                Debug.Print(BitConverter.ToString(buf, off, len));
+                // Debug.Print($"OurTransport::Send Data Length: {len}");
+                // Debug.Print(BitConverter.ToString(buf, off, len));
                 byte[] newBuf = new byte[len];
                 Array.Copy(buf, off, newBuf, 0, newBuf.Length);
                 buf = newBuf;

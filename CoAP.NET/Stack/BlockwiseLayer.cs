@@ -10,7 +10,11 @@
  */
 
 using System;
+#if true // NETSTANDARD1_3
+using System.Threading;
+#else
 using System.Timers;
+#endif
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 using Org.BouncyCastle.Crypto.Prng;
@@ -625,6 +629,19 @@ namespace Com.AugustCellars.CoAP.Stack
         /// </summary>
         protected void PrepareBlockCleanup(Exchange exchange)
         {
+#if true // NETSTANDARD1_3
+            Timer timer = new Timer((o) => BlockwiseTimeout(exchange), this, _blockTimeout, Timeout.Infinite);
+
+            Timer old = exchange.Set("BlockCleanupTimer", timer) as Timer;
+            if (old != null) {
+                try {
+                    old.Dispose();
+                }
+                catch (ObjectDisposedException) {
+                    // ignore
+                }
+            }
+#else
             Timer timer = new Timer {
                 AutoReset = false,
                 Interval = _blockTimeout
@@ -643,6 +660,7 @@ namespace Com.AugustCellars.CoAP.Stack
             }
 
             timer.Start();
+#endif
         }
 
         /// <summary>
@@ -653,7 +671,9 @@ namespace Com.AugustCellars.CoAP.Stack
             Timer timer = exchange.Remove("BlockCleanupTimer") as Timer;
             if (timer != null) {
                 try {
+#if false // NETSTANDARD1_3 == false
                     timer.Stop();
+#endif
                     timer.Dispose();
                 }
                 catch (ObjectDisposedException) {

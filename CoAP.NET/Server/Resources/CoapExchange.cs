@@ -169,5 +169,12 @@ namespace Com.AugustCellars.CoAP.Server.Resources
 
             _exchange.SendResponse(response);
         }
+
+        public void CancelObserve()
+        {
+            if (_exchange.Relation != null) {
+                _exchange.Relation.Cancel();
+            }
+        }
     }
 }

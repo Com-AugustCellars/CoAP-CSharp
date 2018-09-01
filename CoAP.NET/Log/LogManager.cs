@@ -28,9 +28,11 @@ namespace Com.AugustCellars.CoAP.Log
 
         static LogManager()
         {
-            Type test;
+            Type test = null;
             try {
+#if COMMON_LOGGER
                 test = Type.GetType("Common.Logging.LogManager, Common.Logging");
+#endif
             }
             catch {
                 test = null;
@@ -39,9 +41,11 @@ namespace Com.AugustCellars.CoAP.Log
             if (test == null) {
                 _Manager = new ConsoleLogManager();
             }
+#if COMMON_LOGGER
             else {
                 _Manager = new CommonLoggingManager();
             }
+#endif
         }
 
         /// <summary>

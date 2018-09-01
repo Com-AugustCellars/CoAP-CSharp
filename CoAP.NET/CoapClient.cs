@@ -198,9 +198,15 @@ namespace Com.AugustCellars.CoAP
                 request.Send().WaitForResponse(timeout);
                 return request.IsRejected;
             }
+#if NETSTANDARD1_3
+            catch (System.Threading.ThreadStateException) {
+                /* ignore */
+            }
+#else
             catch (System.Threading.ThreadInterruptedException) {
                 /* ignore */
             }
+#endif
             return false;
         }
 

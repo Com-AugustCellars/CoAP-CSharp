@@ -275,7 +275,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         if (recip == null) continue;
                     }
 
-                    if (_replayWindow && recip.ReplayWindow.HitTest(seqNo)) {
+                    if (false && _replayWindow && recip.ReplayWindow.HitTest(seqNo)) {
                         _Log.Info(m => m("Hit test on {0} failed", seqNo));
                         responseString = "Hit test - duplicate";
                         continue;
