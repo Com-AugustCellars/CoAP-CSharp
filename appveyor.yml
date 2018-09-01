@@ -1,34 +1,4 @@
-test_script:
-  - dir
-  - set PATH=%PYTHON%\Scripts;%PATH%;%cd%\win32\aspell\bin;%cd%\win32\hunspell;%cd%\rfclint\win32
-  - set DICTIONARY=en_US
-  - set DICPATH=%cd%\win32\hunspell
-  - cd rfctools_common
-  - "%PYTHON%\\%EXECUTABLE% setup.py --quiet install"
-  - cd rfctools_common
-  - "%PYTHON%\\%EXECUTABLE% test.py"
-  - cd ..\..
-  - cd svgcheck
-  - "%PYTHON%\\%EXECUTABLE% setup.py --quiet install"
-  - cd svgcheck
-  - "%PYTHON%\\%EXECUTABLE% test.py"
-  - cd ..\..
-  - cd rfclint
-  - "%PYTHON%\\%EXECUTABLE% setup.py --quiet install"
-  - cd rfclint
-  - "%PYTHON%\\%EXECUTABLE% test.py"
-  - cd ..\..
-  - cd xmldiff
-  - "%PYTHON%\\%EXECUTABLE% setup.py --quiet install"
-  - cd Test
-  - "%PYTHON%\\%EXECUTABLE% test.py"
-  
-after_test:
-  - cd ..
-  - "%PYTHON%\\%EXECUTABLE% setup.py bdist_wheel"
+image: Visual Studio 2017
 
-artifacts:
-  - path: xmldiff\dist\*
-
-#matrix:
-#  fast_finish: true
+build:
+    project: CoAP.Std10.sln
