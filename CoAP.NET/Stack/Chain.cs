@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Com.AugustCellars.CoAP.Stack
@@ -255,8 +256,13 @@ namespace Com.AugustCellars.CoAP.Stack
             Entry e = _head._nextEntry;
             while (e != _tail)
             {
+#if NETSTANDARD1_3
+                if (filterType.GetTypeInfo().IsAssignableFrom(e.Filter.GetType().GetTypeInfo()))
+                    return e;
+#else
                 if (filterType.IsAssignableFrom(e.Filter.GetType()))
                     return e;
+#endif
                 e = e._nextEntry;
             }
             return null;

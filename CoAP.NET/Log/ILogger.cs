@@ -10,7 +10,9 @@
  */
 
 using System;
+#if COMMON_LOGGER
 using Common.Logging.Factory;
+#endif
 using FormatMessageCallback = System.Action<Com.AugustCellars.CoAP.Log.FormatMessageHandler>;
 
 namespace Com.AugustCellars.CoAP.Log

@@ -11,7 +11,11 @@
 
 using System;
 using System.Collections.Concurrent;
+#if NETSTANDARD1_3 == false
 using System.Timers;
+#else
+using System.Threading;
+#endif
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 
@@ -26,7 +30,10 @@ namespace Com.AugustCellars.CoAP.Deduplication
         private readonly ConcurrentDictionary<Exchange.KeyID, Exchange>[] _maps;
         private Int32 _first;
         private Int32 _second;
-        private readonly Timer _timer;
+        private Timer _timer;
+#if NETSTANDARD1_3
+        private int _period;
+#endif
 
         public CropRotation(ICoapConfig config)
         {
@@ -36,10 +43,24 @@ namespace Com.AugustCellars.CoAP.Deduplication
             _maps[2] = new ConcurrentDictionary<Exchange.KeyID, Exchange>();
             _first = 0;
             _second = 1;
+#if NETSTANDARD1_3
+            _period = config.CropRotationPeriod;
+#else
             _timer = new Timer(config.CropRotationPeriod);
             _timer.Elapsed += Rotation;
+#endif
         }
 
+#if NETSTANDARD1_3
+        private static void Rotation(Object obj)
+        {
+            CropRotation sender = obj as CropRotation;
+            Int32 third = sender._first;
+            sender._first = sender._second;
+            sender._second = (sender._second + 1) % 3;
+            sender._maps[third].Clear();
+        }
+#else
         private void Rotation(Object sender, ElapsedEventArgs e)
         {
             Int32 third = _first;
@@ -47,17 +68,27 @@ namespace Com.AugustCellars.CoAP.Deduplication
             _second = (_second + 1) % 3;
             _maps[third].Clear();
         }
+#endif
 
         /// <inheritdoc/>
         public void Start()
         {
+#if NETSTANDARD1_3
+            _timer = new Timer(Rotation, this, _period, _period);
+#else
             _timer.Start();
+#endif
         }
 
         /// <inheritdoc/>
         public void Stop()
         {
+#if NETSTANDARD1_3
+            _timer.Dispose();
+            _timer = null;
+#else
             _timer.Stop();
+#endif
             Clear();
         }
 

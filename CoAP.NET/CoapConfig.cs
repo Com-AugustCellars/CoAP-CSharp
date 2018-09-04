@@ -368,7 +368,7 @@ namespace Com.AugustCellars.CoAP
         /// <inheritdoc/>
         public void Store(String configFile)
         {
-            using (StreamWriter w = new StreamWriter(configFile))
+            using (StreamWriter w = new StreamWriter(new FileStream(configFile, FileMode.Create)))
             {
                 foreach (string key in _values.Keys) {
                     w.WriteLine($"{key}={_values[key]}");

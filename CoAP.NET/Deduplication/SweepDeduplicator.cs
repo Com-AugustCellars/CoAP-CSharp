@@ -12,8 +12,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+#if NETSTANDARD1_3
+using System.Threading;
+#else
 using System.Timers;
-#if LOG_SWEE_DEDUPLICATOR
+#endif
+#if LOG_SWEEP_DEDUPLICATOR
 using Com.AugustCellars.CoAP.Log;
 #endif
 using Com.AugustCellars.CoAP.Net;
@@ -28,25 +32,39 @@ namespace Com.AugustCellars.CoAP.Deduplication
 
         private readonly ConcurrentDictionary<Exchange.KeyID, Exchange> _incommingMessages
             = new ConcurrentDictionary<Exchange.KeyID, Exchange>();
-        private readonly Timer _timer;
+        private Timer _timer;
         private readonly ICoapConfig _config;
+        private int _period;
 
         public SweepDeduplicator(ICoapConfig config)
         {
             _config = config;
+#if NETSTANDARD1_3
+            _period = (int) config.MarkAndSweepInterval;
+#else
             _timer = new Timer(config.MarkAndSweepInterval);
             _timer.Elapsed += Sweep;
+#endif
         }
 
-        private void Sweep(Object sender, ElapsedEventArgs e)
+#if NETSTANDARD1_3
+        private static void Sweep(Object obj)
+#else
+        private void Sweep(Object obj, ElapsedEventArgs e)
+#endif
         {
+#if NETSTANDARD1_3
+            SweepDeduplicator sender = obj as SweepDeduplicator;
+#else
+            SweepDeduplicator sender = this;
+#endif
 #if LOG_SWEEP_DEDUPLICATOR
             log.Debug(m => m("Start Mark-And-Sweep with {0} entries", _incommingMessages.Count));
 #endif
 
-            DateTime oldestAllowed = DateTime.Now.AddMilliseconds(-_config.ExchangeLifetime);
+            DateTime oldestAllowed = DateTime.Now.AddMilliseconds(-sender._config.ExchangeLifetime);
             List<Exchange.KeyID> keysToRemove = new List<Exchange.KeyID>();
-            foreach (KeyValuePair<Exchange.KeyID, Exchange> pair in _incommingMessages) {
+            foreach (KeyValuePair<Exchange.KeyID, Exchange> pair in sender._incommingMessages) {
                 if (pair.Value.Timestamp < oldestAllowed) {
 #if LOG_SWEEP_DEDUPLICATOR
                     log.Debug(m => m("Mark-And-Sweep removes {0}", pair.Key));
@@ -57,7 +75,7 @@ namespace Com.AugustCellars.CoAP.Deduplication
             if (keysToRemove.Count > 0) {
                 Exchange ex;
                 foreach (Exchange.KeyID key in keysToRemove) {
-                    _incommingMessages.TryRemove(key, out ex);
+                    sender._incommingMessages.TryRemove(key, out ex);
                 }
             }
         }
@@ -65,13 +83,22 @@ namespace Com.AugustCellars.CoAP.Deduplication
         /// <inheritdoc/>
         public void Start()
         {
+#if NETSTANDARD1_3
+            _timer = new Timer(Sweep, this, _period, _period);
+#else
             _timer.Start();
+#endif
         }
 
         /// <inheritdoc/>
         public void Stop()
         {
+#if NETSTANDARD1_3
+            _timer.Dispose();
+            _timer = null;
+#else
             _timer.Stop();
+#endif
             Clear();
         }
 
@@ -105,6 +132,7 @@ namespace Com.AugustCellars.CoAP.Deduplication
         public void Dispose()
         {
             _timer.Dispose();
+            _timer = null;
         }
     }
 }

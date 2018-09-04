@@ -10,7 +10,9 @@
  */
 
 using System;
+#if COMMON_LOGGER
 using Common.Logging.Factory;
+#endif
 using FormatMessageCallback = System.Action<Com.AugustCellars.CoAP.Log.FormatMessageHandler>;
 
 namespace Com.AugustCellars.CoAP.Log
@@ -45,7 +47,9 @@ namespace Com.AugustCellars.CoAP.Log
                 return _cachedMessage;
             }
 
+#if COMMON_LOGGER
             [StringFormatMethod("format")]
+#endif
             protected string FormatMessage(string format, params object[] args)
             {
                 if (args.Length > 0) _cachedMessage = string.Format(format, args);
@@ -248,7 +252,7 @@ namespace Com.AugustCellars.CoAP.Log
                     log = "[" + _logName + "]";
                 }
 
-                String text = $"{DateTime.Now.ToLongTimeString()} {log} {level} - {message}";
+                String text = $"{DateTime.Now:T} {log} {level} - {message}";
                 if (exception != null) {
                     text += exception.ToString();
                 }

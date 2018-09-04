@@ -10,7 +10,11 @@
  */
 
 using System;
+#if NETSTANDARD1_3
+using System.Threading;
+#else
 using System.Timers;
+#endif
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Observe;
@@ -240,32 +244,55 @@ namespace Com.AugustCellars.CoAP.Stack
         {
             private readonly Exchange _exchange;
             private readonly Action<Request> _reregister;
-            private readonly Timer _timer;
+            private Timer _timer;
+#if NETSTANDARD1_3
+            private int _timeout;
+#endif
 
             public ReregistrationContext(Exchange exchange, Int64 timeout, Action<Request> reregister)
             {
                 _exchange = exchange;
                 _reregister = reregister;
+#if NETSTANDARD1_3
+                _timeout = (int) timeout;
+#else
                 _timer = new Timer(timeout) {
                     AutoReset = false
                 };
                 _timer.Elapsed += timer_Elapsed;
+#endif
             }
 
             public void Start()
             {
+#if NETSTANDARD1_3
+                _timer = new Timer(timer_Elapsed, this, _timeout, Timeout.Infinite);
+#else
                 _timer.Start();
+#endif
             }
 
             public void Restart()
             {
+                Stop();
+                Start();
+            }
+
+            public void Stop()
+            {
+#if NETSTANDARD1_3
+                if (_timer != null) {
+                    _timer.Dispose();
+                }
+                _timer = null;
+#else
                 _timer.Stop();
-                _timer.Start();
+#endif
             }
 
             public void Cancel()
             {
-                _timer.Stop();
+                Stop();
                 Dispose();
             }
 
@@ -274,6 +301,33 @@ namespace Com.AugustCellars.CoAP.Stack
                 _timer.Dispose();
             }
 
+#if NETSTANDARD1_3
+            static void timer_Elapsed(Object obj)
+            {
+                ReregistrationContext sender = obj as ReregistrationContext;
+                Request request = sender._exchange.Request;
+                if (!request.IsCancelled) {
+                    Request refresh = Request.NewGet();
+                    refresh.SetOptions(request.GetOptions());
+                    // make sure Observe is set and zero
+                    refresh.MarkObserve();
+                    // use same Token
+                    refresh.Token = request.Token;
+                    refresh.Destination = request.Destination;
+                    refresh.CopyEventHandler(request);
+                    if (log.IsDebugEnabled) {
+                        log.Debug("Re-registering for " + request);
+                    }
+                    request.FireReregister(refresh);
+                    sender._reregister(refresh);
+                }
+                else {
+                    if (log.IsDebugEnabled) {
+                        log.Debug("Dropping re-registration for canceled " + request);
+                    }
+                }
+            }
+#else
             void timer_Elapsed(Object sender, ElapsedEventArgs e)
             {
                 Request request = _exchange.Request;
@@ -298,6 +352,7 @@ namespace Com.AugustCellars.CoAP.Stack
                     }
                 }
             }
+#endif
         }
     }
 }

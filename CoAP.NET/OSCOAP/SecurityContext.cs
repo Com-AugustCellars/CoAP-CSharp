@@ -58,7 +58,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 index -= _baseValue;
                 if (index < 0) return;
                 if (index > _hits.Length) {
-                    if (index > _hits.Length * 3 / 2) {
+                    if (index < _hits.Length * 3 / 2) {
                         int v = _hits.Length / 2;
                         _baseValue += v;
                         BitArray t = new BitArray(_hits.Length);
@@ -72,7 +72,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         index = 0;
                     }
                 }
-                _hits.Set((int)index, true);
+                _hits.Set((int) index, true);
             }
         }
 

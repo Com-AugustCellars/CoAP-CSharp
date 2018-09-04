@@ -13,6 +13,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using Com.AugustCellars.CoAP.Log;
 
 namespace Com.AugustCellars.CoAP.Channel
@@ -346,8 +347,12 @@ namespace Com.AugustCellars.CoAP.Channel
         {
             UDPSocket socket = NewUDPSocket(addressFamily, bufferSize);
 
+#if NETSTANDARD1_3
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+#else
             if (Environment.OSVersion.Platform == PlatformID.Win32NT ||
                 Environment.OSVersion.Platform == PlatformID.WinCE) {
+#endif
                 // do not throw SocketError.ConnectionReset by ignoring ICMP Port Unreachable
                 const Int32 SIO_UDP_CONNRESET = -1744830452;
                 try {

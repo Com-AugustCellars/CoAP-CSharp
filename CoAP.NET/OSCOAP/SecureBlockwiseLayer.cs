@@ -1,5 +1,9 @@
 ﻿using System;
+#if NETSTANDARD1_3
+using System.Threading;
+#else
 using System.Timers;
+#endif
 
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.CoAP.Log;
@@ -611,6 +615,19 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// </summary>
         protected void PrepareBlockCleanup(Exchange exchange)
         {
+#if NETSTANDARD1_3
+            Timer timer = new Timer((o) => BlockwiseTimeout(exchange), this, _blockTimeout, Timeout.Infinite);
+
+            Timer old = exchange.Set("BlockCleanupTimer", timer) as Timer;
+            if (old != null) {
+                try {
+                    old.Dispose();
+                }
+                catch (ObjectDisposedException) {
+                    // ignore
+                }
+            }
+#else
             Timer timer = new Timer();
             timer.AutoReset = false;
             timer.Interval = _blockTimeout;
@@ -631,6 +648,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
 
             timer.Start();
+#endif
         }
 
         /// <summary>
@@ -643,7 +661,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             {
                 try
                 {
+#if NETSTANDARD1_3 == false
                     timer.Stop();
+#endif
                     timer.Dispose();
                 }
                 catch (ObjectDisposedException)
@@ -669,4 +689,4 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         }
     }
 #endif
-}
+                }
