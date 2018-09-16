@@ -186,7 +186,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         protected virtual TlsKeyExchange CreatePskKeyExchange(int keyExchange)
         {
-            return new TlsPskKeyExchange(keyExchange, mSupportedSignatureAlgorithms, null, mPskIdentityManager,
+            return new TlsPskKeyExchange(keyExchange, mSupportedSignatureAlgorithms, null, mPskIdentityManager, null,
                 GetDHParameters(), mNamedCurves, mClientECPointFormats, mServerECPointFormats);
         }
 
