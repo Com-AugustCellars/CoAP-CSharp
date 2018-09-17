@@ -214,7 +214,7 @@ This project is NOT intended to be used for commercial purposes.  It is intented
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Com.AugustCellars.COSE" Version="1.2.0" />
+    <PackageReference Include="Com.AugustCellars.COSE" Version="1.3.0" />
     <PackageReference Include="System.Collections.Specialized" Version="4.3.0" />
     <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
     <PackageReference Include="System.Net.Primitives" Version="4.3.0" />
