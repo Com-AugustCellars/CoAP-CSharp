@@ -32,38 +32,59 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// text/xml
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 TextXml = 1;
         /// <summary>
         /// text/csv
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 TextCsv = 2;
         /// <summary>
         /// text/html
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 TextHtml = 3;
+        /// <summary>
+        /// Application/cose; cose-type="cose-encrypt0"
+        /// </summary>
+        public const Int32 ApplicationCoseEncrypt0 = 16;
+        /// <summary>
+        /// Application/cose; cose-type="cose-mac0"
+        /// </summary>
+        public const Int32 ApplicationCoseMac0 = 17;
+        /// <summary>
+        /// Application/cose; cose-type="cose-sign1"
+        /// </summary>
+        public const Int32 ApplicationCoseSign1 = 18;
         /// <summary>
         /// image/gif
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ImageGif = 21;
         /// <summary>
         /// image/jpeg
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ImageJpeg = 22;
         /// <summary>
         /// image/png
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ImagePng = 23;
         /// <summary>
         /// image/tiff
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ImageTiff = 24;
         /// <summary>
         /// audio/raw
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 AudioRaw = 25;
         /// <summary>
         /// video/raw
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 VideoRaw = 26;
         /// <summary>
         /// application/link-format
@@ -80,18 +101,22 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// application/rdf+xml
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ApplicationRdfXml = 43;
         /// <summary>
         /// application/soap+xml
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ApplicationSoapXml = 44;
         /// <summary>
         /// application/atom+xml
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ApplicationAtomXml = 45;
         /// <summary>
         /// application/xmpp+xml
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ApplicationXmppXml = 46;
         /// <summary>
         /// application/exi
@@ -100,35 +125,60 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// application/fastinfoset
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ApplicationFastinfoset = 48;
         /// <summary>
         /// application/soap+fastinfoset
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ApplicationSoapFastinfoset = 49;
         /// <summary>
-        /// application/json
+        /// application/json [RFC 7159]
         /// </summary>
         public const Int32 ApplicationJson = 50;
         /// <summary>
+        /// application/json-patch+json [RFC 6902]
+        /// </summary>
+        public const Int32 ApplicatioinJsonPatchJson = 51;
+        /// <summary>
         /// application/x-obix-binary
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const Int32 ApplicationXObixBinary = 51;
+        /// <summary>
+        /// application/merge-patch+json [RFC 7396]
+        /// </summary>
+        public const Int32 ApplicationMergePatchJson = 52;
         /// <summary>
         /// application/cbor - [RFC 7049]
         /// </summary>
         public const int ApplicationCbor = 60;
         /// <summary>
+        /// application/cwt [RFC 8392]
+        /// </summary>
+        public const int ApplicationCwt = 61;
+        /// <summary>
+        /// application/multipart-core [draft-ietf-core-multipart-ct]
+        /// </summary>
+        public const int ApplicationMultipartCore = 62;
+        /// <summary>
         /// application/link-format+cbor - [RFC TBD]
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const int ApplicationLinkFormatCbor = 64;
         /// <summary>
         /// application/link-format+json - [RFC TBD]
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const int ApplicationLinkFormatJson = 504;
+        /// <summary>
+        /// application/ace+cbor - [draft-ietf-ace-authz]
+        /// </summary>
+        public const int ApplicationAceCbor = 65000;
         /// <summary>
         /// any
         /// </summary>
-        public const Int32 Any = 0xFF;
+        public const Int32 Any = -2;
 
         private static readonly Dictionary<Int32, String[]> registry = new Dictionary<Int32, String[]>();
 

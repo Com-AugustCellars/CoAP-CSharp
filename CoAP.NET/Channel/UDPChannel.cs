@@ -28,8 +28,8 @@ namespace Com.AugustCellars.CoAP.Channel
         /// </summary>
         public const Int32 DefaultReceivePacketSize = 4096;
 
-        private Int32 _port;
-        private System.Net.EndPoint _localEP;
+        private readonly Int32 _port;
+        private readonly System.Net.EndPoint _localEP;
         private UDPSocket _socket;
         private UDPSocket _socketBackup;
         private Int32 _running;
