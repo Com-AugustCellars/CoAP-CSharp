@@ -139,7 +139,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// application/json-patch+json [RFC 6902]
         /// </summary>
-        public const Int32 ApplicatioinJsonPatchJson = 51;
+        public const Int32 ApplicationJsonPatchJson = 51;
         /// <summary>
         /// application/x-obix-binary
         /// </summary>
@@ -166,6 +166,12 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         [Obsolete("Media type was never registered")]
         public const int ApplicationLinkFormatCbor = 64;
+
+        public const int ApplicationCoseEncrypt = 96;
+        public const int ApplicationCoseMac = 97;
+        public const int ApplicationCoseSign = 98;
+        public const int ApplicationCoseKey = 101;
+        public const int ApplicationCoseKeySet = 102;
         /// <summary>
         /// application/link-format+json - [RFC TBD]
         /// </summary>
