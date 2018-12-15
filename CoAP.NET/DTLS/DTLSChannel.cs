@@ -89,6 +89,12 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         public EventHandler<TlsEvent> TlsEventHandler;
 
+        /// <inheritdoc/>
+        public bool AddMulticastAddress(IPEndPoint ep)
+        {
+            return false;
+        }
+
         public void Start()
         {
             if (System.Threading.Interlocked.CompareExchange(ref _running, 1, 0) > 0) {

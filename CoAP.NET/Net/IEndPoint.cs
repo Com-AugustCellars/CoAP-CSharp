@@ -10,6 +10,8 @@
  */
 
 using System;
+using System.Net;
+using System.Reflection;
 
 namespace Com.AugustCellars.CoAP.Net
 {
@@ -68,7 +70,11 @@ namespace Com.AugustCellars.CoAP.Net
         /// Occurs when a signal message has been received.
         /// </summary>
         event EventHandler<MessageEventArgs<SignalMessage>> ReceivingSignalMessage;
-
+        /// <summary>
+        /// Add a multicast address to the endpoint.
+        /// </summary>
+        /// <param name="ep">address to use</param>
+        bool AddMulticastAddress(IPEndPoint ep);
         /// <summary>
         /// Starts this endpoint and all its components.
         /// </summary>

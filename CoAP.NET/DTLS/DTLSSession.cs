@@ -269,16 +269,16 @@ namespace Com.AugustCellars.CoAP.DTLS
                 else {
                     byte[] buf2 = new byte[size];
                     Array.Copy(buf, buf2, size);
-                    FireDataReceived(buf2, _ipEndPoint);
+                    FireDataReceived(buf2, _ipEndPoint, null);  // M00BUG
                 }
             }
         }
 
-        private void FireDataReceived(Byte[] data, System.Net.EndPoint ep)
+        private void FireDataReceived(Byte[] data, System.Net.EndPoint ep, System.Net.EndPoint epLocal)
         {
             EventHandler<DataReceivedEventArgs> h = _dataReceived;
             if (h != null) {
-                h(this, new DataReceivedEventArgs(data, ep, this));
+                h(this, new DataReceivedEventArgs(data, ep, epLocal, this));
             }
         }
 

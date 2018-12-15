@@ -92,6 +92,11 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         private Int32 _running;
 
+        /// <inheritdoc/>
+        public bool AddMulticastAddress(IPEndPoint ep)
+        {
+            return false;
+        }
 
         /// <summary>
         /// Tell the channel to set itself up and start processing data

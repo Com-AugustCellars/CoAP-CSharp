@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using Com.AugustCellars.CoAP.EndPoint.Resources;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Server.Resources;
@@ -38,7 +37,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// What is the set of attributes that must appear only once in a link format
         /// </summary>
-        public static string[] SingleOccuranceAttributes = new string[] {
+        public static string[] SingleOccurenceAttributes = new string[] {
             "title",  "sz", "obs"
         };
 
@@ -94,7 +93,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public static readonly string Separator = ";";
 
-        #if false
+#if false
         public static readonly Regex DelimiterRegex = new Regex("\\s*" + Delimiter + "+\\s*");
         public static readonly Regex SeparatorRegex = new Regex("\\s*" + Separator + "+\\s*");
 
@@ -204,7 +203,7 @@ namespace Com.AugustCellars.CoAP
                     int eq = attributes[i].IndexOf('=');
                     string name = eq == -1 ? attributes[i] : attributes[i].Substring(0, eq);
 
-                    if (ParseStrictMode && SingleOccuranceAttributes.Contains(name)) {
+                    if (ParseStrictMode && SingleOccurenceAttributes.Contains(name)) {
                         throw new ArgumentException($"'{name}' occurs multiple times");
                     }
 
@@ -265,7 +264,7 @@ namespace Com.AugustCellars.CoAP
                     if (keyName == null) keyName = key.AsString();
                     if (keyName == "href") continue;
 
-                    if (ParseStrictMode && SingleOccuranceAttributes.Contains(keyName)) {
+                    if (ParseStrictMode && SingleOccurenceAttributes.Contains(keyName)) {
                         throw new ArgumentException($"'{keyName}' occurs multiple times");
                     }
 
@@ -305,10 +304,10 @@ namespace Com.AugustCellars.CoAP
             if (resource.Children == null) return;
 
             // sort by resource name
-            List<IResource> childrens = new List<IResource>(resource.Children);
-            childrens.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
+            List<IResource> children = new List<IResource>(resource.Children);
+            children.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
 
-            foreach (IResource child in childrens) {
+            foreach (IResource child in children) {
                 SerializeTree(child, queries, sb);
             }
         }
@@ -322,10 +321,10 @@ namespace Com.AugustCellars.CoAP
             if (resource.Children == null) return;
 
             // sort by resource name
-            List<IResource> childrens = new List<IResource>(resource.Children);
-            childrens.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
+            List<IResource> children = new List<IResource>(resource.Children);
+            children.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
 
-            foreach (IResource child in childrens) {
+            foreach (IResource child in children) {
                 SerializeTree(child, queries, cbor, dictionary);
             }
         }
@@ -825,7 +824,7 @@ namespace Com.AugustCellars.CoAP
 
         private static bool IsSingle(string name)
         {
-            return SingleOccuranceAttributes.Contains(name);
+            return SingleOccurenceAttributes.Contains(name);
         }
 
         private static string quoteChars = "'\"";
