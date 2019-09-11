@@ -4,15 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading;
-#if !NETFX_CORE
-using NUnit.Framework;
-using TestClass = NUnit.Framework.TestFixtureAttribute;
-using TestMethod = NUnit.Framework.TestAttribute;
-using TestInitialize = NUnit.Framework.SetUpAttribute;
-using TestCleanup = NUnit.Framework.TearDownAttribute;
-#else
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-#endif
 using Com.AugustCellars.CoAP.Deduplication;
 using Com.AugustCellars.CoAP.Server;
 using Com.AugustCellars.CoAP.Net;

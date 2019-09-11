@@ -9,13 +9,13 @@ using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Server;
 using Com.AugustCellars.CoAP.Server.Resources;
 using Com.AugustCellars.COSE;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP.DTLS
 {
-    [TestFixture]
+    [TestClass]
     class DtlsEvents
     {
         private static OneKey PskOne;
@@ -29,7 +29,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         private static readonly byte[] PskOneName = Encoding.UTF8.GetBytes("KeyOne");
         private static readonly byte[] PskTwoName = Encoding.UTF8.GetBytes("KeyTwo");
 
-        [OneTimeSetUp]
+        [ClassInitialize]
         public void OneTimeSetup()
         {
             PskOne = new OneKey();
@@ -47,20 +47,20 @@ namespace Com.AugustCellars.CoAP.DTLS
             // UserKeys.AddKey(PskTwo);
         }
 
-        [SetUp]
+        [TestInitialize]
         public void SetupServer()
         {
             Log.LogManager.Level = LogLevel.Fatal;
             CreateServer();
         }
 
-        [TearDown]
+        [TestCleanup]
         public void ShutdownServer()
         {
             _server.Dispose();
         }
 
-        [Test]
+        [TestMethod]
         public void DtlsTestPskEvents()
         {
             Uri uri = new Uri($"coaps://localhost:{_serverPort}/Hello1");
