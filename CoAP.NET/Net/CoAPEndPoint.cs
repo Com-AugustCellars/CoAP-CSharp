@@ -11,6 +11,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Net;
 using Com.AugustCellars.CoAP.Channel;
 using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Log;
@@ -181,6 +182,14 @@ namespace Com.AugustCellars.CoAP.Net
             get => _coapStack;
         }
 
+#if !NETSTANDARD1_3
+        /// <inheritdoc/>
+        public bool AddMulticastAddress(IPEndPoint ep)
+        {
+            return _channel.AddMulticastAddress(ep);
+        }
+#endif
+
         /// <inheritdoc/>
         public void Start()
         {
@@ -301,6 +310,7 @@ namespace Com.AugustCellars.CoAP.Net
                 }
 
                 request.Source = e.EndPoint;
+                request.Destination = e.LocalEndPoint;
                 request.Session = e.Session;
 
                 Fire(ReceivingRequest, request);

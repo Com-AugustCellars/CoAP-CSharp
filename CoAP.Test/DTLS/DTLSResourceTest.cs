@@ -6,7 +6,7 @@ using System.Threading;
 
 using System.Threading.Tasks;
 
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Com.AugustCellars.CoAP.DTLS;
 using Com.AugustCellars.CoAP.Server;
@@ -14,11 +14,10 @@ using Com.AugustCellars.COSE;
 using PeterO.Cbor;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Server.Resources;
-using NUnit.Framework.Internal;
 
 namespace Com.AugustCellars.CoAP.DTLS
 {
-    [TestFixture]
+    [TestClass]
     class DTLSResourceTest
     {
         private static OneKey PskOne;
@@ -29,7 +28,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         private Resource _resource;
         private int _serverPort;
 
-        [OneTimeSetUp]
+        [ClassInitialize]
         public void OneTimeSetup()
         {
             PskOne = new OneKey();
@@ -47,7 +46,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             UserKeys.AddKey(PskTwo);
         }
 
-        [SetUp]
+        [TestInitialize]
         public void SetupServer()
         {
             Log.LogManager.Level = Log.LogLevel.Fatal;
@@ -55,13 +54,13 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         }
 
-        [TearDown]
+        [TestCleanup]
         public void ShutdownServer()
         {
             _server.Dispose();
         }
 
-        [Test]
+        [TestMethod]
         public void DTLSTestPskSpecific()
         {
             Uri uri = new Uri($"coaps://localhost:{_serverPort}/Hello1");
@@ -94,7 +93,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             Thread.Sleep(5000);
         }
 
-        [Test]
+        [TestMethod]
         public void DTLSTestPskAsyncGet()
         {
             Uri uri = new Uri($"coaps://localhost:{_serverPort}/Hello1");

@@ -13,10 +13,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
+using Com.AugustCellars.CoAP.Coral;
 using Com.AugustCellars.CoAP.EndPoint.Resources;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Server.Resources;
+using Com.AugustCellars.CoAP.Util;
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP
@@ -38,7 +39,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// What is the set of attributes that must appear only once in a link format
         /// </summary>
-        public static string[] SingleOccuranceAttributes = new string[] {
+        public static string[] SingleOccurenceAttributes = new string[] {
             "title",  "sz", "obs"
         };
 
@@ -94,7 +95,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public static readonly string Separator = ";";
 
-        #if false
+#if false
         public static readonly Regex DelimiterRegex = new Regex("\\s*" + Delimiter + "+\\s*");
         public static readonly Regex SeparatorRegex = new Regex("\\s*" + Separator + "+\\s*");
 
@@ -121,6 +122,51 @@ namespace Com.AugustCellars.CoAP
             ["sz"] = CBORObject.FromObject(11),
             ["ct"] = CBORObject.FromObject(12),
             ["obs"] = CBORObject.FromObject(13)
+        };
+
+        public static readonly Dictionary<string, CBORObject> CborCoralKeys = new Dictionary<string, CBORObject>() {
+            ["hreflang"] = CBORObject.FromObject(10),
+            ["media"] = CBORObject.FromObject(11),
+            ["title"] = CBORObject.FromObject(12),
+            ["type"] = CBORObject.FromObject(13),
+            ["rt"] = CBORObject.FromObject(14),
+            ["if"] = CBORObject.FromObject(15),
+            ["sz"] = CBORObject.FromObject(16),
+            ["ct"] = CBORObject.FromObject(17),
+            ["ct"] = CBORObject.FromObject(18),
+            ["obs"] = CBORObject.FromObject(20)
+        };
+
+        public static readonly Dictionary<string, string> CoralsKeys = new Dictionary<string, string>() {
+            ["ct"] = "http://coreapps.org/reef#ct",
+            ["sz"] = "http://coreapps.org/reef#sz",
+            ["if"] = "http://coreapps.org/reef#if",
+            ["rt"] = "http://coreapps.org/reef#rt",
+            ["type"] = "http://coreapps.org/coap#type",
+            ["media"] = "http://coreapps.org/coap#media",
+        };
+
+        public static CoralDictionary ReefDictionary = new CoralDictionary() {
+            {0, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"},
+            {1, "http://www.iana.org/assignments/relation/item"},
+            {2, "http://www.iana.org/assignments/relation/collection"},
+            {3, "http://coreapps.org/collections#create"},
+            {4, "http://coreapps.org/base#update"},
+            {5, "https://coreapps.org/collecitons#delete"},
+            {6, "http://coreapps.org/base#search"},
+            {7, "http://coreapps.org/coap#accept"},
+            {8, "http://coreapps.org/reef#rd-unit"},
+            {9, "http://coreapps.org/reef#rd-item"},
+            {10, "http://coreapps.org/base#lang"},
+            {11, "http://coreapps.org/reef#media"},
+            {12, "http://coreapps.org/reef#title"},
+            {13, "http://coreapps.org/reef#type"},
+            {14, "http://coreapps.org/reef#rt"},
+            {15, "http://coreapps.org/reef#if"},
+            {16, "http://coreapps.org/reef#sz"},
+            {17, "http://coreapps.org/reef#ct"},
+            {18, "/.well-known/core"}
+
         };
 
         /// <summary>
@@ -157,6 +203,7 @@ namespace Com.AugustCellars.CoAP
             return linkFormat.ToString();
         }
 
+#if false  // Work is dead?
         public static byte[] SerializeCbor(IResource root, IEnumerable<string> queries)
         {
             CBORObject linkFormat = CBORObject.NewArray();
@@ -184,6 +231,21 @@ namespace Com.AugustCellars.CoAP
 
             return linkFormat.ToJSONString();
         }
+#endif
+        public static byte[] SerializeCoral(IResource root, IEnumerable<string> queries)
+        {
+            CoralBody nodeRoot = new CoralBody();
+            
+
+            List<string> queryList = null;
+            if (queries != null) queryList = queries.ToList();
+
+            foreach (IResource child in root.Children) {
+                SerializeTreeInCoral(child, queryList, nodeRoot, CborAttributeKeys);
+            }
+
+            return nodeRoot.EncodeToBytes(ReefDictionary);
+        }
 
         public static IEnumerable<WebLink> Parse(string linkFormat)
         {
@@ -204,7 +266,7 @@ namespace Com.AugustCellars.CoAP
                     int eq = attributes[i].IndexOf('=');
                     string name = eq == -1 ? attributes[i] : attributes[i].Substring(0, eq);
 
-                    if (ParseStrictMode && SingleOccuranceAttributes.Contains(name)) {
+                    if (ParseStrictMode && SingleOccurenceAttributes.Contains(name)) {
                         throw new ArgumentException($"'{name}' occurs multiple times");
                     }
 
@@ -226,6 +288,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
+#if false  // Work is dead?
         public static IEnumerable<WebLink> ParseCbor(byte[] linkFormat)
         {
             CBORObject links = CBORObject.DecodeFromBytes(linkFormat);
@@ -237,7 +300,7 @@ namespace Com.AugustCellars.CoAP
             CBORObject links = CBORObject.FromJSONString(linkFormat);
             return ParseCommon(links, null);
         }
-
+#endif
         private static IEnumerable<WebLink> ParseCommon(CBORObject links, Dictionary<string, CBORObject> dictionary)
         {
             if (links.Type != CBORType.Array) throw new ArgumentException("Not an array");
@@ -265,7 +328,7 @@ namespace Com.AugustCellars.CoAP
                     if (keyName == null) keyName = key.AsString();
                     if (keyName == "href") continue;
 
-                    if (ParseStrictMode && SingleOccuranceAttributes.Contains(keyName)) {
+                    if (ParseStrictMode && SingleOccurenceAttributes.Contains(keyName)) {
                         throw new ArgumentException($"'{keyName}' occurs multiple times");
                     }
 
@@ -305,14 +368,15 @@ namespace Com.AugustCellars.CoAP
             if (resource.Children == null) return;
 
             // sort by resource name
-            List<IResource> childrens = new List<IResource>(resource.Children);
-            childrens.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
+            List<IResource> children = new List<IResource>(resource.Children);
+            children.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
 
-            foreach (IResource child in childrens) {
+            foreach (IResource child in children) {
                 SerializeTree(child, queries, sb);
             }
         }
 
+#if false  // Work is dead?
         private static void SerializeTree(IResource resource, List<string> queries, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
         {
             if (resource.Visible && Matches(resource, queries)) {
@@ -322,11 +386,31 @@ namespace Com.AugustCellars.CoAP
             if (resource.Children == null) return;
 
             // sort by resource name
-            List<IResource> childrens = new List<IResource>(resource.Children);
-            childrens.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
+            List<IResource> children = new List<IResource>(resource.Children);
+            children.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
 
-            foreach (IResource child in childrens) {
+            foreach (IResource child in children) {
                 SerializeTree(child, queries, cbor, dictionary);
+            }
+        }
+#endif
+
+        private static void SerializeTreeInCoral(IResource resource, List<string> queries, CoralBody coral,
+                                                 Dictionary<string, CBORObject> dictionary)
+        {
+
+            if (resource.Visible && Matches(resource, queries)) {
+                SerializeResourceInCoral(resource, coral, dictionary);
+            }
+
+            if (resource.Children == null) return;
+
+            //  sort by resource name
+            List<IResource> children = new List<IResource>(resource.Children);
+            children.Sort((r1, r2) => string.CompareOrdinal(r1.Name, r2.Name));
+
+            foreach (IResource child in children) {
+                SerializeTreeInCoral(child, queries, coral, dictionary);
             }
         }
 
@@ -335,7 +419,7 @@ namespace Com.AugustCellars.CoAP
         {
             sb.Append("<");
             if (uriRelative != null) {
-                sb.Append(new Uri(uriRelative, resource.Path + resource.Name));
+                sb.Append(new Uri(uriRelative, resource.Path + resource.Name).ToString());
             }
             else {
                 sb.Append(resource.Path)
@@ -348,6 +432,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
+#if false  // Work is dead?
         public static void SerializeResource(IResource resource, CBORObject cbor, Dictionary<string, CBORObject> dictionary,
                                              ResourceAttributes otherAttributes = null, Uri uriRelative = null)
         {
@@ -373,6 +458,36 @@ namespace Com.AugustCellars.CoAP
 
             cbor.Add(obj);
         }
+#endif
+
+        public static void SerializeResourceInCoral(IResource resource, CoralBody coral,
+                                               Dictionary<string, CBORObject> dictionary,
+                                               ResourceAttributes otherAttributes = null, Uri uriRelative = null,
+                                               bool isEndPoint = false)
+        {
+            CBORObject obj = CBORObject.NewArray();
+            CBORObject href;
+            if (uriRelative == null) {
+                href =Ciri.ToCbor(resource.Path + resource.Name);
+            }
+            else {
+                href = Ciri.ToCbor(new Uri(uriRelative, resource.Path + resource.Name));
+            }
+
+            CoralBody body = new CoralBody();
+
+            SerializeAttributesInCoral(resource.Attributes, body, dictionary, uriRelative);
+            if (otherAttributes != null) {
+                SerializeAttributesInCoral(otherAttributes, body, dictionary, uriRelative);
+            }
+
+            if (body.Length == 0) {
+                body = null;
+            }
+
+            CoralItem item = new CoralLink(isEndPoint ? "http://coreapps.org/ref#rd-unit" : "http://coreapps.org/reef#rd-item", href, body);
+            coral.Add(item);
+        }
 
         private static void SerializeAttributes(ResourceAttributes attributes, StringBuilder sb, Uri uriRelative)
         {
@@ -397,6 +512,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
+#if false  // Work is dead?
         private static void SerializeAttributes(ResourceAttributes attributes, CBORObject cbor, Dictionary<string, CBORObject> dictionary, Uri uriRelative)
         {
             List<string> keys = new List<string>(attributes.Keys);
@@ -417,6 +533,37 @@ namespace Com.AugustCellars.CoAP
                 }
 
                 SerializeAttribute(name, values, cbor, dictionary);
+            }
+        }
+#endif
+
+        private static void SerializeAttributesInCoral(ResourceAttributes attributes, CoralBody coral, Dictionary<string, CBORObject> dictionary, Uri uriRelative)
+        {
+            List<string> keys = new List<string>(attributes.Keys);
+            keys.Sort();
+            foreach (string name in keys) {
+                if (!CoralsKeys.ContainsKey(name)) {
+                    continue;
+                }
+
+                List<string> values = new List<string>(attributes.GetValues(name));
+                if (values.Count == 0)
+                {
+                    continue;
+                }
+
+                if (uriRelative != null && name == "anchor")
+                {
+                    List<string> newValues = new List<string>();
+                    foreach (string val in values)
+                    {
+                        newValues.Add(new Uri(uriRelative, val).ToString());
+                    }
+
+                    values = newValues;
+                }
+
+                SerializeAttributeInCoral(name, values, coral, null);
             }
         }
 
@@ -469,15 +616,11 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
+#if false  // Work is dead?
         private static void SerializeAttribute(string name, List<string> values, CBORObject cbor, Dictionary<string, CBORObject> dictionary)
         {
             bool useSpace = SpaceSeparatedValueAttributes.Contains(name);
             CBORObject result;
-
-            CBORObject nameX;
-            if (dictionary == null || !dictionary.TryGetValue(name, out nameX)) {
-                nameX = CBORObject.FromObject(name);
-            }
 
             if (useSpace && values.Count > 1) {
                 StringBuilder sb = new StringBuilder();
@@ -503,7 +646,50 @@ namespace Com.AugustCellars.CoAP
                 }
             }
 
-            cbor.Add(nameX, result);
+            CBORObject pair = CBORObject.NewArray();
+            pair.Add(name);
+                pair.Add(result);
+            cbor.Add(pair);
+        }
+#endif
+        private static void SerializeAttributeInCoral(string name, List<string> values, CoralBody coral,
+                                                      Dictionary<string, CBORObject> dictionary)
+        {
+            bool useSpace = SpaceSeparatedValueAttributes.Contains(name);
+            CBORObject result;
+
+            string nameX = CoralsKeys[name];
+
+            if (useSpace && values.Count > 1) {
+                StringBuilder sb = new StringBuilder();
+
+                foreach (string value in values) {
+                    sb.Append(value);
+                    sb.Append(" ");
+                }
+
+                sb.Length = sb.Length - 1;
+
+                result = CBORObject.FromObject(sb.ToString());
+            }
+            else if (values.Count == 1) {
+                string value = values.First();
+                result = string.IsNullOrEmpty(value) ? CBORObject.True : CBORObject.FromObject(values.First());
+            }
+            else {
+                result = CBORObject.NewArray();
+                foreach (string value in values) {
+                    if (string.IsNullOrEmpty(value)) {
+                        result.Add(CBORObject.True);
+                    }
+                    else {
+                        result.Add(value);
+                    }
+                }
+            }
+
+            CoralLink link = new CoralLink(nameX, result);
+            coral.Add(link);
         }
 
         private static bool IsNumber(string value)
@@ -585,6 +771,9 @@ namespace Com.AugustCellars.CoAP
 
             return root;
         }
+
+#if false  // Work is dead?
+
         /// <summary>
         /// Parse a CBOR encoded link format structure
         /// </summary>
@@ -672,7 +861,7 @@ namespace Com.AugustCellars.CoAP
 
             return root;
         }
-
+#endif
 
 #if false
         private static LinkAttribute ParseAttribute(Scanner scanner)
@@ -825,7 +1014,7 @@ namespace Com.AugustCellars.CoAP
 
         private static bool IsSingle(string name)
         {
-            return SingleOccuranceAttributes.Contains(name);
+            return SingleOccurenceAttributes.Contains(name);
         }
 
         private static string quoteChars = "'\"";

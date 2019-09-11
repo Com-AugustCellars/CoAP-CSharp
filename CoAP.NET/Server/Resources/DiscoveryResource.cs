@@ -55,12 +55,18 @@ namespace Com.AugustCellars.CoAP.Server.Resources
                         payload = Encoding.UTF8.GetBytes(LinkFormat.Serialize(_root, req.UriQueries));
                         break;
 
+#if false  // Work is dead?
                     case MediaType.ApplicationLinkFormatCbor:
                         payload = LinkFormat.SerializeCbor(_root, req.UriQueries);
                         break;
 
                     case MediaType.ApplicationLinkFormatJson:
                         payload = Encoding.UTF8.GetBytes(LinkFormat.SerializeJson(_root, req.UriQueries));
+                        break;
+#endif
+
+                    case MediaType.ApplicationCoralReef:
+                        payload = LinkFormat.SerializeCoral(_root, req.UriQueries);
                         break;
 
                     default:

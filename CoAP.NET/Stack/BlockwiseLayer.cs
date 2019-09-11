@@ -97,6 +97,11 @@ namespace Com.AugustCellars.CoAP.Stack
         public override void ReceiveRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
             if (request.HasOption(OptionType.Block1)) {
+                //  If this is a multicast address we are receiving this on, then we should ignore it
+                if (request.IsMulticast) {
+                    return;
+                }
+
                 // This must be a large POST or PUT request
                 BlockOption block1 = request.Block1;
                 log.Debug(m => m("Request contains block1 option {0}", block1));
@@ -288,6 +293,10 @@ namespace Com.AugustCellars.CoAP.Stack
                     status.CurrentNUM = nextNum;
                     status.CurrentSZX = block1.SZX;
                     Request nextBlock = GetNextRequestBlock(exchange.Request, status);
+                    if (exchange.Request.IsMulticast) {
+                        //  Multicast jumps to the Unicast address
+                        exchange.Request.Destination = response.Source;
+                    }
                     if (nextBlock.Token == null)
                         nextBlock.Token = response.Token; // reuse same token
                     exchange.CurrentRequest = nextBlock;
@@ -353,6 +362,8 @@ namespace Com.AugustCellars.CoAP.Stack
                     }
                     else if (block2.M) {
                         log.Debug("Request the next response block");
+                        exchange.Complete = true;
+                        exchange.Complete = false;
 
                         Request request = exchange.Request;
                         int num = block2.NUM + blockCount;
@@ -362,12 +373,17 @@ namespace Com.AugustCellars.CoAP.Stack
                         Request block = new Request(request.Method);
                         // NON could make sense over SMS or similar transports
                         block.Type = request.Type;
-                        block.Destination = request.Destination;
+                        if (request.IsMulticast) {
+                            block.Destination = response.Source;
+                        }
+                        else {
+                            block.Destination = request.Destination;
+                        }
                         block.SetOptions(request.GetOptions());
                         block.SetOption(new BlockOption(OptionType.Block2, num, szx, m));
                         block.Session = request.Session;
                         // we use the same token to ease traceability (GET without Observe no longer cancels relations)
-                        block.Token = response.Token;
+                        // block.Token = response.Token;
                         // make sure not to use Observe for block retrieval
                         block.RemoveOptions(OptionType.Observe);
 

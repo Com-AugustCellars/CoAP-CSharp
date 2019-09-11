@@ -24,140 +24,221 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// undefined
         /// </summary>
-        public const Int32 Undefined = -1;
+        public const int Undefined = -1;
         /// <summary>
         /// text/plain; charset=utf-8
         /// </summary>
-        public const Int32 TextPlain = 0;
+        public const int TextPlain = 0;
         /// <summary>
         /// text/xml
         /// </summary>
-        public const Int32 TextXml = 1;
+        [Obsolete("Media type was never registered")]
+        public const int TextXml = 1;
         /// <summary>
         /// text/csv
         /// </summary>
-        public const Int32 TextCsv = 2;
+        [Obsolete("Media type was never registered")]
+        public const int TextCsv = 2;
         /// <summary>
         /// text/html
         /// </summary>
-        public const Int32 TextHtml = 3;
+        [Obsolete("Media type was never registered")]
+        public const int TextHtml = 3;
+        /// <summary>
+        /// Application/cose; cose-type="cose-encrypt0"
+        /// </summary>
+        public const int ApplicationCoseEncrypt0 = 16;
+        /// <summary>
+        /// Application/cose; cose-type="cose-mac0"
+        /// </summary>
+        public const int ApplicationCoseMac0 = 17;
+        /// <summary>
+        /// Application/cose; cose-type="cose-sign1"
+        /// </summary>
+        public const int ApplicationCoseSign1 = 18;
         /// <summary>
         /// image/gif
         /// </summary>
-        public const Int32 ImageGif = 21;
+        [Obsolete("Media type was never registered")]
+        public const int ImageGif = 21;
         /// <summary>
         /// image/jpeg
         /// </summary>
-        public const Int32 ImageJpeg = 22;
+        [Obsolete("Media type was never registered")]
+        public const int ImageJpeg = 22;
         /// <summary>
         /// image/png
         /// </summary>
-        public const Int32 ImagePng = 23;
+        [Obsolete("Media type was never registered")]
+        public const int ImagePng = 23;
         /// <summary>
         /// image/tiff
         /// </summary>
-        public const Int32 ImageTiff = 24;
+        [Obsolete("Media type was never registered")]
+        public const int ImageTiff = 24;
         /// <summary>
         /// audio/raw
         /// </summary>
-        public const Int32 AudioRaw = 25;
+        [Obsolete("Media type was never registered")]
+        public const int AudioRaw = 25;
         /// <summary>
         /// video/raw
         /// </summary>
-        public const Int32 VideoRaw = 26;
+        [Obsolete("Media type was never registered")]
+        public const int VideoRaw = 26;
         /// <summary>
         /// application/link-format
         /// </summary>
-        public const Int32 ApplicationLinkFormat = 40;
+        public const int ApplicationLinkFormat = 40;
         /// <summary>
         /// application/xml
         /// </summary>
-        public const Int32 ApplicationXml = 41;
+        public const int ApplicationXml = 41;
         /// <summary>
         /// application/octet-stream
         /// </summary>
-        public const Int32 ApplicationOctetStream = 42;
+        public const int ApplicationOctetStream = 42;
         /// <summary>
         /// application/rdf+xml
         /// </summary>
-        public const Int32 ApplicationRdfXml = 43;
+        [Obsolete("Media type was never registered")]
+        public const int ApplicationRdfXml = 43;
         /// <summary>
         /// application/soap+xml
         /// </summary>
-        public const Int32 ApplicationSoapXml = 44;
+        [Obsolete("Media type was never registered")]
+        public const int ApplicationSoapXml = 44;
         /// <summary>
         /// application/atom+xml
         /// </summary>
-        public const Int32 ApplicationAtomXml = 45;
+        [Obsolete("Media type was never registered")]
+        public const int ApplicationAtomXml = 45;
         /// <summary>
         /// application/xmpp+xml
         /// </summary>
-        public const Int32 ApplicationXmppXml = 46;
+        [Obsolete("Media type was never registered")]
+        public const int ApplicationXmppXml = 46;
         /// <summary>
         /// application/exi
         /// </summary>
-        public const Int32 ApplicationExi = 47;
+        public const int ApplicationExi = 47;
         /// <summary>
         /// application/fastinfoset
         /// </summary>
-        public const Int32 ApplicationFastinfoset = 48;
+        [Obsolete("Media type was never registered")]
+        public const int ApplicationFastinfoset = 48;
         /// <summary>
         /// application/soap+fastinfoset
         /// </summary>
-        public const Int32 ApplicationSoapFastinfoset = 49;
+        [Obsolete("Media type was never registered")]
+        public const int ApplicationSoapFastinfoset = 49;
         /// <summary>
-        /// application/json
+        /// application/json [RFC 7159]
         /// </summary>
-        public const Int32 ApplicationJson = 50;
+        public const int ApplicationJson = 50;
+        /// <summary>
+        /// application/json-patch+json [RFC 6902]
+        /// </summary>
+        public const int ApplicationJsonPatchJson = 51;
         /// <summary>
         /// application/x-obix-binary
         /// </summary>
-        public const Int32 ApplicationXObixBinary = 51;
+        [Obsolete("Media type was never registered")]
+        public const int ApplicationXObixBinary = 51;
+        /// <summary>
+        /// application/merge-patch+json [RFC 7396]
+        /// </summary>
+        public const int ApplicationMergePatchJson = 52;
         /// <summary>
         /// application/cbor - [RFC 7049]
         /// </summary>
         public const int ApplicationCbor = 60;
         /// <summary>
+        /// application/cwt [RFC 8392]
+        /// </summary>
+        public const int ApplicationCwt = 61;
+        /// <summary>
+        /// application/multipart-core [draft-ietf-core-multipart-ct]
+        /// </summary>
+        public const int ApplicationMultipartCore = 62;
+
+#if false  // Work is dead?
+        /// <summary>
         /// application/link-format+cbor - [RFC TBD]
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const int ApplicationLinkFormatCbor = 64;
+#endif
+
+        public const int ApplicationCoseEncrypt = 96;
+        public const int ApplicationCoseMac = 97;
+        public const int ApplicationCoseSign = 98;
+        public const int ApplicationCoseKey = 101;
+        public const int ApplicationCoseKeySet = 102;
+
+#if false
         /// <summary>
         /// application/link-format+json - [RFC TBD]
         /// </summary>
+        [Obsolete("Media type was never registered")]
         public const int ApplicationLinkFormatJson = 504;
+#endif
+
+        /// <summary>
+        /// application/ace+cbor - [draft-ietf-ace-authz]
+        /// </summary>
+        public const int ApplicationAceCbor = 65000;
+
+        public const int ApplicationCoralReef = 65088;
+        public const int Coral = 999;
         /// <summary>
         /// any
         /// </summary>
-        public const Int32 Any = 0xFF;
+        public const int Any = -2;
 
-        private static readonly Dictionary<Int32, String[]> registry = new Dictionary<Int32, String[]>();
+        public class MediaTypeInfo
+        {
+            public string[] ContentType { get; }
+            public bool IsText { get; }
+            public bool IsCbor { get; }
+            public MediaTypeInfo(string[] contentType, bool isText=false, bool isCbor=false)
+            {
+                ContentType = contentType;
+                IsText = isText;
+                IsCbor = isCbor;
+            }
+        }
+
+        private static readonly Dictionary<int, MediaTypeInfo> registry = new Dictionary<int, MediaTypeInfo>();
 
         static MediaType()
         {
-            registry.Add(TextPlain, new String[] { "text/plain", "txt" });
-            registry.Add(TextXml, new String[] { "text/xml", "xml" });
-            registry.Add(TextCsv, new String[] { "text/csv", "csv" });
-            registry.Add(TextHtml, new String[] { "text/html", "html" });
+            registry.Add(TextPlain, new MediaTypeInfo(new string[] { "text/plain", "txt" }, true));
+            registry.Add(TextXml, new MediaTypeInfo(new string[] { "text/xml", "xml" }, true));
+            registry.Add(TextCsv, new MediaTypeInfo(new string[] { "text/csv", "csv" }, true));
+            registry.Add(TextHtml, new MediaTypeInfo(new string[] { "text/html", "html" }, true));
 
-            registry.Add(ImageGif, new String[] { "image/gif", "gif" });
-            registry.Add(ImageJpeg, new String[] { "image/jpeg", "jpg" });
-            registry.Add(ImagePng, new String[] { "image/png", "png" });
-            registry.Add(ImageTiff, new String[] { "image/tiff", "tif" });
-            registry.Add(AudioRaw, new String[] { "audio/raw", "raw" });
-            registry.Add(VideoRaw, new String[] { "video/raw", "raw" });
+            registry.Add(ImageGif, new MediaTypeInfo(new string[] { "image/gif", "gif" }));
+            registry.Add(ImageJpeg, new MediaTypeInfo(new string[] { "image/jpeg", "jpg" }));
+            registry.Add(ImagePng, new MediaTypeInfo(new string[] { "image/png", "png" }));
+            registry.Add(ImageTiff, new MediaTypeInfo(new string[] { "image/tiff", "tif" }));
+            registry.Add(AudioRaw, new MediaTypeInfo(new string[] { "audio/raw", "raw" }));
+            registry.Add(VideoRaw, new MediaTypeInfo(new string[] { "video/raw", "raw" }));
 
-            registry.Add(ApplicationLinkFormat, new String[] { "application/link-format", "wlnk" });
-            registry.Add(ApplicationXml, new String[] { "application/xml", "xml" });
-            registry.Add(ApplicationOctetStream, new String[] { "application/octet-stream", "bin" });
-            registry.Add(ApplicationRdfXml, new String[] {"application/rdf+xml", "rdf"});
-            registry.Add(ApplicationSoapXml, new String[] {"application/soap+xml", "soap"});
-            registry.Add(ApplicationAtomXml, new String[] {"application/atom+xml", "atom"});
-            registry.Add(ApplicationXmppXml, new String[] {"application/xmpp+xml", "xmpp"});
-            registry.Add(ApplicationFastinfoset,new String[] { "application/fastinfoset", "finf"});
-            registry.Add(ApplicationSoapFastinfoset, new String[] {"application/soap+fastinfoset", "soap.finf"});
-            registry.Add(ApplicationXObixBinary, new String[] { "application/x-obix-binary", "obix" });
-            registry.Add(ApplicationExi, new String[] { "application/exi", "exi" });
-            registry.Add(ApplicationJson, new String[] { "application/json", "json" });
+            registry.Add(ApplicationLinkFormat, new MediaTypeInfo(new string[] { "application/link-format", "wlnk" }, true));
+            registry.Add(ApplicationXml, new MediaTypeInfo(new string[] { "application/xml", "xml" }, true));
+            registry.Add(ApplicationOctetStream, new MediaTypeInfo(new string[] { "application/octet-stream", "bin" }));
+            registry.Add(ApplicationRdfXml, new MediaTypeInfo(new string[] {"application/rdf+xml", "rdf"}, true));
+            registry.Add(ApplicationSoapXml, new MediaTypeInfo(new string[] {"application/soap+xml", "soap"}, true));
+            registry.Add(ApplicationAtomXml, new MediaTypeInfo(new string[] {"application/atom+xml", "atom"}, true));
+            registry.Add(ApplicationXmppXml, new MediaTypeInfo(new string[] {"application/xmpp+xml", "xmpp"}, true));
+            registry.Add(ApplicationFastinfoset, new MediaTypeInfo(new string[] { "application/fastinfoset", "finf"}));
+            registry.Add(ApplicationSoapFastinfoset, new MediaTypeInfo(new string[] {"application/soap+fastinfoset", "soap.finf"}));
+            registry.Add(ApplicationXObixBinary, new MediaTypeInfo(new string[] { "application/x-obix-binary", "obix" }));
+            registry.Add(ApplicationExi, new MediaTypeInfo(new string[] { "application/exi", "exi" }));
+            registry.Add(ApplicationJson, new MediaTypeInfo(new string[] { "application/json", "json" }, false));  // Compressed w/ deflate
+
+            registry.Add(Coral, new MediaTypeInfo(new string[] {"XX", "coral"}, false, true));
         }
 
         /// <summary>
@@ -165,31 +246,29 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="mediaType">The media type to be checked</param>
         /// <returns>True iff the media type is a type of image</returns>
-        public static Boolean IsImage(Int32 mediaType)
+        public static Boolean IsImage(int mediaType)
         {
             return mediaType >= ImageGif && mediaType <= ImageTiff;
         }
 
-        public static Boolean IsPrintable(Int32 mediaType)
+        public static Boolean IsPrintable(int mediaType)
         {
-            switch (mediaType)
-            {
-                case TextPlain:
-                case TextXml:
-                case TextCsv:
-                case TextHtml:
-                case ApplicationLinkFormat:
-                case ApplicationXml:
-                case ApplicationRdfXml:
-                case ApplicationSoapXml:
-                case ApplicationAtomXml:
-                case ApplicationXmppXml:
-                case ApplicationJson:
-                case Undefined:
-                    return true;
-                default:
-                    return false;
+            MediaTypeInfo val;
+            if (!registry.TryGetValue(mediaType, out val)) {
+                return false;
             }
+
+            return val.IsText;
+        }
+
+        public static Boolean IsCbor(int mediaType)
+        {
+            MediaTypeInfo val;
+            if (!registry.TryGetValue(mediaType, out val)) {
+                return false;
+            }
+
+            return val.IsCbor;
         }
 
         /// <summary>
@@ -197,14 +276,12 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="mediaType">The media type to be described</param>
         /// <returns>A string describing the media type</returns>
-        public static String ToString(Int32 mediaType)
+        public static string ToString(int mediaType)
         {
-            if (registry.ContainsKey(mediaType))
-            {
-                return registry[mediaType][0];
+            if (registry.ContainsKey(mediaType)) {
+                return registry[mediaType].ContentType[0];
             }
-            else
-            {
+            else {
                 return "unknown/" + mediaType;
             }
         }
@@ -212,19 +289,18 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets the file extension of the given media type.
         /// </summary>
-        public static String ToFileExtension(Int32 mediaType)
+        public static string ToFileExtension(int mediaType)
         {
             if (registry.ContainsKey(mediaType))
             {
-                return registry[mediaType][1];
+                return registry[mediaType].ContentType[1];
             }
-            else
-            {
+            else {
                 return "unknown_" + mediaType;
             }
         }
 
-        public static Int32 NegotiationContent(Int32 defaultContentType, IEnumerable<Int32> supported, IEnumerable<Option> accepted)
+        public static int NegotiationContent(int defaultContentType, IEnumerable<int> supported, IEnumerable<Option> accepted)
         {
             if (accepted == null)
                 return defaultContentType;
@@ -232,7 +308,7 @@ namespace Com.AugustCellars.CoAP
             Boolean hasAccept = false;
             foreach (Option accept in accepted)
             {
-                foreach (Int32 ct in supported)
+                foreach (int ct in supported)
                 {
                     if (ct == accept.IntValue)
                         return ct;
@@ -242,28 +318,28 @@ namespace Com.AugustCellars.CoAP
             return hasAccept ? Undefined : defaultContentType;
         }
 
-        public static Int32 Parse(String type)
+        public static int Parse(string type)
         {
             if (type == null)
                 return Undefined;
 
-            foreach (KeyValuePair<Int32, String[]> pair in registry)
+            foreach (KeyValuePair<int, MediaTypeInfo> pair in registry)
             {
-                if (pair.Value[0].Equals(type, StringComparison.OrdinalIgnoreCase))
+                if (pair.Value.ContentType[0].Equals(type, StringComparison.OrdinalIgnoreCase))
                     return pair.Key;
             }
 
             return Undefined;
         }
 
-        public static IEnumerable<Int32> ParseWildcard(String regex)
+        public static IEnumerable<int> ParseWildcard(string regex)
         {
             regex = regex.Trim().Substring(0, regex.IndexOf('*')).Trim() + ".*";
             Regex r = new Regex(regex);
 
-            foreach (KeyValuePair<Int32, String[]> pair in registry)
+            foreach (KeyValuePair<int, MediaTypeInfo> pair in registry)
             {
-                String mime = pair.Value[0];
+                string mime = pair.Value.ContentType[0];
                 if (r.IsMatch(mime))
                     yield return pair.Key;
             }

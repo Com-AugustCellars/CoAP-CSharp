@@ -2,11 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using NUnit.Framework;
-using TestClass = NUnit.Framework.TestFixtureAttribute;
-using TestMethod = NUnit.Framework.TestAttribute;
-using TestInitialize = NUnit.Framework.SetUpAttribute;
-using TestCleanup = NUnit.Framework.TearDownAttribute;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Server;
 using Com.AugustCellars.CoAP.Server.Resources;
@@ -221,12 +217,6 @@ namespace Com.AugustCellars.CoAP
             Assert.AreEqual(4, resources.Count());
 
             resources = client.Discover(MediaType.ApplicationLinkFormat);
-            Assert.AreEqual(4, resources.Count());
-
-            resources = client.Discover(MediaType.ApplicationLinkFormatCbor);
-            Assert.AreEqual(4, resources.Count());
-
-            resources = client.Discover(MediaType.ApplicationLinkFormatJson);
             Assert.AreEqual(4, resources.Count());
         }
 

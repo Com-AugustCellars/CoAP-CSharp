@@ -25,19 +25,20 @@ namespace Com.AugustCellars.CoAP.DTLS
         private Int32 _receivePacketSize;
         private readonly int _port;
         private UDPChannel _udpChannel;
-        private KeySet _serverKeys;
+        private TlsKeyPairSet _serverKeys;
         private KeySet _userKeys;
-        
+        private KeySet _cwtTrustRoots;
 
-        public DTLSChannel(KeySet serverKeys, KeySet userKeys) : this(serverKeys, userKeys, 0)
+        public DTLSChannel(TlsKeyPairSet serverKeys, KeySet userKeys) : this(serverKeys, userKeys, 0)
         {
         }
 
-        public DTLSChannel(KeySet serverKeys, KeySet userKeys, Int32 port)
+        public DTLSChannel(TlsKeyPairSet serverKeys, KeySet userKeys, Int32 port, KeySet cwtTrustRoots = null)
         {
             _port = port;
             _userKeys = userKeys;
             _serverKeys = serverKeys;
+            _cwtTrustRoots = cwtTrustRoots;
         }
 
         /// <summary>
@@ -46,7 +47,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// <param name="serverKeys"></param>
         /// <param name="userKeys"></param>
         /// <param name="ep"></param>
-        public DTLSChannel(KeySet serverKeys, KeySet userKeys, System.Net.EndPoint ep)
+        public DTLSChannel(TlsKeyPairSet serverKeys, KeySet userKeys, System.Net.EndPoint ep)
         {
             _localEP = ep;
             _userKeys = userKeys;
@@ -88,6 +89,12 @@ namespace Com.AugustCellars.CoAP.DTLS
         private Int32 _running;
 
         public EventHandler<TlsEvent> TlsEventHandler;
+
+        /// <inheritdoc/>
+        public bool AddMulticastAddress(IPEndPoint ep)
+        {
+            return false;
+        }
 
         public void Start()
         {
@@ -165,7 +172,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                 //  No session - create a new one.
 
-                session = new DTLSSession(ipEndPoint, DataReceived, _serverKeys, _userKeys);
+                session = new DTLSSession(ipEndPoint, DataReceived, _serverKeys, _userKeys, _cwtTrustRoots);
                 AddSession(session);
                 session.TlsEventHandler += MyTlsEventHandler;
 
@@ -195,7 +202,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 DTLSSession session = FindSession(ipEP);
                 if (session == null) {
 
-                    session = new DTLSSession(ipEP, DataReceived, _serverKeys, _userKeys);
+                    session = new DTLSSession(ipEP, DataReceived, _serverKeys, _userKeys, _cwtTrustRoots);
                     session.TlsEventHandler += MyTlsEventHandler;
                     AddSession(session);
                     session.Connect(_udpChannel);
@@ -223,7 +230,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                     }
                 }
 
-                DTLSSession sessionNew = new DTLSSession((IPEndPoint) e.EndPoint, DataReceived, _serverKeys, _userKeys);
+                DTLSSession sessionNew = new DTLSSession((IPEndPoint) e.EndPoint, DataReceived, _serverKeys, _userKeys, _cwtTrustRoots);
                 sessionNew.TlsEventHandler = MyTlsEventHandler;
                 _sessionList.Add(sessionNew);
                 new Thread(() => Accept(sessionNew, e.Data)).Start();

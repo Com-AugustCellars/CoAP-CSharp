@@ -3,23 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Com.AugustCellars.CoAP.DTLS;
 using Com.AugustCellars.COSE;
-using NUnit.Framework.Internal;
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP.DTLS
 {
-    [TestFixture]
+    [TestClass]
     class DTLSClientEndPointTest
     {
         private static OneKey PskOneKey;
         private static OneKey RpkOneKey;
 
-        [OneTimeSetUp]
+        [ClassInitialize]
         public void OneTimeSetup()
         {
             RpkOneKey = OneKey.GenerateKey(AlgorithmValues.ECDSA_256, GeneralValues.KeyType_EC, "P-256");
@@ -29,19 +27,19 @@ namespace Com.AugustCellars.CoAP.DTLS
             PskOneKey.Add(CoseKeyParameterKeys.Octet_k, CBORObject.FromObject(new byte[10]));
         }
 
-        [Test]
+        [TestMethod]
         public void TestNoKey()
         {
             DTLSClientEndPoint ep = new DTLSClientEndPoint(null);
         }
 
-        [Test]
+        [TestMethod]
         public void TestRpk()
         {
             DTLSClientEndPoint ep = new DTLSClientEndPoint(RpkOneKey);
         }
 
-        [Test]
+        [TestMethod]
         public void NoEndPoint()
         {
             DTLSClientEndPoint ep=  new DTLSClientEndPoint(PskOneKey);
@@ -56,7 +54,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             req.WaitForResponse(5000);
         }
 
-        [Test]
+        [TestMethod]
         public void CoapURL()
         {
             DTLSClientEndPoint ep = new DTLSClientEndPoint(PskOneKey);
@@ -67,9 +65,13 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             ep.Start();
 
-            Exception e = Assert.Throws<Exception>(() => req.Send());
-            Assert.That(e.Message == "Schema is incorrect for the end point");
-            req.WaitForResponse(5000);
+            try {
+                req.Send();
+                req.WaitForResponse(5000);
+            }
+            catch (Exception e) {
+                Assert.AreEqual(e.Message, "Schema is incorrect for the end point");
+            }
         }
     }
 }

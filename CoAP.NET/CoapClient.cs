@@ -132,7 +132,14 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// OSCOAP context to use for the message
         /// </summary>
-        public OSCOAP.SecurityContext OscoapContext { get; set; }
+        [ObsoleteAttribute("Use OscoreContext instead")]
+        public OSCOAP.SecurityContext OscoapContext
+        {
+            get => OscoreContext;
+            set => OscoreContext = value;
+        }
+
+        public OSCOAP.SecurityContext OscoreContext { get; set; }
 
         /// <summary>
         /// Let the client use Confirmable requests.
@@ -253,11 +260,13 @@ namespace Com.AugustCellars.CoAP
                 case MediaType.ApplicationLinkFormat:
                     return LinkFormat.Parse(links.PayloadString);
 
+#if false
                 case MediaType.ApplicationLinkFormatCbor:
                     return LinkFormat.ParseCbor(links.Payload);
 
                 case MediaType.ApplicationLinkFormatJson:
                     return LinkFormat.ParseJson(links.PayloadString);
+#endif
 
                 default:
                     return _EmptyLinks;
@@ -650,7 +659,7 @@ namespace Com.AugustCellars.CoAP
         {
             request.Type = _type;
             request.URI = Uri;
-            request.OscoapContext = OscoapContext;
+            request.OscoreContext = OscoreContext;
 
             if (UriPath != null) {
                 request.UriPath = UriPath;

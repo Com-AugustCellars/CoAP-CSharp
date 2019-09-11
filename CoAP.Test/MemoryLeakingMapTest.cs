@@ -4,15 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Threading;
-#if !NETFX_CORE
-using NUnit.Framework;
-using TestClass = NUnit.Framework.TestFixtureAttribute;
-using TestMethod = NUnit.Framework.TestAttribute;
-using TestInitialize = NUnit.Framework.SetUpAttribute;
-using TestCleanup = NUnit.Framework.TearDownAttribute;
-#else
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-#endif
 using Com.AugustCellars.CoAP.Deduplication;
 using Com.AugustCellars.CoAP.Server;
 using Com.AugustCellars.CoAP.Net;
@@ -34,6 +26,7 @@ namespace Com.AugustCellars.CoAP
         // The names of the two resources of the server
         public const String PIGGY = "piggy";
         public const String SEPARATE = "separate";
+        public const int MAX_WAIT_TIME = /*1000*/ Timeout.Infinite;
 
         private IEndPoint _serverEndpoint;
         private IEndPoint _clientEndpoint;
@@ -114,7 +107,7 @@ namespace Com.AugustCellars.CoAP
             Request request = Request.NewGet();
             request.URI = uri;
             request.Type = MessageType.NON;
-            Response response = request.Send(_clientEndpoint).WaitForResponse(1000);
+            Response response = request.Send(_clientEndpoint).WaitForResponse(MAX_WAIT_TIME);
 
             Console.WriteLine("Client received response " + response.PayloadString + " with msg type " + response.Type);
             Assert.AreEqual(_currentResponseText, response.PayloadString);
