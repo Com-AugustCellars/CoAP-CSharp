@@ -277,6 +277,7 @@ namespace Com.AugustCellars.CoAP.Examples
                         if (usage == "oscoap") {
                             SecurityContext ctx = SecurityContext.DeriveContext(
                                 key[CoseKeyParameterKeys.Octet_k].GetByteString(),
+                                null,
                                 key[CBORObject.FromObject("RecipID")].GetByteString(),
                                 key[CBORObject.FromObject("SenderID")].GetByteString(), null,
                                 key[CoseKeyKeys.Algorithm]);
@@ -284,7 +285,10 @@ namespace Com.AugustCellars.CoAP.Examples
                             break;
                         }
                         else if (usage == "oscoap-group") {
-                            SecurityContext ctx = SecurityContext.DeriveGroupContext(key[CoseKeyParameterKeys.Octet_k].GetByteString(), key[CBORObject.FromObject(2)].GetByteString(), key[CBORObject.FromObject("SenderID")].GetByteString(), null, null, key[CoseKeyKeys.Algorithm]);
+                            SecurityContext ctx = SecurityContext.DeriveGroupContext(
+                                key[CoseKeyParameterKeys.Octet_k].GetByteString(), key[CBORObject.FromObject(2)].GetByteString(), key[CBORObject.FromObject("SenderID")].GetByteString(),
+                                null, null,
+                                null, null, null, key[CoseKeyKeys.Algorithm]);
                             foreach (CBORObject recipient in key[CBORObject.FromObject("recipients")].Values) {
                                 ctx.AddRecipient(recipient[CBORObject.FromObject("RecipID")].GetByteString(), new OneKey( recipient[CBORObject.FromObject("sign")]));
                             }

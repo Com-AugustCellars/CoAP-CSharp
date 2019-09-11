@@ -47,7 +47,7 @@ namespace Com.AugustCellars.CoAP
         public void Ocoap_Get()
         {
             CoapClient client = new CoapClient($"coap://localhost:{_serverPort}/abc") {
-                OscoapContext = SecurityContext.DeriveContext(_Secret, _ClientId, _ServerId)
+                OscoapContext = SecurityContext.DeriveContext(_Secret, null, _ClientId, _ServerId)
             };
             Response r = client.Get();
             Assert.AreEqual("/abc", r.PayloadString);
@@ -72,7 +72,7 @@ namespace Com.AugustCellars.CoAP
             _serverPort = ((System.Net.IPEndPoint) endpoint.LocalEndPoint).Port;
 
             SecurityContextSet oscoapContexts = new SecurityContextSet();
-            SecurityContextSet.AllContexts.Add(SecurityContext.DeriveContext(_Secret, _ServerId, _ClientId));
+            SecurityContextSet.AllContexts.Add(SecurityContext.DeriveContext(_Secret, null, _ServerId, _ClientId));
         }
 
         class EchoLocation : Resource

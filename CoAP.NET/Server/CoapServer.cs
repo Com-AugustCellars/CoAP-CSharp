@@ -156,6 +156,7 @@ namespace Com.AugustCellars.CoAP.Server
             AddEndPoint(new CoAPEndPoint(new IPEndPoint(address, port), Config));
         }
 
+#if !NETSTANDARD1_3
         public void AddMulticastAddress(IPEndPoint ep)
         {
             foreach (IEndPoint endpoint in _endpoints) {
@@ -166,6 +167,7 @@ namespace Com.AugustCellars.CoAP.Server
 
             throw new Exception("No UDP Endpoint exists.");
         }
+#endif
 
         /// <inheritdoc/>
         public IEndPoint FindEndPoint(System.Net.EndPoint ep)

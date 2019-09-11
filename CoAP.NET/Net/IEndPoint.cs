@@ -70,11 +70,15 @@ namespace Com.AugustCellars.CoAP.Net
         /// Occurs when a signal message has been received.
         /// </summary>
         event EventHandler<MessageEventArgs<SignalMessage>> ReceivingSignalMessage;
+
+#if !NETSTANDARD1_3
         /// <summary>
         /// Add a multicast address to the endpoint.
         /// </summary>
         /// <param name="ep">address to use</param>
         bool AddMulticastAddress(IPEndPoint ep);
+#endif
+
         /// <summary>
         /// Starts this endpoint and all its components.
         /// </summary>

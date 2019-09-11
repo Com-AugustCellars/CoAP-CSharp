@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using Com.AugustCellars.CoAP.Channel;
 using Com.AugustCellars.COSE;
+using Com.AugustCellars.WebToken;
 
 namespace Com.AugustCellars.CoAP.DTLS
 {
@@ -23,6 +24,8 @@ namespace Com.AugustCellars.CoAP.DTLS
         private readonly int _port;
         private UDPChannel _udpChannel;
         private readonly OneKey _userKey;
+        private readonly CWT _userCwt;
+        private KeySet CwtTrustKeySet { get; }
 
         public EventHandler<TlsEvent> TlsEventHandler;
 
@@ -44,6 +47,14 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
             _port = port;
             _userKey = userKey;
+        }
+
+        public DTLSClientChannel(CWT cwt, OneKey userKey, KeySet cwtTrustKeys, int port)
+        {
+            _port = port;
+            _userKey = userKey;
+            _userCwt = cwt;
+            CwtTrustKeySet = cwtTrustKeys;
         }
 
         /// <summary>
@@ -185,7 +196,13 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                 //  No session - create a new one.
 
-                session = new DTLSSession(ipEndPoint, DataReceived, _userKey);
+                if (_userCwt != null) {
+                    session = new DTLSSession(ipEndPoint, DataReceived, _userCwt, _userKey, CwtTrustKeySet);
+                }
+                else {
+                    session = new DTLSSession(ipEndPoint, DataReceived, _userKey);
+                }
+
                 session.TlsEventHandler += OnTlsEvent;
                 AddSession(session);
 

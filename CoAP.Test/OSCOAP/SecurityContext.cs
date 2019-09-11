@@ -77,7 +77,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public void Derive_C_1_1()
         {
             SecurityContext ctx =
-                SecurityContext.DeriveContext(_Doc_Secret, _Doc_SenderId, _Doc_RecipientId, _Doc_Salt);
+                SecurityContext.DeriveContext(_Doc_Secret, null, _Doc_SenderId, _Doc_RecipientId, _Doc_Salt);
             Assert.AreEqual(ctx.Sender.BaseIV, new byte[] { 0x46, 0x22, 0xd4, 0xdd, 0x6d, 0x94, 0x41, 0x68,0xee, 0xfb, 0x54, 0x98, 0x7c });
             Assert.AreEqual(ctx.Sender.Key, new byte[]{ 0xf0, 0x91, 0x0e, 0xd7, 0x29, 0x5e, 0x6a, 0xd4, 0xb5, 0x4f, 0xc7, 0x93, 0x15, 0x43, 0x02, 0xff });
             Assert.AreEqual(ctx.Recipient.Key, new byte[]{ 0xff, 0xb1, 0x4e, 0x09, 0x3c, 0x94, 0xc9, 0xca, 0xc9, 0x47, 0x16, 0x48, 0xb4, 0xf9, 0x87, 0x10 });
@@ -89,7 +89,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         {
             byte[] senderId = new byte[]{0};
 
-            SecurityContext ctx = SecurityContext.DeriveContext(_Doc_Secret, senderId, _Doc_RecipientId);
+            SecurityContext ctx = SecurityContext.DeriveContext(_Doc_Secret, null, senderId, _Doc_RecipientId);
 
             Assert.AreEqual(ctx.Sender.Key, new byte[]{ 0x32, 0x1b, 0x26, 0x94, 0x32, 0x53, 0xc7, 0xff, 0xb6, 0x00, 0x3b, 0x0b, 0x64, 0xd7, 0x40, 0x41 });
             Assert.AreEqual(ctx.Sender.BaseIV, new byte[]{ 0xbf, 0x35, 0xae, 0x29, 0x7d, 0x2d, 0xac, 0xe9, 0x10, 0xc5, 0x2e, 0x99, 0xf9 });
@@ -102,8 +102,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         {
             byte[] salt = new byte[]{ 0x9e, 0x7c, 0xa9, 0x22, 0x23, 0x78, 0x63, 0x40 };
             byte[] groupId = new byte[]{ 0x37, 0xcb, 0xf3, 0x21, 0x00, 0x17, 0xa2, 0xd3 };
+            OneKey signKey = new OneKey();
+            signKey.Add(COSE.CoseKeyKeys.Algorithm, COSE.AlgorithmValues.EdDSA);
 
-            SecurityContext ctx = SecurityContext.DeriveGroupContext(_Doc_Secret, groupId, _Doc_SenderId, new byte[][]{_Doc_RecipientId}, salt);
+            SecurityContext ctx = SecurityContext.DeriveGroupContext(_Doc_Secret, groupId, _Doc_SenderId, 
+                                                                     signKey[COSE.CoseKeyKeys.Algorithm], signKey, 
+                                                                     new byte[][]{_Doc_RecipientId}, new OneKey[]{signKey}, salt);
 
             Assert.AreEqual(ctx.Sender.Key, new byte[]{ 0xaf, 0x2a, 0x13, 0x00, 0xa5, 0xe9, 0x57, 0x88, 0xb3, 0x56, 0x33, 0x6e, 0xee, 0xcd, 0x2b, 0x92 });
             Assert.AreEqual(ctx.Sender.BaseIV, new byte[]{ 0x2c, 0xa5, 0x8f, 0xb8, 0x5f, 0xf1, 0xb8, 0x1c, 0x0b, 0x71, 0x81, 0xb8, 0x5e });

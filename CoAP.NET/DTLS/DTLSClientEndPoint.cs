@@ -4,6 +4,7 @@ using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Net;
 
 using Com.AugustCellars.COSE;
+using Com.AugustCellars.WebToken;
 
 namespace Com.AugustCellars.CoAP.DTLS
 {
@@ -21,6 +22,10 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// </summary>
         /// <param name="userKey">Authentication information</param>
         public DTLSClientEndPoint(OneKey userKey) : this(userKey, 0, CoapConfig.Default)
+        {
+        }
+
+        public DTLSClientEndPoint(CWT cwt, OneKey privKey, KeySet cwtTrustKeys) : this (new DTLSClientChannel(cwt, privKey, cwtTrustKeys, 0), CoapConfig.Default)
         {
         }
 

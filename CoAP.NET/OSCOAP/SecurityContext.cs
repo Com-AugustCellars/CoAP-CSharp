@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+// using System.Runtime.Remoting.Messaging;
+using System.Text;
 using PeterO.Cbor;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -9,14 +11,14 @@ using Com.AugustCellars.COSE;
 
 namespace Com.AugustCellars.CoAP.OSCOAP
 {
-#if INCLUDE_OSCOAP
     /// <summary>
     /// Security context information for use with the OSCOAP structures.
     /// This structure supports doing both unicast and multicast transmission and
-    /// receiption of messages.
+    /// reception of messages.
     /// </summary>
     public class SecurityContext
     {
+#region Replay Window Code
         /// <summary>
         /// Class implementation used for doing checking if a message is being replayed at us.
         /// </summary>
@@ -62,7 +64,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         int v = _hits.Length / 2;
                         _baseValue += v;
                         BitArray t = new BitArray(_hits.Length);
-                        for (int i = 0; i < v; i++) t[i] = _hits[i + v];
+                        for (int i = 0; i < v; i++) {
+                            t[i] = _hits[i + v];
+                        }
+
                         _hits = t;
                         index -= v;
                     }
@@ -75,6 +80,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 _hits.Set((int) index, true);
             }
         }
+        #endregion
+
+#region Entity Context - information about a single sender
 
         /// <summary>
         /// Crypto information dealing with a single entity that sends data
@@ -82,12 +90,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public class EntityContext
         {
             /// <summary>
-            /// Create new entity cyrpto context structure
+            /// Create new entity crypto context structure
             /// </summary>
             public EntityContext() { }
 
             /// <summary>
-            /// Create new entity cyrpto context structure
+            /// Create new entity crypto context structure
             /// Copy constructor - needed to clone key material
             /// </summary>
             /// <param name="old">old structure</param>
@@ -103,9 +111,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
 
             /// <summary>
-            /// What encrption algorithm is being used?
+            /// What encryption algorithm is being used?
             /// </summary>
             public CBORObject Algorithm { get; set; }
+
+            public CBORObject SigningAlgorithm { get; set; }
 
             /// <summary>
             /// What is the base IV value for this context?
@@ -137,7 +147,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     byte[] part = BitConverter.GetBytes(SequenceNumber);
                     if (BitConverter.IsLittleEndian) Array.Reverse(part);
                     int i;
-                    for (i = 0; i < part.Length - 1; i++) if (part[i] != 0) break;
+                    for (i = 0; i < part.Length - 1; i++) {
+                        if (part[i] != 0) break;
+                    }
+
                     Array.Copy(part, i, part, 0, part.Length - i);
                     Array.Resize(ref part, part.Length - i);
 
@@ -165,7 +178,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 byte[] iv = (byte[])BaseIV.Clone();
                 int offset = iv.Length - partialIV.Length;
 
-                for (int i = 0; i < partialIV.Length; i++) iv[i + offset] ^= partialIV[i];
+                for (int i = 0; i < partialIV.Length; i++) {
+                    iv[i + offset] ^= partialIV[i];
+                }
 
                 return CBORObject.FromObject(iv);
             }
@@ -184,11 +199,31 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             /// The key to use for counter signing purposes
             /// </summary>
             public OneKey SigningKey { get; set; }
-        }
 
-        private static int _ContextNumber;
+            /// <inheritdoc />
+            public override string ToString()
+            {
+                string ret = $"kid= {BitConverter.ToString(Id)} key={BitConverter.ToString(Key)} IV={BitConverter.ToString(BaseIV)} PartialIV={BitConverter.ToString(PartialIV)}\n";
+                if (SigningKey != null) {
+                    ret += $" {SigningKey.AsCBOR().ToString()}";
+                }
+
+                return ret;
+            }
+        }
+#endregion
+
+
+
+        private static int _contextNumber;
         private byte[] _masterSecret;
         private byte[] _salt;
+        public CBORObject CountersignParams { get; set; }
+        public CBORObject CountersignKeyParams { get; set; }
+        public int SignatureSize { get; } = 64;
+
+        public  Func<SecurityContext, byte[], EntityContext> Locate = null;
+    
 
         /// <summary>
         /// What is the global unique context number for this context.
@@ -208,7 +243,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <summary>
         /// Get the set of all recipients for group.
         /// </summary>
-        public Dictionary<byte[], EntityContext> Recipients { get; private set; } = new Dictionary<byte[], EntityContext>();
+        public Dictionary<byte[], EntityContext> Recipients { get; private set; }
 
         /// <summary>
         /// Group ID for multi-cast.
@@ -259,7 +294,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         public void AddRecipient(byte[] recipientId, OneKey signKey)
         {
-            EntityContext x = DeriveEntityContext(_masterSecret, null, recipientId, _salt, Sender.Algorithm, null);
+            if (!signKey.HasAlgorithm(Sender.SigningAlgorithm)) {
+                throw new ArgumentException("signature algorithm not correct");
+            }
+            EntityContext x = DeriveEntityContext(_masterSecret, GroupId, recipientId, _salt, Sender.Algorithm);
             x.SigningKey = signKey;
 
             Recipients.Add(recipientId, x);
@@ -271,20 +309,26 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// to build a security context for a single sender and recipient.
         /// </summary>
         /// <param name="masterSecret">pre-shared key</param>
+        /// <param name="senderContext">context for the ID</param>
         /// <param name="senderId">name assigned to sender</param>
         /// <param name="recipientId">name assigned to recipient</param>
         /// <param name="masterSalt">salt value</param>
         /// <param name="algAEAD">encryption algorithm</param>
         /// <param name="algKeyAgree">key agreement algorithm</param>
         /// <returns></returns>
-        public static SecurityContext DeriveContext(byte[] masterSecret, byte[] senderId, byte[] recipientId, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
+        public static SecurityContext DeriveContext(byte[] masterSecret, byte[] senderContext, byte[] senderId, byte[] recipientId, 
+                                                    byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
         {
             int cbKey;
             int cbIV;
             SecurityContext ctx = new SecurityContext();
 
-            if (algAEAD == null) ctx.Sender.Algorithm = AlgorithmValues.AES_CCM_16_64_128;
-            else ctx.Sender.Algorithm = algAEAD;
+            if (algAEAD == null) {
+                ctx.Sender.Algorithm = AlgorithmValues.AES_CCM_16_64_128;
+            }
+            else {
+                ctx.Sender.Algorithm = algAEAD;
+            }
 
             if (ctx.Sender.Algorithm.Type != CBORType.Number) throw new Exception("Unsupported algorithm");
             switch ((AlgorithmValuesInt) ctx.Sender.Algorithm.AsInt32()) {
@@ -329,7 +373,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             CBORObject info = CBORObject.NewArray();
 
             info.Add(senderId); // 0
-            info.Add(CBORObject.Null); // 1
+            info.Add(senderContext); // 1
             info.Add(ctx.Sender.Algorithm); // 2
             info.Add("Key"); // 3
             info.Add(cbKey); // 4 in bytes
@@ -343,7 +387,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             else if (algKeyAgree.Equals(AlgorithmValues.ECDH_SS_HKDF_512)) {
                 sha256 = new Sha512Digest();
             }
-            else throw new ArgumentException("Unrecognized key agreement algorithm");
+            else {
+                throw new ArgumentException("Unrecognized key agreement algorithm");
+            }
 
             IDerivationFunction hkdf = new HkdfBytesGenerator(sha256);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
@@ -367,17 +413,21 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             int iIv = cbIV - 5 - senderId.Length;
             if (cbIV - 6 < senderId.Length) throw new Exception("Sender Id too long");
             ctx.Sender.BaseIV[0] ^= (byte) senderId.Length;
-            for (int i = 0; i < senderId.Length; i++) ctx.Sender.BaseIV[iIv + i] ^= senderId[i];
+            for (int i = 0; i < senderId.Length; i++) {
+                ctx.Sender.BaseIV[iIv + i] ^= senderId[i];
+            }
 
             iIv = cbIV - 5 - recipientId.Length;
             if (cbIV - 6 < recipientId.Length) throw new Exception("Recipient Id too long");
             ctx.Recipient.BaseIV[0] ^= (byte) recipientId.Length;
-            for (int i = 0; i < recipientId.Length; i++) ctx.Recipient.BaseIV[iIv + i] ^= recipientId[i];
+            for (int i = 0; i < recipientId.Length; i++) {
+                ctx.Recipient.BaseIV[iIv + i] ^= recipientId[i];
+            }
 
             //  Give a unique context number for doing comparisons
 
-            ctx.ContextNo = _ContextNumber;
-            _ContextNumber += 1;
+            ctx.ContextNo = _contextNumber;
+            _contextNumber += 1;
 
             return ctx;
         }
@@ -387,36 +437,65 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// to build a security context for a single sender and recipient.
         /// </summary>
         /// <param name="masterSecret">pre-shared key</param>
+        /// <param name="groupId">identifier for the group</param>
         /// <param name="senderId">name assigned to sender</param>
+        /// <param name="algSignature">What is the signature algorithm</param>
+        /// <param name="senderSignKey">what is the signing key for the signer</param>
         /// <param name="recipientIds">names assigned to recipients</param>
+        /// <param name="recipientSignKeys">keys for any assigned recipients</param>
         /// <param name="masterSalt">salt value</param>
         /// <param name="algAEAD">encryption algorithm</param>
         /// <param name="algKeyAgree">key agreement algorithm</param>
         /// <returns></returns>
-        public static SecurityContext DeriveGroupContext(byte[] masterSecret, byte[] groupID, byte[] senderId, byte[][] recipientIds, byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
+        public static SecurityContext DeriveGroupContext(byte[] masterSecret, byte[] groupId, byte[] senderId, CBORObject algSignature, OneKey senderSignKey, 
+                                                         byte[][] recipientIds, OneKey[] recipientSignKeys, 
+                                                         byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
         {
             SecurityContext ctx = new SecurityContext();
+            ctx.Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
             ctx._masterSecret = masterSecret;
             ctx._salt = masterSalt;
 
-            ctx.Sender = DeriveEntityContext(masterSecret, groupID, senderId, masterSalt, algAEAD, algKeyAgree);
-            if (recipientIds != null) {
-                ctx.Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
-                foreach (byte[] id in recipientIds) {
-                    ctx.Recipients.Add(id, DeriveEntityContext(masterSecret, groupID, id, masterSalt, algAEAD, algKeyAgree));
-                }
+            if ((recipientIds != null && recipientSignKeys != null) && (recipientIds.Length != recipientSignKeys.Length)) {
+                throw new ArgumentException("recipientsIds and recipientSignKey must be the same length");
             }
 
-            ctx.GroupId = groupID;
+            if (!senderSignKey.HasAlgorithm(algSignature)) {
+                throw new ArgumentException("Wrong algorithm for sender sign key");
+            }
+
+            ctx.Sender = DeriveEntityContext(masterSecret, groupId, senderId, masterSalt, algAEAD, algKeyAgree);
+            ctx.Sender.SigningAlgorithm = algSignature;
+            ctx.Sender.SigningKey = senderSignKey;
+            
+            if (recipientIds != null) {
+                if (recipientSignKeys == null) throw new ArgumentException("recipientSignKeys is null when recipientIds is not null");
+                ctx.Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
+                for (int i =0; i<recipientIds.Length; i++ ) {
+                    if (!recipientSignKeys[i].HasAlgorithm(algSignature)) {
+                        throw new ArgumentException("Wrong algorithm for recipient sign key");
+                    }
+                    EntityContext et = DeriveEntityContext(masterSecret, groupId, recipientIds[i], masterSalt, algAEAD, algKeyAgree);
+                    et.SigningKey = recipientSignKeys[i];
+                    ctx.Recipients.Add(recipientIds[i], et);
+                }
+            }
+            else if (recipientSignKeys != null) {
+                throw new ArgumentException("recipientIds is null when recipientSignKeys is not null");
+            }
+
+            ctx.GroupId = groupId;
 
             return ctx;
         }
+
 
         /// <summary>
         /// Given the set of inputs, perform the crptographic operations that are needed
         /// to build a security context for a single sender and recipient.
         /// </summary>
         /// <param name="masterSecret">pre-shared key</param>
+        /// <param name="groupId">Group/Context Identifier</param>
         /// <param name="entityId">name assigned to sender</param>
         /// <param name="masterSalt">salt value</param>
         /// <param name="algAEAD">encryption algorithm</param>
@@ -469,7 +548,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             else if (algKeyAgree.Equals(AlgorithmValues.ECDH_SS_HKDF_512)) {
                 sha256 = new Sha512Digest();
             }
-            else throw new ArgumentException("Unknown key agree algorithm");
+            else {
+                throw new ArgumentException("Unknown key agree algorithm");
+            }
 
             IDerivationFunction hkdf = new HkdfBytesGenerator(sha256);
             hkdf.Init(new HkdfParameters(masterSecret, masterSalt, info.EncodeToBytes()));
@@ -489,21 +570,47 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             if (ivSize - 6 < entityId.Length) throw new Exception("Entity id is too long");
             ctx.BaseIV[0] ^= (byte) entityId.Length;
             int i1 = ivSize - 5 - entityId.Length /*- 1*/;
-            for (int i = 0; i < entityId.Length; i++) ctx.BaseIV[i1 + i] ^= entityId[i];
+            for (int i = 0; i < entityId.Length; i++) {
+                ctx.BaseIV[i1 + i] ^= entityId[i];
+            }
 
             return ctx;
         }
 
 
-
+        public bool IsGroupContext => Recipients != null;
 
 #if DEBUG
         static public int FutzError { get; set; }
 #endif
 
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            StringBuilder sb = new StringBuilder("SecurityContext: ");
+            sb.Append($"Secret: {BitConverter.ToString(_masterSecret)}\n");
+            sb.Append($"Sender: {Sender.ToString()}");
+            if (IsGroupContext) {
+                foreach (KeyValuePair<byte[], EntityContext> entity in Recipients) {
+                    sb.Append($"Entity: {entity.Value.ToString()}\n");
+
+                }
+            }
+            else {
+                sb.Append($"Recipient: {Recipient.ToString()}");
+            }
+
+            return sb.ToString();
+        }
+
         public class ByteArrayComparer : EqualityComparer<byte[]>
         {
             public override bool Equals(byte[] first, byte[] second)
+            {
+                return AreEqual(first, second);
+            }
+
+            public static bool AreEqual(byte[] first, byte[] second)
             {
                 if (first == null || second == null) {
                     // null == null returns true.
@@ -530,5 +637,4 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
         }
     }
-#endif
 }

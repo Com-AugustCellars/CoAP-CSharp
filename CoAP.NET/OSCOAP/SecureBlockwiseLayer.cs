@@ -45,7 +45,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <inheritdoc/>
         public override void SendRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
-            if ((request.Oscoap == null) && (exchange.OscoapContext == null))
+            if ((request.Oscoap == null) && (exchange.OscoreContext == null))
             {
                 base.SendRequest(nextLayer, exchange, request);
             }
@@ -87,7 +87,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <inheritdoc/>
         public override void ReceiveRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
-            if ((request.Oscoap == null) && (exchange.OscoapContext == null))
+            if ((request.Oscoap == null) && (exchange.OscoreContext == null))
             {
                 base.ReceiveRequest(nextLayer, exchange, request);
             }
@@ -215,7 +215,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <inheritdoc/>
         public override void SendResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
-            if ((exchange.OscoapContext == null) && (response.Oscoap == null))
+            if ((exchange.OscoreContext == null) && (response.Oscoap == null))
             {
                 base.SendResponse(nextLayer, exchange, response);
                 return;
@@ -270,7 +270,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <inheritdoc/>
         public override void ReceiveResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
-            if ((exchange.OscoapContext == null) && (response.Oscoap == null))
+            if ((exchange.OscoreContext == null) && (response.Oscoap == null))
             {
                 base.ReceiveResponse(nextLayer, exchange, response);
                 return;

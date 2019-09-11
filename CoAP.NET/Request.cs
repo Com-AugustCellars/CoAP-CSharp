@@ -75,7 +75,15 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets a value indicating whether this request is a multicast request or not.
         /// </summary>
-        public Boolean Multicast { get; set; }
+        public new Boolean IsMulticast {
+            get {
+                if (Destination == null) {
+                    throw new Exception("Must set the destination before we can known");
+                }
+
+                return base.IsMulticast;
+            }
+         }
 
         // ReSharper disable once InconsistentNaming
         private static readonly Regex regIP = new Regex("(\\[[0-9a-f:]+\\]|[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})", RegexOptions.IgnoreCase);
@@ -239,6 +247,7 @@ namespace Com.AugustCellars.CoAP
             return null;
         }
 
+#region SendFunctions
         /// <summary>
         /// Send the request.
         /// </summary>
@@ -305,6 +314,7 @@ namespace Com.AugustCellars.CoAP
                 return resp;
             }
         }
+#endregion
 
         /// <inheritdoc/>
         protected override void OnRejected()
@@ -372,6 +382,10 @@ namespace Com.AugustCellars.CoAP
             if (Destination == null) {
                 throw new InvalidOperationException("Missing Destination");
             }
+
+            if (IsMulticast && this.Type == MessageType.CON) {
+                throw new InvalidOperationException("Multicast and CON are not compatible.");
+            }
         }
 
         internal override void CopyEventHandler(Message src)
@@ -385,6 +399,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
+#region Creation Functions
         /// <summary>
         /// Construct a GET request.
         /// </summary>
@@ -416,13 +431,19 @@ namespace Com.AugustCellars.CoAP
         {
             return new Request(Method.DELETE);
         }
+#endregion
 
-#if INCLUDE_OSCOAP
         /// <summary>
         /// Set the context structure used to OSCOAP protect the message
         /// </summary>
-        public SecurityContext OscoapContext { get; set; }
-#endif
+        [ObsoleteAttribute("Use OscoreContext instead")]
+        public SecurityContext OscoapContext
+        {
+            get => OscoreContext;
+            set => OscoreContext = value;
+        }
+
+        public SecurityContext OscoreContext { get; set; }
 
         /// <summary>
         /// Return the security context associated with TLS.

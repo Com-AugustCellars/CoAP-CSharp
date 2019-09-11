@@ -13,7 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Collections.Concurrent;
-using System.Linq;
+using Org.BouncyCastle.Utilities.Encoders;
+using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP.Util
 {
@@ -164,12 +165,23 @@ namespace Com.AugustCellars.CoAP.Util
             sb.AppendFormat("Options: {0}\n", OptionsToString(msg))
                 .AppendFormat("Payload: {0} Bytes\n", msg.PayloadSize);
 
-            if (msg.PayloadSize > 0 && MediaType.IsPrintable(msg.ContentType))
-            {
+            if (msg.PayloadSize > 0) {
                 sb.AppendLine("---------------------------------------------------------------");
-                sb.AppendLine(msg.PayloadString);
+                if (MediaType.IsPrintable(msg.ContentType)) {
+                    sb.AppendLine(msg.PayloadString);
+                }
+                else if (MediaType.IsCbor(msg.ContentType)) {
+                    sb.AppendLine(CBORObject.DecodeFromBytes(msg.Payload).ToString());
+                }
+                else {
+                    string x = Hex.ToHexString(msg.Payload);
+                    for (int i = 0; i < x.Length; i += 64) {
+                        int chunk = (i + 64 < x.Length) ? 64 : (x.Length - i);
+                        sb.AppendLine(x.Substring(i, chunk));
+                    }
+                }
             }
-            sb.AppendLine("===============================================================");
+
 
             return sb.ToString();
         }

@@ -12,7 +12,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using Com.AugustCellars.CoAP.Log;
@@ -106,6 +108,7 @@ namespace Com.AugustCellars.CoAP.Channel
         /// </summary>
         public int MaxSendSize { get; set; }
 
+#if !NETSTANDARD1_3
         private readonly List<SocketSet> _listMultiCastEndpoints = new List<SocketSet>();
 
         /// <inheritdoc/>
@@ -120,6 +123,7 @@ namespace Com.AugustCellars.CoAP.Channel
             }
             return true;
         }
+#endif
 
         /// <inheritdoc/>
         public void Start()
@@ -135,9 +139,11 @@ namespace Com.AugustCellars.CoAP.Channel
 
                 StartSocket(_unicast);
 
+#if !NETSTANDARD1_3
                 foreach (SocketSet s in _listMultiCastEndpoints) {
                     StartMulticastSocket(s);
                 }
+#endif
             }
             catch (Exception) {
                 _running = 0;
@@ -208,21 +214,72 @@ namespace Com.AugustCellars.CoAP.Channel
             BeginReceive(info);
         }
 
+#if !NETSTANDARD1_3
         private void StartMulticastSocket(SocketSet info)
         {
             if (info._localEP.Address.IsIPv6Multicast) {
-                info._socket = SetupUDPSocket(AddressFamily.InterNetworkV6, ReceivePacketSize + 1);
-                info._socket.Socket.Bind(new IPEndPoint(IPAddress.IPv6Any, _port));
+                try {
+                    info._socket = SetupUDPSocket(AddressFamily.InterNetworkV6, ReceivePacketSize + 1);
+                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.IPv6Any, _port));
+
+                    NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+                    foreach (NetworkInterface adapter in nics) {
+                        if (!adapter.SupportsMulticast) continue;
+                        if (adapter.OperationalStatus != OperationalStatus.Up) continue;
+                        if (adapter.Supports(NetworkInterfaceComponent.IPv6)) {
+                            IPInterfaceProperties properties = adapter.GetIPProperties();
+
+                            foreach (UnicastIPAddressInformation ip in adapter.GetIPProperties().UnicastAddresses) {
+                                if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) {
+                                    IPv6InterfaceProperties v6ip = adapter.GetIPProperties().GetIPv6Properties();
+                                    IPv6MulticastOption mc = new IPv6MulticastOption(info._localEP.Address, v6ip.Index);
+                                    try {
+                                        info._socket.Socket.SetSocketOption(SocketOptionLevel.IPv6,
+                                                                            SocketOptionName.AddMembership,
+                                                                            mc);
+                                    }
+                                    catch (SocketException e) {
+                                        _Log.Info(
+                                            m => m(
+                                                $"Start Multicast:  Address {info._localEP.Address} had an exception ${e.ToString()}"));
+                                    }
+
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (SocketException e) {
+                    _Log.Info(
+                        m => m($"Start Multicast:  Address {info._localEP.Address} had an exception ${e.ToString()}"));
+                    throw;
+                }
             }
             else {
                 try {
                     info._socket = SetupUDPSocket(AddressFamily.InterNetwork, ReceivePacketSize + 1);
                     info._socket.Socket.Bind(new IPEndPoint(IPAddress.Any, _port));
 
-                    MulticastOption mc = new MulticastOption(info._localEP.Address);
-                    info._socket.Socket.SetSocketOption(SocketOptionLevel.IP,
-                                                        SocketOptionName.AddMembership,
-                                                        mc);
+                    NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+
+
+                    foreach (NetworkInterface adapter in nics) {
+                        if (!adapter.SupportsMulticast) continue;
+                        if (adapter.OperationalStatus != OperationalStatus.Up) continue;
+                        if (adapter.Supports(NetworkInterfaceComponent.IPv4)) {
+                            IPInterfaceProperties properties = adapter.GetIPProperties();
+
+                            foreach (UnicastIPAddressInformation ip in adapter.GetIPProperties().UnicastAddresses) {
+                                if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
+                                    MulticastOption mc = new MulticastOption(info._localEP.Address, ip.Address);
+                                    info._socket.Socket.SetSocketOption(SocketOptionLevel.IP,
+                                                                        SocketOptionName.AddMembership,
+                                                                        mc);
+                                }
+                            }
+                        }
+                    }
                 }
                 catch (SocketException e) {
                     _Log.Info(m => m($"Start Multicast:  Address {info._localEP.Address} had an exception ${e.ToString()}"));
@@ -247,6 +304,8 @@ namespace Com.AugustCellars.CoAP.Channel
 
             BeginReceive(info);
         }
+#endif
+
         /// <inheritdoc/>
         public void Stop()
         {
