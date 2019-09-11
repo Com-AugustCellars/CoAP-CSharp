@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 
 <Project Sdk="Microsoft.NET.Sdk">
@@ -22,6 +22,7 @@ This project is NOT intended to be used for commercial purposes.  It is intented
 1.3
   - Remove NetStandard 1.3 in favor of 2.0 and add NetCore 2.0
   - Put in multcast support
+  - Primative version of CoRAL
 1.2.0.0
   - Update net 4.5 file to use latest CBOR
   - Switch to use NetStandard 1.3 rather than Net 4.5
