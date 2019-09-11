@@ -352,64 +352,61 @@ namespace Com.AugustCellars.CoAP.Net
 		     */
 
             Exchange.KeyID keyId;
-            if (response.Type == MessageType.ACK)
+            if (response.Type == MessageType.ACK) {
                 // own namespace
                 keyId = new Exchange.KeyID(response.ID, null, response.Session);
-            else
+            }
+            else {
                 // remote namespace
                 keyId = new Exchange.KeyID(response.ID, response.Source, response.Session);
+            }
 
             Exchange.KeyToken keyToken = new Exchange.KeyToken(response.Token);
 
             Exchange exchange;
-            if (_exchangesByToken.TryGetValue(keyToken, out exchange))
-            {
+            if (_exchangesByToken.TryGetValue(keyToken, out exchange)) {
+                //  We need to play games if this is multicast
+                if (exchange.CurrentRequest.IsMulticast) {
+                    Exchange newExchange = new Exchange(exchange);
+                    newExchange.Request = exchange.Request;
+                    exchange = newExchange;
+                }
+
                 // There is an exchange with the given token
                 Exchange prev = _deduplicator.FindPrevious(keyId, exchange);
-                if (prev != null)
-                {
+                if (prev != null) {
                     // (and thus it holds: prev == exchange)
-                    if (_Log.IsInfoEnabled)
-                        _Log.Info("Duplicate response for open exchange: " + response);
+                    _Log.Info(m => m($"Duplicate response for open exchange: {response}"));
                     response.Duplicate = true;
                 }
-                else
-                {
+                else {
                     keyId = new Exchange.KeyID(exchange.CurrentRequest.ID, null, response.Session);
-                    if (_Log.IsDebugEnabled)
-                        _Log.Debug("Exchange got response: Cleaning up " + keyId);
+                    _Log.Debug(m => m($"Exchange got response: Cleaning up {keyId}"));
                     _exchangesByID.Remove(keyId);
                 }
 
-                if (response.Type == MessageType.ACK && exchange.CurrentRequest.ID != response.ID)
-                {
+                if (response.Type == MessageType.ACK && exchange.CurrentRequest.ID != response.ID) {
                     // The token matches but not the MID. This is a response for an older exchange
-                    if (_Log.IsWarnEnabled)
-                        _Log.Warn("Possible MID reuse before lifetime end: " + response.TokenString + " expected MID " + exchange.CurrentRequest.ID + " but received " + response.ID);
+                    _Log.Warn( m => m($"Possible MID reuse before lifetime end: {response.TokenString} expected MID {exchange.CurrentRequest.ID} but received {response.ID}"));
                 }
 
                 return exchange;
             }
-            else
-            {
+            else {
                 // There is no exchange with the given token.
-                if (response.Type != MessageType.ACK)
-                {
+                if (response.Type != MessageType.ACK) {
                     // only act upon separate responses
                     Exchange prev = _deduplicator.Find(keyId);
-                    if (prev != null)
-                    {
-                        if (_Log.IsInfoEnabled)
-                            _Log.Info("Duplicate response for completed exchange: " + response);
+                    if (prev != null) {
+                        _Log.Info(m => m($"Duplicate response for completed exchange: {response}"));
                         response.Duplicate = true;
                         return prev;
                     }
                 }
-                else
-                {
-                    if (_Log.IsInfoEnabled)
-                        _Log.Info("Ignoring unmatchable piggy-backed response from " + response.Source + ": " + response);
+                else {
+                    _Log.Info(m => m($"Ignoring unmatchable piggy-backed response from {response.Source}: {response}"));
                 }
+
                 // ignore response
                 return null;
             }

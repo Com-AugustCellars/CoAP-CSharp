@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
-#if !NETFX_CORE
-using NUnit.Framework;
-using TestClass = NUnit.Framework.TestFixtureAttribute;
-using TestMethod = NUnit.Framework.TestAttribute;
-#else
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-#endif
 
 namespace Com.AugustCellars.CoAP.Channel
 {

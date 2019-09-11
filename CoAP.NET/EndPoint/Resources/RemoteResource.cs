@@ -23,8 +23,10 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
                 case MediaType.ApplicationLinkFormat:
                     return LinkFormat.Deserialize(linkFormat);
 
+#if false // Dead work?
                 case MediaType.ApplicationLinkFormatJson:
                     return LinkFormat.DeserializeJson(linkFormat);
+#endif
 
                 default:
                     throw new ArgumentException("Unrecognized media type");
@@ -37,11 +39,13 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
                 case MediaType.ApplicationLinkFormat:
                     return LinkFormat.Deserialize(Encoding.UTF8.GetString(linkFormat));
 
+#if false // Dead work?
                 case MediaType.ApplicationLinkFormatCbor:
                     return LinkFormat.DeserializeCbor(linkFormat);
 
                 case MediaType.ApplicationLinkFormatJson:
                     return LinkFormat.DeserializeJson(Encoding.UTF8.GetString(linkFormat));
+#endif
 
                 default:
                     throw new ArgumentException("Unrecognized media type");

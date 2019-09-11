@@ -10,6 +10,7 @@
  */
 
 using System;
+using System.Net;
 
 namespace Com.AugustCellars.CoAP.Channel
 {
@@ -26,6 +27,14 @@ namespace Com.AugustCellars.CoAP.Channel
         /// Occurs when some bytes are received in this channel.
         /// </summary>
         event EventHandler<DataReceivedEventArgs> DataReceived;
+#if !NETSTANDARD1_3
+        /// <summary>
+        /// Add a multicast address to the channel
+        /// </summary>
+        /// <param name="ep">address to add</param>
+        /// <returns>true if added</returns>
+        bool AddMulticastAddress(IPEndPoint ep);
+#endif
         /// <summary>
         /// Starts this channel.
         /// </summary>

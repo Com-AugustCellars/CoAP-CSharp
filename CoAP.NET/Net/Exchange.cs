@@ -49,7 +49,6 @@ namespace Com.AugustCellars.CoAP.Net
 #if INCLUDE_OSCOAP
         private BlockwiseStatus _oscoap_requestBlockStatus;
         private BlockwiseStatus _oscoap_responseBlockStatus;
-        private SecurityContext _oscoap_securityContext;
 #endif
 
         public event EventHandler Completed;
@@ -59,6 +58,14 @@ namespace Com.AugustCellars.CoAP.Net
             _origin = origin;
             _currentRequest = request;
             _timestamp = DateTime.Now;
+        }
+
+        public Exchange(Exchange other)
+        {
+            _origin = other.Origin;
+            _currentRequest = other.Request;
+            _timestamp = other._timestamp;
+            OscoreContext = other.OscoreContext;
         }
 
         public Origin Origin
@@ -170,10 +177,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <summary>
         /// Gets or sets the OSCOAP security context for the exchange
         /// </summary>
-        public SecurityContext OscoapContext {
-            get { return _oscoap_securityContext; }
-            set { _oscoap_securityContext = value; }
-        }
+        public SecurityContext OscoreContext { get; set; }
 
         /// <summary>
         /// Gets or sets the sequence number used to link requests and responses

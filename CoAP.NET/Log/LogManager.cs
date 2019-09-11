@@ -134,7 +134,7 @@ namespace Com.AugustCellars.CoAP.Log
         /// </summary>
         Error,
         /// <summary>
-        /// Fatals only.
+        /// Fatal only.
         /// </summary>
         Fatal,
         /// <summary>

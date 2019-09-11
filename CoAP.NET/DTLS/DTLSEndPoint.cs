@@ -13,31 +13,31 @@ namespace Com.AugustCellars.CoAP.DTLS
     public class DTLSEndPoint : CoAPEndPoint
     {
         /// <inheritdoc/>
-        public DTLSEndPoint(KeySet serverKeys, KeySet userKeys) : this(serverKeys, userKeys, 0, CoapConfig.Default)
+        public DTLSEndPoint(TlsKeyPairSet serverKeys, KeySet userKeys) : this(serverKeys, userKeys, 0, CoapConfig.Default)
         {
         }
 
         /// <inheritdoc/>
-        public DTLSEndPoint(KeySet serverKeys, KeySet userKeys, ICoapConfig config) : this(serverKeys, userKeys, 0, config)
+        public DTLSEndPoint(TlsKeyPairSet serverKeys, KeySet userKeys, ICoapConfig config) : this(serverKeys, userKeys, 0, config)
         {
         }
 
         /// <inheritdoc/>
-        public DTLSEndPoint(KeySet keysServer, KeySet keysUser, Int32 port) : this(new DTLSChannel(keysServer, keysUser, port), CoapConfig.Default)
+        public DTLSEndPoint(TlsKeyPairSet keysServer, KeySet keysUser, Int32 port, KeySet cwtTrustRoots = null) : this(new DTLSChannel(keysServer, keysUser, port, cwtTrustRoots), CoapConfig.Default)
         {
         }
 
         /// <inheritdoc/>
-        public DTLSEndPoint(KeySet keyServer, KeySet keysUser, int port, ICoapConfig config) : this (new DTLSChannel(keyServer, keysUser, port), config)
+        public DTLSEndPoint(TlsKeyPairSet keyServer, KeySet keysUser, int port, ICoapConfig config) : this (new DTLSChannel(keyServer, keysUser, port), config)
         { }
 
         /// <inheritdoc/>
-        public DTLSEndPoint(KeySet keysServer, KeySet keysUser, System.Net.EndPoint localEndPoint) : this(keysServer, keysUser, localEndPoint, CoapConfig.Default)
+        public DTLSEndPoint(TlsKeyPairSet keysServer, KeySet keysUser, System.Net.EndPoint localEndPoint) : this(keysServer, keysUser, localEndPoint, CoapConfig.Default)
         {
         }
 
         /// <inheritdoc/>
-        public DTLSEndPoint(KeySet keysServer, KeySet keysUser, System.Net.EndPoint localEndPoint, ICoapConfig config) : this(new DTLSChannel(keysServer, keysUser, localEndPoint), config)
+        public DTLSEndPoint(TlsKeyPairSet keysServer, KeySet keysUser, System.Net.EndPoint localEndPoint, ICoapConfig config) : this(new DTLSChannel(keysServer, keysUser, localEndPoint), config)
         {
         }
 

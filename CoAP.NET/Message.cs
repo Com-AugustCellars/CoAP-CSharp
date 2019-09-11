@@ -11,6 +11,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
 using Com.AugustCellars.CoAP.Util;
 
 namespace Com.AugustCellars.CoAP
@@ -157,7 +159,29 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets the destination endpoint.
         /// </summary>
-        public System.Net.EndPoint Destination { get; set; }
+        public System.Net.EndPoint Destination
+        {
+            get=>_destination;
+            set {
+                IPEndPoint ip = (IPEndPoint) value;
+                if (ip != null && ip.AddressFamily == AddressFamily.InterNetwork) {
+                    if ((ip.Address.GetAddressBytes()[0] & 0xf0) == 0xe0) {
+                        IsMulticast = true;
+                    }
+                    else {
+                        IsMulticast = false;
+                    }
+                }
+                else if (ip != null && ip.AddressFamily == AddressFamily.InterNetworkV6) {
+                    IsMulticast = ip.Address.IsIPv6Multicast;
+                }
+
+                _destination = value;
+            }
+        }
+
+        private System.Net.EndPoint _destination;
+        protected bool IsMulticast;
 
         /// <summary>
         /// Gets or sets the source endpoint.

@@ -3,11 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using NUnit.Framework;
-using TestClass = NUnit.Framework.TestFixtureAttribute;
-using TestMethod = NUnit.Framework.TestAttribute;
-using TestInitialize = NUnit.Framework.SetUpAttribute;
-using TestCleanup = NUnit.Framework.TearDownAttribute;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.OSCOAP;
 using Com.AugustCellars.CoAP.Server;
@@ -47,7 +43,7 @@ namespace Com.AugustCellars.CoAP
         public void Ocoap_Get()
         {
             CoapClient client = new CoapClient($"coap://localhost:{_serverPort}/abc") {
-                OscoapContext = SecurityContext.DeriveContext(_Secret, _ClientId, _ServerId)
+                OscoapContext = SecurityContext.DeriveContext(_Secret, null, _ClientId, _ServerId)
             };
             Response r = client.Get();
             Assert.AreEqual("/abc", r.PayloadString);
@@ -72,7 +68,7 @@ namespace Com.AugustCellars.CoAP
             _serverPort = ((System.Net.IPEndPoint) endpoint.LocalEndPoint).Port;
 
             SecurityContextSet oscoapContexts = new SecurityContextSet();
-            SecurityContextSet.AllContexts.Add(SecurityContext.DeriveContext(_Secret, _ServerId, _ClientId));
+            SecurityContextSet.AllContexts.Add(SecurityContext.DeriveContext(_Secret, null, _ServerId, _ClientId));
         }
 
         class EchoLocation : Resource

@@ -20,11 +20,12 @@ namespace Com.AugustCellars.CoAP.Channel
     {
         /// <summary>
         /// </summary>
-        public DataReceivedEventArgs(Byte[] data, System.Net.EndPoint endPoint, ISession session)
+        public DataReceivedEventArgs(Byte[] data, System.Net.EndPoint endPoint, System.Net.EndPoint endPointLocal, ISession session)
         {
             Data = data;
             EndPoint = endPoint;
             Session = session;
+            LocalEndPoint = endPointLocal;
         }
 
         /// <summary>
@@ -36,6 +37,11 @@ namespace Com.AugustCellars.CoAP.Channel
         /// Gets the <see cref="System.Net.EndPoint"/> where the data is received from.
         /// </summary>
         public System.Net.EndPoint EndPoint { get; }
+
+        /// <summary>
+        /// Get the <see cref="System.Net.Endpoint"/> where the data was received.
+        /// </summary>
+        public System.Net.EndPoint LocalEndPoint { get; }
 
         /// <summary>
         /// Gets the communication session for the message.

@@ -6,7 +6,9 @@ using System.Diagnostics;
 using System.Threading;
 using Com.AugustCellars.CoAP.Channel;
 using Com.AugustCellars.COSE;
-
+#if SUPPORT_TLS_CWT
+using Com.AugustCellars.WebToken;
+#endif
 using PeterO.Cbor;
 
 using Org.BouncyCastle.Crypto.Tls;
@@ -25,8 +27,11 @@ namespace Com.AugustCellars.CoAP.DTLS
         private DtlsTransport _dtlsSession;
         private readonly OurTransport _transport;
         private readonly OneKey _userKey;
+#if SUPPORT_TLS_CWT
+        private readonly CWT _userCwt;
+#endif
         private readonly KeySet _userKeys;
-        private readonly KeySet _serverKeys;
+        private readonly TlsKeyPairSet _serverKeys;
         private OneKey _authKey;
 
         private readonly ConcurrentQueue<QueueItem> _queue = new ConcurrentQueue<QueueItem>();
@@ -35,6 +40,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         private readonly EventHandler<SessionEventArgs> _sessionEvents;
 
         public EventHandler<TlsEvent> TlsEventHandler;
+        private KeySet CwtTrustKeySet { get; }
 
         /// <summary>
         /// List of event handlers to inform about session events.
@@ -49,14 +55,27 @@ namespace Com.AugustCellars.CoAP.DTLS
             _transport = new OurTransport(ipEndPoint);
         }
 
-        public DTLSSession(IPEndPoint ipEndPoint, EventHandler<DataReceivedEventArgs> dataReceived, KeySet serverKeys, KeySet userKeys)
+        public DTLSSession(IPEndPoint ipEndPoint, EventHandler<DataReceivedEventArgs> dataReceived, TlsKeyPairSet serverKeys, KeySet userKeys, KeySet cwtTrustKeySet)
         {
             _ipEndPoint = ipEndPoint;
             _dataReceived = dataReceived;
             _userKeys = userKeys;
             _serverKeys = serverKeys;
             _transport = new OurTransport(ipEndPoint);
+            CwtTrustKeySet = cwtTrustKeySet;
         }
+
+#if SUPPORT_TLS_CWT
+        public DTLSSession(IPEndPoint ipEndPoint, EventHandler<DataReceivedEventArgs> dataReceived, CWT userCwt, OneKey privKey, KeySet cwtTrustKeys)
+        {
+            _ipEndPoint = ipEndPoint;
+            _dataReceived = dataReceived;
+            _userCwt = userCwt;
+            _userKey = privKey;
+            CwtTrustKeySet = cwtTrustKeys;
+            _transport = new OurTransport(ipEndPoint);
+        }
+#endif
 
         public OneKey AuthenticationKey
         {
@@ -104,7 +123,15 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
             BasicTlsPskIdentity pskIdentity = null;
 
-            if (_userKey != null) {
+#if SUPPORT_TLS_CWT
+            if (_userCwt != null)
+            {
+                _client = new DtlsClient(null, new TlsKeyPair(_userCwt, _userKey), CwtTrustKeySet);
+            }
+            else if (_userKey != null) {
+#else
+            if (_userKey != null) { 
+#endif
                 if (_userKey.HasKeyType((int) COSE.GeneralValuesInt.KeyType_Octet)) {
                     CBORObject kid = _userKey[COSE.CoseKeyKeys.KeyIdentifier];
 
@@ -153,6 +180,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             DtlsServer server = new DtlsServer(_serverKeys, _userKeys);
             server.TlsEventHandler += OnTlsEvent;
+            server.CwtTrustKeySet = CwtTrustKeySet;
 
             _transport.UDPChannel = udpChannel;
             _transport.Receive(message);
@@ -269,16 +297,16 @@ namespace Com.AugustCellars.CoAP.DTLS
                 else {
                     byte[] buf2 = new byte[size];
                     Array.Copy(buf, buf2, size);
-                    FireDataReceived(buf2, _ipEndPoint);
+                    FireDataReceived(buf2, _ipEndPoint, null);  // M00BUG
                 }
             }
         }
 
-        private void FireDataReceived(Byte[] data, System.Net.EndPoint ep)
+        private void FireDataReceived(Byte[] data, System.Net.EndPoint ep, System.Net.EndPoint epLocal)
         {
             EventHandler<DataReceivedEventArgs> h = _dataReceived;
             if (h != null) {
-                h(this, new DataReceivedEventArgs(data, ep, this));
+                h(this, new DataReceivedEventArgs(data, ep, epLocal, this));
             }
         }
 

@@ -5,6 +5,9 @@ using System.Net;
 using System.Net.Sockets;
 using Com.AugustCellars.CoAP.Channel;
 using Com.AugustCellars.COSE;
+#if SUPPORT_TLS_CWT
+using Com.AugustCellars.WebToken;
+#endif
 
 namespace Com.AugustCellars.CoAP.DTLS
 {
@@ -23,6 +26,10 @@ namespace Com.AugustCellars.CoAP.DTLS
         private readonly int _port;
         private UDPChannel _udpChannel;
         private readonly OneKey _userKey;
+#if SUPPORT_TLS_CWT
+        private readonly CWT _userCwt;
+#endif
+        private KeySet CwtTrustKeySet { get; }
 
         public EventHandler<TlsEvent> TlsEventHandler;
 
@@ -45,6 +52,16 @@ namespace Com.AugustCellars.CoAP.DTLS
             _port = port;
             _userKey = userKey;
         }
+
+#if SUPPORT_TLS_CWT
+        public DTLSClientChannel(CWT cwt, OneKey userKey, KeySet cwtTrustKeys, int port)
+        {
+            _port = port;
+            _userKey = userKey;
+            _userCwt = cwt;
+            CwtTrustKeySet = cwtTrustKeys;
+        }
+#endif
 
         /// <summary>
         /// Create a client only channel and use a given endpoint
@@ -92,6 +109,11 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         private Int32 _running;
 
+        /// <inheritdoc/>
+        public bool AddMulticastAddress(IPEndPoint ep)
+        {
+            return false;
+        }
 
         /// <summary>
         /// Tell the channel to set itself up and start processing data
@@ -180,7 +202,17 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                 //  No session - create a new one.
 
-                session = new DTLSSession(ipEndPoint, DataReceived, _userKey);
+#if SUPPORT_TLS_CWT
+                if (_userCwt != null) {
+                    session = new DTLSSession(ipEndPoint, DataReceived, _userCwt, _userKey, CwtTrustKeySet);
+                }
+                else {
+#endif
+                    session = new DTLSSession(ipEndPoint, DataReceived, _userKey);
+#if SUPPORT_TLS_CWT
+            }
+#endif
+
                 session.TlsEventHandler += OnTlsEvent;
                 AddSession(session);
 
