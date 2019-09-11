@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Com.AugustCellars.COSE;
+#if SUPPORT_TLS_CWT
 using Com.AugustCellars.WebToken;
+#endif
 using Org.BouncyCastle.Security;
 
 namespace Com.AugustCellars.CoAP.DTLS
@@ -13,7 +15,9 @@ namespace Com.AugustCellars.CoAP.DTLS
     {
         public OneKey PrivateKey { get; }
         public OneKey PublicKey { get; }
+#if SUPPORT_TLS_CWT
         public CWT PublicCwt { get; }
+#endif
         public byte[] X509Certificate { get; }
 
         public byte CertType { get; }
@@ -25,12 +29,14 @@ namespace Com.AugustCellars.CoAP.DTLS
             CertType = 2; // RPK
         }
 
+#if SUPPORT_TLS_CWT
         public TlsKeyPair(CWT publicKey, OneKey privateKey)
         {
             this.PrivateKey = privateKey;
             this.PublicCwt = publicKey;
             CertType = 254; // CWT
         }
+#endif
 
         public TlsKeyPair(byte[] certificate, OneKey privateKey)
         {

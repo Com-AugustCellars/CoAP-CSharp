@@ -6,7 +6,9 @@ using System.Diagnostics;
 using System.Threading;
 using Com.AugustCellars.CoAP.Channel;
 using Com.AugustCellars.COSE;
+#if SUPPORT_TLS_CWT
 using Com.AugustCellars.WebToken;
+#endif
 using PeterO.Cbor;
 
 using Org.BouncyCastle.Crypto.Tls;
@@ -25,7 +27,9 @@ namespace Com.AugustCellars.CoAP.DTLS
         private DtlsTransport _dtlsSession;
         private readonly OurTransport _transport;
         private readonly OneKey _userKey;
+#if SUPPORT_TLS_CWT
         private readonly CWT _userCwt;
+#endif
         private readonly KeySet _userKeys;
         private readonly TlsKeyPairSet _serverKeys;
         private OneKey _authKey;
@@ -61,6 +65,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             CwtTrustKeySet = cwtTrustKeySet;
         }
 
+#if SUPPORT_TLS_CWT
         public DTLSSession(IPEndPoint ipEndPoint, EventHandler<DataReceivedEventArgs> dataReceived, CWT userCwt, OneKey privKey, KeySet cwtTrustKeys)
         {
             _ipEndPoint = ipEndPoint;
@@ -70,6 +75,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             CwtTrustKeySet = cwtTrustKeys;
             _transport = new OurTransport(ipEndPoint);
         }
+#endif
 
         public OneKey AuthenticationKey
         {
@@ -117,11 +123,15 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
             BasicTlsPskIdentity pskIdentity = null;
 
+#if SUPPORT_TLS_CWT
             if (_userCwt != null)
             {
                 _client = new DtlsClient(null, new TlsKeyPair(_userCwt, _userKey), CwtTrustKeySet);
             }
             else if (_userKey != null) {
+#else
+            if (_userKey != null) { 
+#endif
                 if (_userKey.HasKeyType((int) COSE.GeneralValuesInt.KeyType_Octet)) {
                     CBORObject kid = _userKey[COSE.CoseKeyKeys.KeyIdentifier];
 

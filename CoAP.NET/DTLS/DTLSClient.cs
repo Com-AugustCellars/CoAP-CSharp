@@ -3,7 +3,9 @@ using System.Collections;
 using System.IO;
 using System.Threading.Tasks;
 using Com.AugustCellars.COSE;
+#if SUPPORT_TLS_CWT
 using Com.AugustCellars.WebToken;
+#endif
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.Sec;
 using Org.BouncyCastle.Crypto.Tls;
@@ -75,12 +77,14 @@ namespace Com.AugustCellars.CoAP.DTLS
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8
                 };
             }
+#if SUPPORT_TLS_CWT
             else if (_tlsKeyPair != null && _tlsKeyPair.CertType == CertificateType.CwtPublicKey) {
                 i = new int[] {
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8
                 };
             }
+#endif
             else {
                 i = new int[] {
                     CipherSuite.TLS_PSK_WITH_AES_128_CCM_8,
@@ -99,6 +103,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             return e.IntValues;
         }
 
+#if SUPPORT_TLS_CWT
         public override AbstractCertificate ParseServerCertificate(short certificateType, Stream io)
         {
             switch (certificateType) {
@@ -124,6 +129,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             }
          
         }
+#endif
 
         public override IDictionary GetClientExtensions()
         {

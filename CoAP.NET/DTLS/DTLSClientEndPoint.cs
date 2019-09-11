@@ -4,7 +4,9 @@ using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Net;
 
 using Com.AugustCellars.COSE;
+#if SUPPORT_TLS_CWT
 using Com.AugustCellars.WebToken;
+#endif
 
 namespace Com.AugustCellars.CoAP.DTLS
 {
@@ -25,9 +27,11 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
         }
 
+#if SUPPORT_TLS_CWT
         public DTLSClientEndPoint(CWT cwt, OneKey privKey, KeySet cwtTrustKeys) : this (new DTLSClientChannel(cwt, privKey, cwtTrustKeys, 0), CoapConfig.Default)
         {
         }
+#endif
 
         /// <summary>
         /// Instantiates a new DTLS endpoint with the specific channel and configuration

@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 using Org.BouncyCastle.Crypto.Tls;
 
 using Com.AugustCellars.COSE;
+#if SUPPORT_TLS_CWT
 using Com.AugustCellars.WebToken;
+#endif
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Asn1.X9;
@@ -122,6 +124,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             return new BigInteger(rgb2);
         }
 
+#if SUPPORT_TLS_CWT
         public override AbstractCertificate ParseCertificate(short certificateType, Stream io)
         {
             switch (certificateType)
@@ -149,7 +152,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 return null;
             }
         }
-
+#endif
         protected override TlsSignerCredentials GetECDsaSignerCredentials()
         {
             byte[] certTypes;
@@ -202,6 +205,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                     }
                 }
 #endif
+#if SUPPORT_RPK
                 if (b == 1) {
                     foreach (TlsKeyPair kp in _serverKeys)
                     {
@@ -212,11 +216,14 @@ namespace Com.AugustCellars.CoAP.DTLS
                             k.HasAlgorithm(COSE.AlgorithmValues.ECDSA_256)) {
 
                             return new DefaultTlsSignerCredentials(
-                                mContext, new CwtPublicKey(kp.PublicCwt.EncodeToBytes()), kp.PrivateKey.AsPrivateKey(),
+                                mContext,
+                                new CwtPublicKey(kp.PublicCwt.EncodeToBytes()), 
+                                kp.PrivateKey.AsPrivateKey(),
                                 new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
                         }
                     }
                 }
+#endif
 
             }
 

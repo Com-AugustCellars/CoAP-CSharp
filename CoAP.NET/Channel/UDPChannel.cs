@@ -239,9 +239,11 @@ namespace Com.AugustCellars.CoAP.Channel
                                                                             mc);
                                     }
                                     catch (SocketException e) {
+#if LOG_UDP_CHANNEL
                                         _Log.Info(
                                             m => m(
                                                 $"Start Multicast:  Address {info._localEP.Address} had an exception ${e.ToString()}"));
+#endif
                                     }
 
                                     break;
@@ -251,9 +253,11 @@ namespace Com.AugustCellars.CoAP.Channel
                     }
                 }
                 catch (SocketException e) {
+#if LOG_UDP_CHANNEL
                     _Log.Info(
                         m => m($"Start Multicast:  Address {info._localEP.Address} had an exception ${e.ToString()}"));
                     throw;
+#endif
                 }
             }
             else {
@@ -282,7 +286,9 @@ namespace Com.AugustCellars.CoAP.Channel
                     }
                 }
                 catch (SocketException e) {
+#if LOG_UDP_CHANNEL
                     _Log.Info(m => m($"Start Multicast:  Address {info._localEP.Address} had an exception ${e.ToString()}"));
+#endif
                     throw;
                 }
             }
@@ -306,8 +312,8 @@ namespace Com.AugustCellars.CoAP.Channel
         }
 #endif
 
-        /// <inheritdoc/>
-        public void Stop()
+                    /// <inheritdoc/>
+                    public void Stop()
         {
 #if LOG_UDP_CHANNEL
             _Log.Debug("Stop");
