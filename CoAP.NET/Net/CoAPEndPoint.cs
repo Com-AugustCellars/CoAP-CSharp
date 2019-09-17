@@ -42,7 +42,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <returns>Message decoder object</returns>
         public delegate IMessageDecoder FindMessageDecoder(byte[] data);
 
-        readonly IChannel _channel;
+        protected readonly IChannel _channel;
         readonly CoapStack _coapStack;
         private IMessageDeliverer _deliverer;
         private readonly IMatcher _matcher;
@@ -116,8 +116,8 @@ namespace Com.AugustCellars.CoAP.Net
         /// </summary>
         public CoAPEndPoint(IChannel channel, ICoapConfig config)
         {
+            _channel = channel ?? throw new ArgumentNullException(nameof(channel));
             Config = config;
-            _channel = channel;
             _matcher = new Matcher(config);
             _coapStack = new CoapStack(config);
             _channel.DataReceived += ReceiveData;

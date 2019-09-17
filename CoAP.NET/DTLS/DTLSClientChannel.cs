@@ -25,14 +25,12 @@ namespace Com.AugustCellars.CoAP.DTLS
         private Int32 _receivePacketSize;
         private readonly int _port;
         private UDPChannel _udpChannel;
-        private readonly OneKey _userKey;
-#if SUPPORT_TLS_CWT
-        private readonly CWT _userCwt;
-#endif
-        private KeySet CwtTrustKeySet { get; }
+        private readonly TlsKeyPair _userKey;
+        public KeySet CwtTrustKeySet { get; set; }
 
         public EventHandler<TlsEvent> TlsEventHandler;
 
+#if false
         /// <summary>
         /// Create a client only channel and use a randomly assigned port on
         /// the client UDP port.
@@ -47,12 +45,19 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// </summary>
         /// <param name="userKey">Authentication Key</param>
         /// <param name="port">client side UDP port</param>
-        public DTLSClientChannel(OneKey userKey, Int32 port)
+        public DTLSClientChannel(OneKey userKey, Intint32 port)
         {
             _port = port;
             _userKey = userKey;
         }
 
+#endif
+        public DTLSClientChannel(TlsKeyPair userKey, int port)
+        {
+            _port = port;
+            _userKey = userKey ?? throw new ArgumentNullException(nameof(userKey));
+        }
+#if false
 #if SUPPORT_TLS_CWT
         public DTLSClientChannel(CWT cwt, OneKey userKey, KeySet cwtTrustKeys, int port)
         {
@@ -73,6 +78,19 @@ namespace Com.AugustCellars.CoAP.DTLS
             _localEndPoint = ep;
             _userKey = userKey;
         }
+#endif
+
+        /// <summary>
+        /// Create a client only channel and use a given endpoint
+        /// </summary>
+        /// <param name="userKey">Authentication Key</param>
+        /// <param name="ep">client side endpoint</param>
+        public DTLSClientChannel(TlsKeyPair userKey, System.Net.EndPoint ep)
+        {
+            _localEndPoint = ep;
+            _userKey = userKey ?? throw new ArgumentNullException(nameof(userKey));
+        }
+
 
         /// <inheritdoc/>
         public event EventHandler<DataReceivedEventArgs> DataReceived;
@@ -203,8 +221,8 @@ namespace Com.AugustCellars.CoAP.DTLS
                 //  No session - create a new one.
 
 #if SUPPORT_TLS_CWT
-                if (_userCwt != null) {
-                    session = new DTLSSession(ipEndPoint, DataReceived, _userCwt, _userKey, CwtTrustKeySet);
+                if (CwtTrustKeySet != null) {
+                    session = new DTLSSession(ipEndPoint, DataReceived,  _userKey, CwtTrustKeySet);
                 }
                 else {
 #endif

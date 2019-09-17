@@ -2,13 +2,9 @@
 
 using System.Net;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Threading;
 using Com.AugustCellars.CoAP.Channel;
 using Com.AugustCellars.COSE;
-#if SUPPORT_TLS_CWT
-using Com.AugustCellars.WebToken;
-#endif
 using PeterO.Cbor;
 
 using Org.BouncyCastle.Crypto.Tls;
@@ -23,69 +19,69 @@ namespace Com.AugustCellars.CoAP.DTLS
     public  class DTLSSession : ISecureSession
     {
         private DtlsClient _client;
-        private readonly IPEndPoint _ipEndPoint;
         private DtlsTransport _dtlsSession;
         private readonly OurTransport _transport;
-        private readonly OneKey _userKey;
-#if SUPPORT_TLS_CWT
-        private readonly CWT _userCwt;
-#endif
+        private readonly TlsKeyPair _userKey;
         private readonly KeySet _userKeys;
         private readonly TlsKeyPairSet _serverKeys;
-        private OneKey _authKey;
 
-        private readonly ConcurrentQueue<QueueItem> _queue = new ConcurrentQueue<QueueItem>();
         private readonly EventHandler<DataReceivedEventArgs> _dataReceived;
 
         private readonly EventHandler<SessionEventArgs> _sessionEvents;
 
         public EventHandler<TlsEvent> TlsEventHandler;
+#if SUPPORT_TLS_CWT
         private KeySet CwtTrustKeySet { get; }
+#endif
 
         /// <summary>
         /// List of event handlers to inform about session events.
         /// </summary>
         public event EventHandler<SessionEventArgs> SessionEvent;
 
-        public DTLSSession(IPEndPoint ipEndPoint, EventHandler<DataReceivedEventArgs> dataReceived, OneKey userKey)
+        /// <summary>
+        /// Create a session for the server side
+        /// </summary>
+        /// <param name="ipEndPoint">Where to talk from</param>
+        /// <param name="dataReceived">Where to send receive events</param>
+        /// <param name="serverKeys">Server authentication keys - asymmetric</param>
+        /// <param name="userKeys">Shared secret keys</param>
+        /// <param name="cwtTrustKeySet">Keys used for trusting CWT authentication</param>
+        public DTLSSession(IPEndPoint ipEndPoint, EventHandler<DataReceivedEventArgs> dataReceived, TlsKeyPairSet serverKeys, KeySet userKeys, KeySet cwtTrustKeySet = null)
         {
-            _ipEndPoint = ipEndPoint;
+            EndPoint = ipEndPoint;
             _dataReceived = dataReceived;
-            _userKey = userKey;
-            _transport = new OurTransport(ipEndPoint);
-        }
-
-        public DTLSSession(IPEndPoint ipEndPoint, EventHandler<DataReceivedEventArgs> dataReceived, TlsKeyPairSet serverKeys, KeySet userKeys, KeySet cwtTrustKeySet)
-        {
-            _ipEndPoint = ipEndPoint;
-            _dataReceived = dataReceived;
-            _userKeys = userKeys;
+            _userKeys = userKeys ?? throw new ArgumentNullException(nameof(userKeys));
             _serverKeys = serverKeys;
             _transport = new OurTransport(ipEndPoint);
+#if SUPPORT_TLS_CWT
             CwtTrustKeySet = cwtTrustKeySet;
+#endif
         }
 
-#if SUPPORT_TLS_CWT
-        public DTLSSession(IPEndPoint ipEndPoint, EventHandler<DataReceivedEventArgs> dataReceived, CWT userCwt, OneKey privKey, KeySet cwtTrustKeys)
+        /// <summary>
+        /// Create a session for initiating a session.
+        /// </summary>
+        /// <param name="ipEndPoint">Where to talk from</param>
+        /// <param name="dataReceived">Where to send receive events</param>
+        /// <param name="privKey">user authentication key</param>
+        /// <param name="cwtTrustKeys">Authentication keys for CWTs</param>
+        public DTLSSession(IPEndPoint ipEndPoint, EventHandler<DataReceivedEventArgs> dataReceived, TlsKeyPair privKey, KeySet cwtTrustKeys = null)
         {
-            _ipEndPoint = ipEndPoint;
+            EndPoint = ipEndPoint;
             _dataReceived = dataReceived;
-            _userCwt = userCwt;
-            _userKey = privKey;
+            _userKey = privKey ?? throw new ArgumentNullException(nameof(privKey));
+#if SUPPORT_TLS_CWT
             CwtTrustKeySet = cwtTrustKeys;
+#endif
             _transport = new OurTransport(ipEndPoint);
         }
-#endif
 
-        public OneKey AuthenticationKey
-        {
-            get => _authKey;
-        }
+        public OneKey AuthenticationKey { get; private set; }
+        public Certificate AuthenticationCertificate { get; private set; }
+
         /// <inheritdoc/>
-        public bool IsReliable
-        {
-            get => false;
-        }
+        public bool IsReliable => false;
 
         /// <summary>
         /// True means that it is supported, False means that it may be supported.
@@ -100,18 +96,12 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// <summary>
         /// Queue of items to be written on the session.
         /// </summary>
-        public ConcurrentQueue<QueueItem> Queue
-        {
-            get => _queue;
-        }
+        public ConcurrentQueue<QueueItem> Queue { get; } = new ConcurrentQueue<QueueItem>();
 
         /// <summary>
         /// Endpoint to which the session is connected.
         /// </summary>
-        public IPEndPoint EndPoint
-        {
-            get => _ipEndPoint;
-        }
+        public IPEndPoint EndPoint { get; }
 
 
         /// <summary>
@@ -121,42 +111,33 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// <param name="udpChannel">UDP channel to use</param>
         public void Connect(UDPChannel udpChannel)
         {
-            BasicTlsPskIdentity pskIdentity = null;
-
 #if SUPPORT_TLS_CWT
-            if (_userCwt != null)
-            {
-                _client = new DtlsClient(null, new TlsKeyPair(_userCwt, _userKey), CwtTrustKeySet);
+            if (CwtTrustKeySet != null) {
+                _client = new DtlsClient(null, _userKey, CwtTrustKeySet);
             }
-            else if (_userKey != null) {
-#else
-            if (_userKey != null) { 
+            else { 
 #endif
-                if (_userKey.HasKeyType((int) COSE.GeneralValuesInt.KeyType_Octet)) {
-                    CBORObject kid = _userKey[COSE.CoseKeyKeys.KeyIdentifier];
+                if (_userKey.PrivateKey.HasKeyType((int) GeneralValuesInt.KeyType_Octet)) {
+                    CBORObject kid = _userKey.PrivateKey[CoseKeyKeys.KeyIdentifier];
 
-                    if (kid != null) {
-                        pskIdentity = new BasicTlsPskIdentity(kid.GetByteString(), _userKey[CoseKeyParameterKeys.Octet_k].GetByteString());
-                    }
-                    else {
-                        pskIdentity = new BasicTlsPskIdentity(new byte[0], _userKey[CoseKeyParameterKeys.Octet_k].GetByteString());
-                    }
+                    BasicTlsPskIdentity pskIdentity;
+                    pskIdentity = new BasicTlsPskIdentity(kid != null ? kid.GetByteString() : new byte[0],
+                        _userKey.PrivateKey[CoseKeyParameterKeys.Octet_k].GetByteString());
                     _client = new DtlsClient(null, pskIdentity);
                 }
-                else if (_userKey.HasKeyType((int) COSE.GeneralValuesInt.KeyType_EC2)) {
+                else if (_userKey.PrivateKey.HasKeyType((int) GeneralValuesInt.KeyType_EC2)) {
                     _client = new DtlsClient(null, _userKey);
                 }
+#if SUPPORT_TLS_CWT
             }
-            else {
-                _client = new DtlsClient(null, pskIdentity);
-            }
+#endif
 
             _client.TlsEventHandler += OnTlsEvent;
 
             DtlsClientProtocol clientProtocol = new DtlsClientProtocol(new SecureRandom());
 
             _transport.UDPChannel = udpChannel;
-            _authKey = _userKey;
+            AuthenticationKey = _userKey.PrivateKey;
 
             _listening = 1;
             DtlsTransport dtlsClient = clientProtocol.Connect(_client, _transport);
@@ -180,7 +161,9 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             DtlsServer server = new DtlsServer(_serverKeys, _userKeys);
             server.TlsEventHandler += OnTlsEvent;
+#if SUPPORT_TLS_CWT
             server.CwtTrustKeySet = CwtTrustKeySet;
+#endif
 
             _transport.UDPChannel = udpChannel;
             _transport.Receive(message);
@@ -194,7 +177,8 @@ namespace Com.AugustCellars.CoAP.DTLS
             _listening = 0;
 
             _dtlsSession = dtlsServer;
-            _authKey = server.AuthenticationKey;
+            AuthenticationKey = server.AuthenticationKey;
+            AuthenticationCertificate = server.AuthenticationCertificate;
 
             new Thread(StartListen).Start();
         }
@@ -225,18 +209,23 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// </summary>
         public void WriteData()
         {
-            if (_queue.Count == 0)
+            if (Queue.Count == 0) {
                 return;
+            }
+
             lock (_writeLock) {
-                if (_writing > 0)
+                if (_writing > 0) {
                     return;
+                }
+
                 _writing = 1;
             }
 
             while (Queue.Count > 0) {
                 QueueItem q;
-                if (!_queue.TryDequeue(out q))
+                if (!Queue.TryDequeue(out q)) {
                     break;
+                }
 
                 if (_dtlsSession != null) {
                     _dtlsSession.Send(q.Data, 0, q.Data.Length);
@@ -245,8 +234,9 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             lock (_writeLock) {
                 _writing = 0;
-                if (_queue.Count > 0)
+                if (Queue.Count > 0) {
                     WriteData();
+                }
             }
         }
 
@@ -273,7 +263,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// </summary>
         void StartListen()
         {
-            if (System.Threading.Interlocked.CompareExchange(ref _listening, 1, 0) > 0) {
+            if (Interlocked.CompareExchange(ref _listening, 1, 0) > 0) {
                 return;
             }
 
@@ -289,7 +279,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 if (size == -1) {
                     lock (_transport.Queue) {
                         if (_transport.Queue.Count == 0) {
-                            System.Threading.Interlocked.Exchange(ref _listening, 0);
+                            Interlocked.Exchange(ref _listening, 0);
                             return;
                         }
                     }
@@ -297,7 +287,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 else {
                     byte[] buf2 = new byte[size];
                     Array.Copy(buf, buf2, size);
-                    FireDataReceived(buf2, _ipEndPoint, null);  // M00BUG
+                    FireDataReceived(buf2, EndPoint, null);  // M00BUG
                 }
             }
         }
@@ -321,7 +311,6 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         private class OurTransport : DatagramTransport
         {
-            private UDPChannel _udpChannel;
             private readonly System.Net.EndPoint _ep;
 
 
@@ -330,57 +319,56 @@ namespace Com.AugustCellars.CoAP.DTLS
                 _ep = ep;
             }
 
-            public UDPChannel UDPChannel
-            {
-                set => _udpChannel = value;
-            }
+            public UDPChannel UDPChannel { get; set; }
 
             public void Close()
             {
 //                _udpChannel = null;
-                lock (_receivingQueue) {
-                    Monitor.PulseAll(_receivingQueue);
+                lock (Queue) {
+                    Monitor.PulseAll(Queue);
                 }
             }
 
             public int GetReceiveLimit()
             {
-                int limit = _udpChannel.ReceiveBufferSize;
+                int limit = UDPChannel.ReceiveBufferSize;
                 if (limit <= 0) limit = 1149;
                 return limit;
             }
 
             public int GetSendLimit()
             {
-                int limit = _udpChannel.SendBufferSize;
-                if (limit <= 0)
+                int limit = UDPChannel.SendBufferSize;
+                if (limit <= 0) {
                     limit = 1149;
+                }
+
                 return limit;
             }
 
             public int Receive(byte[] buf, int off, int len, int waitMillis)
             {
-                lock (_receivingQueue) {
-                    if (_receivingQueue.Count < 1) {
+                lock (Queue) {
+                    if (Queue.Count < 1) {
                         try {
-                            Monitor.Wait(_receivingQueue, waitMillis);
+                            Monitor.Wait(Queue, waitMillis);
                         }
 #if NETSTANDARD1_3
                         catch (ThreadStateException) {
-                            // TODO keep waitin until full wait expired?
+                            // TODO keep waiting until full wait expired?
                         }
 #else
                         catch (ThreadInterruptedException) {
                             // TODO Keep waiting until full wait expired?
                         }
 #endif
-                        if (_receivingQueue.Count < 1) {
+                        if (Queue.Count < 1) {
                             return -1;
                         }
                     }
 
                     byte[] packet;
-                    _receivingQueue.TryDequeue(out packet);
+                    Queue.TryDequeue(out packet);
                     int copyLength = Math.Min(len, packet.Length);
                     Array.Copy(packet, 0, buf, off, copyLength);
                     // Debug.Print($"OurTransport::Receive - EP:{_ep} Data Length: {packet.Length}");
@@ -396,21 +384,16 @@ namespace Com.AugustCellars.CoAP.DTLS
                 byte[] newBuf = new byte[len];
                 Array.Copy(buf, off, newBuf, 0, newBuf.Length);
                 buf = newBuf;
-                _udpChannel.Send(buf, _udpChannel, _ep);
+                UDPChannel.Send(buf, UDPChannel, _ep);
             }
 
-            private readonly ConcurrentQueue<byte[]> _receivingQueue = new ConcurrentQueue<byte[]>();
-
-            public ConcurrentQueue<byte[]> Queue
-            {
-                get => _receivingQueue;
-            }
+            public ConcurrentQueue<byte[]> Queue { get; } = new ConcurrentQueue<byte[]>();
 
             public void Receive(byte[] buf)
             {
-                lock (_receivingQueue) {
-                    _receivingQueue.Enqueue(buf);
-                    Monitor.PulseAll(_receivingQueue);
+                lock (Queue) {
+                    Queue.Enqueue(buf);
+                    Monitor.PulseAll(Queue);
                 }
             }
 

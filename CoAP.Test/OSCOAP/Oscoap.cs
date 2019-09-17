@@ -10,7 +10,7 @@ using Com.AugustCellars.CoAP.Server;
 using Com.AugustCellars.CoAP.Server.Resources;
 
 
-namespace Com.AugustCellars.CoAP
+namespace Com.AugustCellars.CoAP.OSCOAP
 {
     [TestClass]
     public class Oscoap
@@ -43,7 +43,7 @@ namespace Com.AugustCellars.CoAP
         public void Ocoap_Get()
         {
             CoapClient client = new CoapClient($"coap://localhost:{_serverPort}/abc") {
-                OscoapContext = SecurityContext.DeriveContext(_Secret, null, _ClientId, _ServerId)
+                OscoreContext = SecurityContext.DeriveContext(_Secret, null, _ClientId, _ServerId)
             };
             Response r = client.Get();
             Assert.AreEqual("/abc", r.PayloadString);

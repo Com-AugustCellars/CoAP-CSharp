@@ -22,7 +22,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
 
         /*
-        [TestMethod]
+        [Test Method]
         public void Derive_CCM()
         {
             SecurityContext ctx = SecurityContext.DeriveContext(_Secret, _SenderId, _RecipientId, null, AlgorithmValues.AES_CCM_16_64_128, _KeyAgreeAlg);
@@ -37,7 +37,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             Assert.AreEqual(ctx.Sender.Key, ctx2.Recipient.Key);
         }
 
-        [TestMethod]
+        [Test Method]
         public void Derive_Salt()
         {
             SecurityContext ctx = SecurityContext.DeriveContext(_Secret, _SenderId, _RecipientId, _Salt, AlgorithmValues.AES_CCM_16_64_128, _KeyAgreeAlg);
@@ -48,7 +48,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             Assert.AreEqual(ctx.Recipient.Key, new byte[] { 0xAD, 0x35, 0xAF, 0xD2, 0xA8, 0x86, 0x08, 0x8A, 0x13, 0xD6, 0x94, 0x04, 0x34, 0x0A, 0xC0, 0x1E});
         }
 
-        [TestMethod]
+        [Test Method]
         public void Derive_Hash512()
         {
             SecurityContext ctx = SecurityContext.DeriveContext(_Secret, _SenderId, _RecipientId, _Salt, AlgorithmValues.AES_CCM_16_64_128, AlgorithmValues.ECDH_SS_HKDF_512);
@@ -59,7 +59,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             Assert.AreEqual(ctx.Recipient.Key, new byte[] { 0xA6, 0x60, 0x66, 0xBB, 0x88, 0xCE, 0x9B, 0x24, 0xCC, 0xE3, 0x00, 0xE7, 0x23, 0xB1, 0x5C, 0x7F });
         }
 
-        [TestMethod]
+        [Test Method]
         public void Derive_GCM()
         {
             SecurityContext ctx = SecurityContext.DeriveContext(_Secret, _SenderId, _RecipientId, null, AlgorithmValues.AES_GCM_128, _KeyAgreeAlg);
