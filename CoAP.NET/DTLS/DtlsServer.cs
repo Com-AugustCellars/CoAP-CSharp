@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-
 using Org.BouncyCastle.Crypto.Tls;
 
 using Com.AugustCellars.COSE;
@@ -14,20 +10,17 @@ using Com.AugustCellars.WebToken;
 #endif
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X509;
-using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP.DTLS
 {
-    class DtlsServer : DefaultTlsServer
+    public class DtlsServer : DefaultTlsServer
     {
-        private TlsKeyPairSet _serverKeys;
+        private readonly TlsKeyPairSet _serverKeys;
         private KeySet _userKeys;
 
         public EventHandler<TlsEvent> TlsEventHandler;
@@ -46,6 +39,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         protected override ProtocolVersion MaximumVersion => ProtocolVersion.DTLSv12;
 
         public OneKey AuthenticationKey => mPskIdentityManager.AuthenticationKey;
+        public Certificate AuthenticationCertificate { get; private set; }
 
         // Chain all of our events to the next level up.
 
@@ -113,17 +107,6 @@ namespace Com.AugustCellars.CoAP.DTLS
             }
         }
 
-        private BigInteger ConvertBigNum(CBORObject cbor)
-        {
-            byte[] rgb = cbor.GetByteString();
-            byte[] rgb2 = new byte[rgb.Length + 2];
-            rgb2[0] = 0;
-            rgb2[1] = 0;
-            for (int i = 0; i < rgb.Length; i++) rgb2[i + 2] = rgb[i];
-
-            return new BigInteger(rgb2);
-        }
-
 #if SUPPORT_TLS_CWT
         public override AbstractCertificate ParseCertificate(short certificateType, Stream io)
         {
@@ -161,18 +144,37 @@ namespace Com.AugustCellars.CoAP.DTLS
                 certTypes = (byte[]) mClientExtensions[ExtensionType.server_certificate_type];
             }
             else {
-                certTypes = new byte[]{1};
+                certTypes = new byte[]{CertificateType.X509};
             }
 
             foreach (byte b in certTypes) {
+                if (b == CertificateType.X509)
+                {
+                    foreach (TlsKeyPair kp in _serverKeys)
+                    {
+                        if (b != kp.CertType) continue;
+
+                        OneKey k = kp.PrivateKey;
+                        if (k.HasKeyType((int)GeneralValuesInt.KeyType_EC2) &&
+                            k.HasAlgorithm(AlgorithmValues.ECDSA_256))
+                        {
+
+                            return new DefaultTlsSignerCredentials(
+                                mContext,
+                                new Certificate(kp.X509Certificate), 
+                                kp.PrivateKey.AsPrivateKey(),
+                                new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
+                        }
+                    }
+                }
 #if SUPPORT_RPK
-                if (b == 2) {
+                if (b == CertificateType.RawPublicKey) {
                     foreach (TlsKeyPair kp in _serverKeys) {
                         if (b != kp.CertType) continue;
 
                         OneKey k = kp.PublicKey;
-                        if (k.HasKeyType((int) COSE.GeneralValuesInt.KeyType_EC2) &&
-                            k.HasAlgorithm(COSE.AlgorithmValues.ECDSA_256)) {
+                        if (k.HasKeyType((int) GeneralValuesInt.KeyType_EC2) &&
+                            k.HasAlgorithm(AlgorithmValues.ECDSA_256)) {
 
                             AsymmetricKeyParameter param = k.AsPublicKey();
 
@@ -186,13 +188,13 @@ namespace Com.AugustCellars.CoAP.DTLS
                 }
 #endif
 #if SUPPORT_TLS_CWT
-                if (b == 254) {
+                if (b == CertificateType.CwtPublicKey) {
                     foreach (TlsKeyPair kp in _serverKeys) {
                         if (b != kp.CertType) continue;
 
                         OneKey k = kp.PrivateKey;
-                        if (k.HasKeyType((int) COSE.GeneralValuesInt.KeyType_EC2) &&
-                            k.HasAlgorithm(COSE.AlgorithmValues.ECDSA_256)) {
+                        if (k.HasKeyType((int) GeneralValuesInt.KeyType_EC2) &&
+                            k.HasAlgorithm(AlgorithmValues.ECDSA_256)) {
 
                             CwtPublicKey cwtKey = new CwtPublicKey(kp.PublicCwt.EncodeToBytes());
                             AsymmetricKeyParameter pubKey = kp.PublicCwt.Cnf.Key.AsPublicKey();
@@ -205,26 +207,6 @@ namespace Com.AugustCellars.CoAP.DTLS
                     }
                 }
 #endif
-#if SUPPORT_RPK
-                if (b == 1) {
-                    foreach (TlsKeyPair kp in _serverKeys)
-                    {
-                        if (b != kp.CertType) continue;
-
-                        OneKey k = kp.PrivateKey;
-                        if (k.HasKeyType((int)COSE.GeneralValuesInt.KeyType_EC2) &&
-                            k.HasAlgorithm(COSE.AlgorithmValues.ECDSA_256)) {
-
-                            return new DefaultTlsSignerCredentials(
-                                mContext,
-                                new CwtPublicKey(kp.PublicCwt.EncodeToBytes()), 
-                                kp.PrivateKey.AsPrivateKey(),
-                                new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
-                        }
-                    }
-                }
-#endif
-
             }
 
             // If we did not fine appropriate signer credentials - ask for help
@@ -293,7 +275,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
             TlsEvent e = new TlsEvent(TlsEvent.EventCode.ClientCertType) {
                 Bytes = certificateTypes,
-                Byte = (byte) 0xff
+                Byte = 0xff
             };
 
             EventHandler<TlsEvent> handler = TlsEventHandler;
@@ -306,8 +288,13 @@ namespace Com.AugustCellars.CoAP.DTLS
             }
 
             foreach (byte type in certificateTypes) {
+                if (type == 1) return type;
+#if SUPPORT_RPK
                 if (type == 2) return type;  // Assume we only support Raw Public Key
+#endif
+#if SUPPORT_TLS_CWT
                 if (type == 254) return type;
+#endif
             }
 
 
@@ -318,7 +305,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
             TlsEvent e = new TlsEvent(TlsEvent.EventCode.ServerCertType) {
                 Bytes = certificateTypes,
-                Byte = (byte)0xff
+                Byte = 0xff
             };
 
             EventHandler<TlsEvent> handler = TlsEventHandler;
@@ -331,6 +318,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             }
 
             foreach (byte type in certificateTypes) {
+                if (type == 1) return type;
                 if (type == 2) return type;  // Assume we only support Raw Public Key
                 if (type == 254) return type; 
             }
@@ -363,9 +351,10 @@ namespace Com.AugustCellars.CoAP.DTLS
                 mPskIdentityManager.GetCwtKey((CwtPublicKey) clientCertificate);
             }
 #endif
-            else {
+            else if (clientCertificate is Certificate) {
                 TlsEvent e = new TlsEvent(TlsEvent.EventCode.ClientCertificate) {
-                    Certificate = clientCertificate
+                    Certificate = clientCertificate,
+                    CertificateType = CertificateType.X509
                 };
 
                 EventHandler<TlsEvent> handler = TlsEventHandler;
@@ -376,6 +365,11 @@ namespace Com.AugustCellars.CoAP.DTLS
                 if (!e.Processed) {
                     throw new TlsFatalAlert(AlertDescription.certificate_unknown);
                 }
+
+                AuthenticationCertificate = (Certificate) clientCertificate;
+            }
+            else {
+                throw new TlsFatalAlert(AlertDescription.certificate_unknown);
             }
         }
 #else
@@ -393,6 +387,8 @@ namespace Com.AugustCellars.CoAP.DTLS
                 if (!e.Processed) {
                     throw new TlsFatalAlert(AlertDescription.certificate_unknown);
                 }
+
+                AuthenticationCertificate = (Certificate) clientCertificate;
             
         }
 #endif
@@ -408,13 +404,16 @@ namespace Com.AugustCellars.CoAP.DTLS
             internal MyIdentityManager(KeySet keys)
             {
                 _userKeys = keys;
+#if SUPPORT_TLS_CWT
+                CwtAuthenticationKey = null;
+#endif
             }
 
             public OneKey AuthenticationKey { get; private set; }
 
 #if SUPPORT_TLS_CWT
             public KeySet CwtTrustRoots { get; set; }
-            public CWT CwtAuthenticationKey { get; private set; }
+            public CWT CwtAuthenticationKey { get; }
 #endif
 
             public virtual byte[] GetHint()
@@ -425,7 +424,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             public virtual byte[] GetPsk(byte[] identity)
             {
                 foreach (OneKey key in _userKeys) {
-                    if (!key.HasKeyType((int) COSE.GeneralValuesInt.KeyType_Octet)) continue;
+                    if (!key.HasKeyType((int) GeneralValuesInt.KeyType_Octet)) continue;
 
                     if (identity == null) {
                         if (key.HasKid(null)) {
@@ -451,13 +450,18 @@ namespace Com.AugustCellars.CoAP.DTLS
                 }
 
                 if (e.KeyValue != null) {
-                    if (e.KeyValue.HasKeyType((int) COSE.GeneralValuesInt.KeyType_Octet)) {
+                    if (e.KeyValue.HasKeyType((int) GeneralValuesInt.KeyType_Octet)) {
                         AuthenticationKey = e.KeyValue;
                         return (byte[]) e.KeyValue[CoseKeyParameterKeys.Octet_k].GetByteString().Clone();
                     }
                 }
 
                 return null;
+            }
+
+            public void GetCertKey(Certificate certificate)
+            {
+
             }
 
 #if SUPPORT_RPK
@@ -514,7 +518,6 @@ namespace Com.AugustCellars.CoAP.DTLS
 #if SUPPORT_TLS_CWT
             public void GetCwtKey(CwtPublicKey rpk)
             {
-                AsymmetricKeyParameter key;
                 CWT cwt;
 
                 try {
