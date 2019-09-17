@@ -40,7 +40,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 Assert.Fail("Should not have reached here.");
             }
             catch (ArgumentNullException e) {
-                Assert.AreEqual(e.Message, "Value cannot be null.\r\nParameter name: userKey");
+                Assert.AreEqual(e.ParamName, "userKey");
             }
         }
 
