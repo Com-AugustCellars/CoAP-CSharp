@@ -387,6 +387,8 @@ namespace Com.AugustCellars.CoAP.DTLS
                 if (!e.Processed) {
                     throw new TlsFatalAlert(AlertDescription.certificate_unknown);
                 }
+
+                AuthenticationCertificate = (Certificate) clientCertificate;
             
                 AuthenticationCertificate = (Certificate) clientCertificate;
             

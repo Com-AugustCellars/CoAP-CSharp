@@ -120,6 +120,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             {
                 if (key.Compare(k)) {
                     return;
+                }
             }
             }
             _keyList.Add(key);

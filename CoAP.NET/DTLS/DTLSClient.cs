@@ -83,6 +83,11 @@ namespace Com.AugustCellars.CoAP.DTLS
                 };
             }
 #endif
+                else {
+                    //  We should never get here
+                    i = new int[0];
+                }
+            }
             else {
                     //  We should never get here
                     i = new int[0];
@@ -110,25 +115,25 @@ namespace Com.AugustCellars.CoAP.DTLS
         public override AbstractCertificate ParseServerCertificate(short certificateType, Stream io)
         {
             switch (certificateType) {
-                case CertificateType.CwtPublicKey:
-                    try {
-                        CwtPublicKey cwtPub = CwtPublicKey.Parse(io);
+            case CertificateType.CwtPublicKey:
+                try {
+                    CwtPublicKey cwtPub = CwtPublicKey.Parse(io);
 
-                        CWT cwtServer = CWT.Decode(cwtPub.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
+                    CWT cwtServer = CWT.Decode(cwtPub.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
 
-                        AsymmetricKeyParameter pubKey = cwtServer.Cnf.Key.AsPublicKey();
+                    AsymmetricKeyParameter pubKey = cwtServer.Cnf.Key.AsPublicKey();
 
-                        SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKey);
-                        cwtPub.SetSubjectPublicKeyInfo(spi);
+                    SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKey);
+                    cwtPub.SetSubjectPublicKeyInfo(spi);
 
-                        return cwtPub;
-                    }
-                    catch {
-                        return null;
-                    }
+                    return cwtPub;
+                }
+                catch {
+                    return null;
+                }
 
             default:
-                    return null;
+                return null;
             }
         }
 #endif
@@ -529,14 +534,14 @@ namespace Com.AugustCellars.CoAP.DTLS
                         if (k.HasKeyType((int) GeneralValuesInt.KeyType_EC2) &&
                             k.HasAlgorithm(AlgorithmValues.ECDSA_256)) {
 
-                        X9ECParameters p = k.GetCurve();
-                        ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
-                        ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(k[CoseKeyParameterKeys.EC_D]), parameters);
+                            X9ECParameters p = k.GetCurve();
+                            ECDomainParameters parameters = new ECDomainParameters(p.Curve, p.G, p.N, p.H);
+                            ECPrivateKeyParameters privKey = new ECPrivateKeyParameters("ECDSA", ConvertBigNum(k[CoseKeyParameterKeys.EC_D]), parameters);
 
-                        ECPoint point = k.GetPoint();
-                        ECPublicKeyParameters param = new ECPublicKeyParameters("ECDSA", point, /*parameters*/ SecObjectIdentifiers.SecP256r1);
+                            ECPoint point = k.GetPoint();
+                            ECPublicKeyParameters param = new ECPublicKeyParameters("ECDSA", point, /*parameters*/ SecObjectIdentifiers.SecP256r1);
 
-                        SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(param);
+                            SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(param);
 
                         return new DefaultTlsSignerCredentials(_mContext, new RawPublicKey(spi), privKey, new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
                     }
@@ -550,12 +555,12 @@ namespace Com.AugustCellars.CoAP.DTLS
                         if (k.HasKeyType((int) GeneralValuesInt.KeyType_EC2) &&
                             k.HasAlgorithm(AlgorithmValues.ECDSA_256)) {
 
-                        AsymmetricKeyParameter privKey = TlsKey.PrivateKey.AsPrivateKey();
+                            AsymmetricKeyParameter privKey = TlsKey.PrivateKey.AsPrivateKey();
 
                             return new DefaultTlsSignerCredentials(_mContext, new CwtPublicKey(TlsKey.PublicCwt.EncodeToBytes()), privKey,
                                 new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
+                        }
                     }
-                }
 #endif
                 }
 

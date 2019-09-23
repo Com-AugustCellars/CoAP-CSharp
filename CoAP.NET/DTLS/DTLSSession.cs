@@ -236,6 +236,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 _writing = 0;
                 if (Queue.Count > 0) {
                     WriteData();
+                }
             }
         }
         }

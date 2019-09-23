@@ -33,7 +33,7 @@ namespace Com.AugustCellars.CoAP
 
 #if false
         // We have flattened out the tree because of full URIs so this test makes no sense any more
-        [TestMethod]
+        [Test Method]
         public void ExtendedTest()
         {
             String input = "</my/Päth>;rt=\"MyName\";if=\"/someRef/path\";ct=42;obs;sz=10";
