@@ -1,7 +1,10 @@
 # CoAP.NET - A CoAP framework in C#
 
 [![NuGet Status](https://img.shields.io/nuget/v/Com.AugustCellars.CoAP.png)](https://www.nuget.org/packages/Com.AugustCellars.CoAP)
-[![Build Status](https://api.travis-ci.org/jimsch/CoAP-CSharp.png)](https://travis-ci.org/jimsch/CoAP-CSharp)
+[![Travis Build Status](https://api.travis-ci.org/Com.AugustCellars/CoAP-CSharp/CoAP-CSharp.png)](https://travis-ci.org/Com.AugustCellars/CoAP-CSharp)
+[![Appveyor Build](https://ci.appveyor.com/api/projects/status/github/Com-AugustCellars/CoAP-CSharp?svg=true)](https://ci.appveyor.com/project/jimsch/coap-csharp)
+[![CircleCI](https://circleci.com/gh/Com-AugustCellars/CoAP-CSharp.svg?style=svg)](https://circleci.com/gh/Com-AugustCellars/CoAP-CSharp)
+
 
 The Constrained Application Protocol (CoAP) (https://datatracker.ietf.org/doc/draft-ietf-core-coap/)
 is a RESTful web transfer protocol for resource-constrained networks and nodes.
@@ -140,7 +143,7 @@ See [CoAP Example Server](CoAP.Server) for more.
 
 ## Building the sources
 
-I am currently sync-ed up to Visual Studio 2017 and have started using language features of C# v7.0 that are supported both in Visual Studio and in the latest version of mono.
+I am currently sync-ed up to Visual Studio 2019 and have started using language features of C# v7.0 that are supported both in Visual Studio and in the latest version of mono.
 
 ## License
 
@@ -151,17 +154,13 @@ See [LICENSE](LICENSE) for more info.
 This is a copy of the CoAP.NET project hosted at (https://http://coap.codeplex.com/).
 As this project does not seem to be maintained anymore, and I am doing active updates to it, I have made a local copy that things are going to move forward on.
 
-Current projects are:
+## Current projects are:
 
-- [OSCoAP]{https://datatracker.ietf.org/doc/draft-ietf-core-object-security/} - Add an implemenation of message based security
-- [EDHOC]{https://datatracker.ietf.org/doc/draft-selander-ace-cose-ecdhe/} - Ephemeral Diffie-Hellman over COSE - a key establishment protocol
+- [OSCoAP](https://datatracker.ietf.org/doc/draft-ietf-core-object-security/) - Add an implemenation of message based security
+- [EDHOC](https://datatracker.ietf.org/doc/draft-selander-ace-cose-ecdhe/) - Ephemeral Diffie-Hellman over COSE - a key establishment protocol
 - DTLS - Support DTLS for transport
-- [TLS/TCP]{https://datatracker.ietf.org/doc/draft-ietf-core-coap-tcp-tls/} - Support TCP and TLS over TCP for transport
-- [Resource Directory]{https://datatracker.ietf.org/doc/draft-ietf-core-resource-directory/} - Resource directory resources
-- [PubSub]{https://datatracker.ietf.org/doc/draft-ietf-core-coap-pubsub/} - Publish-Subscribe Broker
-- [AAA]{https://datatracker.ietf.org/doc/draft-ietf-ace-oauth-authz/} - Authentication and authoriztion protocol work
+- [TLS/TCP](https://datatracker.ietf.org/doc/draft-ietf-core-coap-tcp-tls/) - Support TCP and TLS over TCP for transport
+- [Resource Directory](https://datatracker.ietf.org/doc/draft-ietf-core-resource-directory/) - Resource directory resources
+- [PubSub](https://datatracker.ietf.org/doc/draft-ietf-core-coap-pubsub/) - Publish-Subscribe Broker
+- [AAA](https://datatracker.ietf.org/doc/draft-ietf-ace-oauth-authz/) - Authentication and authoriztion protocol work
 
-CoAP.NET is based on [**Californium**](https://github.com/mkovatsc/Californium),
-a CoAP framework in Java by Matthias Kovatsch, Dominique Im Obersteg,
-and Daniel Pauli, ETH Zurich. See <http://people.inf.ethz.ch/mkovatsc/californium.php>.
-Thanks to the authors and their great job.
