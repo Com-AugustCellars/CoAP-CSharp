@@ -239,7 +239,6 @@ namespace Com.AugustCellars.CoAP.DTLS
                 }
             }
         }
-        }
 
         /// <summary>
         /// Event handler to deal with data coming from the UDP Channel

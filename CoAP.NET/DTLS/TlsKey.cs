@@ -122,7 +122,6 @@ namespace Com.AugustCellars.CoAP.DTLS
                     return;
                 }
             }
-            }
             _keyList.Add(key);
         }
 
