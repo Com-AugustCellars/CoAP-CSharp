@@ -90,7 +90,9 @@ namespace Com.AugustCellars.CoAP.DTLS
             }
             else {
                     //  We should never get here
-                    i = new int[0];
+                    i = new int[] {
+                        CipherSuite.TLS_PSK_WITH_AES_128_CCM_8
+                    };
             }
  
             TlsEvent e = new TlsEvent(TlsEvent.EventCode.GetCipherSuites) {
