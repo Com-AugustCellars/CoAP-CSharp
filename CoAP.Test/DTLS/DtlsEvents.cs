@@ -16,7 +16,7 @@ using PeterO.Cbor;
 namespace Com.AugustCellars.CoAP.DTLS
 {
     [TestClass]
-    class DtlsEvents
+    public class DtlsEvents
     {
         private static OneKey PskOne;
         private static OneKey PskTwo;
@@ -30,7 +30,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         private static readonly byte[] PskTwoName = Encoding.UTF8.GetBytes("KeyTwo");
 
         [ClassInitialize]
-        public void OneTimeSetup()
+        public static void OneTimeSetup(TestContext ctx)
         {
             PskOne = new OneKey();
             PskOne.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_Octet);

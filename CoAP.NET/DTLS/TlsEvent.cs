@@ -77,6 +77,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 #else
         public Certificate Certificate { get; set; }
 #endif
+        public byte CertificateType { get; set; }
 
         public byte[] Bytes { get; set; }
         public byte Byte { get; set; }
