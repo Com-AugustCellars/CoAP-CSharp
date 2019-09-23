@@ -18,7 +18,7 @@ using Com.AugustCellars.CoAP.Server.Resources;
 namespace Com.AugustCellars.CoAP.DTLS
 {
     [TestClass]
-    class DTLSResourceTest
+    public class DTLSResourceTest
     {
         private static OneKey PskOne;
         private static OneKey PskTwo;
@@ -29,7 +29,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         private int _serverPort;
 
         [ClassInitialize]
-        public void OneTimeSetup()
+        public static void OneTimeSetup(TestContext ctx)
         {
             PskOne = new OneKey();
             PskOne.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_Octet);

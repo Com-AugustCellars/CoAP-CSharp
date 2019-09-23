@@ -13,6 +13,7 @@ using System;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Observe;
 #if INCLUDE_OSCOAP
@@ -78,7 +79,7 @@ namespace Com.AugustCellars.CoAP
         public new Boolean IsMulticast {
             get {
                 if (Destination == null) {
-                    throw new Exception("Must set the destination before we can known");
+                    throw new CoAPException("Must set the destination before we can known");
                 }
 
                 return base.IsMulticast;
@@ -117,31 +118,30 @@ namespace Com.AugustCellars.CoAP
                     string scheme = value.Scheme;
 
                     if (string.IsNullOrEmpty(scheme)) scheme = CoapConstants.UriScheme;
+                    scheme = scheme.ToLower();
 
                     // set Uri-Host option if not IP literal
-                    if (!String.IsNullOrEmpty(host) && !regIP.IsMatch(host)
+                    if (!string.IsNullOrEmpty(host) && !regIP.IsMatch(host)
                         && !host.Equals("localhost", StringComparison.OrdinalIgnoreCase)) {
                         UriHost = host;
                     }
 
                     if (port >= 0) {
-                        if (scheme.Equals(CoapConstants.UriScheme) && port != CoapConstants.DefaultPort) {
-                            UriPort = port;
-                        }
-                        else if (scheme.Equals(CoapConstants.SecureUriScheme) && port != CoapConstants.DefaultSecurePort) {
-                            UriPort = port;
+                        if (UriInformation.UriDefaults.ContainsKey(scheme)) {
+                            if (port != UriInformation.UriDefaults[scheme].DefaultPort) {
+                                UriPort = port;
+                            }
                         }
                         else {
-                            UriPort = port;
+                            throw new CoAPException($"Unrecognized or unsupported scheme {scheme}");
                         }
                     }
                     else {
-                        if (String.IsNullOrEmpty(value.Scheme) ||
-                            String.Equals(value.Scheme, CoapConstants.UriScheme)) {
-                            port = CoapConstants.DefaultPort;
+                        if (UriInformation.UriDefaults.ContainsKey(scheme)) {
+                            port = UriInformation.UriDefaults[scheme].DefaultPort;
                         }
-                        else if (String.Equals(value.Scheme, CoapConstants.SecureUriScheme)) {
-                            port = CoapConstants.DefaultSecurePort;
+                        else {
+                            throw new CoAPException($"Unrecognized or unsupported scheme {scheme}");
                         }
                     }
 

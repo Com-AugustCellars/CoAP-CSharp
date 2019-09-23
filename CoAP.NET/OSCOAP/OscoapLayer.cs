@@ -737,8 +737,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             //  Deal with Proxy-Uri
             if (unprotected.ProxyUri != null) {
                 int port;
-                if (!unprotected.ProxyUri.IsAbsoluteUri) throw new Exception("Must be an absolute URI");
-                if (!string.IsNullOrEmpty(unprotected.ProxyUri.Fragment)) throw new Exception("Fragments not allowed in ProxyUri");
+                if (!unprotected.ProxyUri.IsAbsoluteUri) throw new CoAPException("Must be an absolute URI");
+                if (!string.IsNullOrEmpty(unprotected.ProxyUri.Fragment)) throw new CoAPException("Fragments not allowed in ProxyUri");
                 switch (unprotected.ProxyUri.Scheme) {
                     case "coap":
                         port = 5683;
@@ -749,7 +749,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         break;
 
                     default:
-                        throw new Exception("Unsupported schema");
+                        throw new CoAPException("Unsupported schema");
                 }
 
                 string strUri = unprotected.ProxyUri.Scheme + ":";
@@ -810,7 +810,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         {
             //  Deal with Proxy-Uri
             if (unprotected.ProxyUri != null) {
-                throw new Exception("Should not see Proxy-Uri on a response.");
+                throw new CoAPException("Should not see Proxy-Uri on a response.");
             }
 
             List<Option> toDelete = new List<Option>();
@@ -928,21 +928,21 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
 
             if (gid != null) {
-                if (gid.GetByteString().Length > 255) throw new Exception("GID too large");
+                if (gid.GetByteString().Length > 255) throw new CoAPException("GID too large");
                 optionValue[cbSize] = (byte) gid.GetByteString().Length;
                 Array.Copy(gid.GetByteString(), 0, optionValue, cbSize + 1, gid.GetByteString().Length);
                 cbSize += gid.GetByteString().Length + 1;
             }
 
             if (sig != null) {
-                if (sigBytes.Length > 255) throw new Exception("SIG too large");
+                if (sigBytes.Length > 255) throw new CoAPException("SIG too large");
                 optionValue[cbSize] = (byte) sigBytes.Length;
                 Array.Copy(sigBytes, 0, optionValue, cbSize + 1, sig.GetByteString().Length);
                 cbSize += sigBytes.Length + 1;
             }
 
             if (kid != null) {
-                if (kid.GetByteString().Length > 255) throw new Exception("KID too large");
+                if (kid.GetByteString().Length > 255) throw new CoAPException("KID too large");
                 Array.Copy(kid.GetByteString(), 0, optionValue, cbSize, kid.GetByteString().Length);
             }
 

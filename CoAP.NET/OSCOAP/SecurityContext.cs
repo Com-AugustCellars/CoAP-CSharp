@@ -330,7 +330,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 ctx.Sender.Algorithm = algAEAD;
             }
 
-            if (ctx.Sender.Algorithm.Type != CBORType.Number) throw new Exception("Unsupported algorithm");
+            if (ctx.Sender.Algorithm.Type != CBORType.Number) throw new CoAPException("Unsupported algorithm");
             switch ((AlgorithmValuesInt) ctx.Sender.Algorithm.AsInt32()) {
                 case AlgorithmValuesInt.AES_CCM_16_64_128:
                     cbKey = 128/8;
@@ -358,7 +358,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     break;
 
                 default:
-                    throw new Exception("Unsupported algorithm");
+                    throw new CoAPException("Unsupported algorithm");
             }
 
             ctx.Sender.Id = senderId ?? throw new ArgumentNullException(nameof(senderId));
@@ -411,14 +411,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             ctx.Sender.BaseIV = (byte[]) ctx.Recipient.BaseIV.Clone();
 
             int iIv = cbIV - 5 - senderId.Length;
-            if (cbIV - 6 < senderId.Length) throw new Exception("Sender Id too long");
+            if (cbIV - 6 < senderId.Length) throw new CoAPException("Sender Id too long");
             ctx.Sender.BaseIV[0] ^= (byte) senderId.Length;
             for (int i = 0; i < senderId.Length; i++) {
                 ctx.Sender.BaseIV[iIv + i] ^= senderId[i];
             }
 
             iIv = cbIV - 5 - recipientId.Length;
-            if (cbIV - 6 < recipientId.Length) throw new Exception("Recipient Id too long");
+            if (cbIV - 6 < recipientId.Length) throw new CoAPException("Recipient Id too long");
             ctx.Recipient.BaseIV[0] ^= (byte) recipientId.Length;
             for (int i = 0; i < recipientId.Length; i++) {
                 ctx.Recipient.BaseIV[iIv + i] ^= recipientId[i];
@@ -567,7 +567,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             // Modify the context 
 
-            if (ivSize - 6 < entityId.Length) throw new Exception("Entity id is too long");
+            if (ivSize - 6 < entityId.Length) throw new CoAPException("Entity id is too long");
             ctx.BaseIV[0] ^= (byte) entityId.Length;
             int i1 = ivSize - 5 - entityId.Length /*- 1*/;
             for (int i = 0; i < entityId.Length; i++) {

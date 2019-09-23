@@ -134,7 +134,7 @@ namespace Com.AugustCellars.CoAP.Examples
             if (payload != null) {
                 request.SetPayload(payload, MediaType.TextPlain);
             }
-            if (oscoap != null) request.OscoapContext = oscoap;
+            if (oscoap != null) request.OscoreContext = oscoap;
 
             // uncomment the next line if you want to specify a draft to use
             // request.EndPoint = CoAP.Net.EndPointManager.Draft13;

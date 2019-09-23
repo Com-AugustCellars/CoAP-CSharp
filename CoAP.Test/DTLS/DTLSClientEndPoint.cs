@@ -12,15 +12,19 @@ using PeterO.Cbor;
 namespace Com.AugustCellars.CoAP.DTLS
 {
     [TestClass]
-    class DTLSClientEndPointTest
+    public class DTLSClientEndPointTest
     {
         private static OneKey PskOneKey;
+#if SUPPORT_RPK
         private static OneKey RpkOneKey;
+#endif
 
         [ClassInitialize]
-        public void OneTimeSetup()
+        public static void OneTimeSetup(TestContext ctx)
         {
+#if SUPPORT_RPK
             RpkOneKey = OneKey.GenerateKey(AlgorithmValues.ECDSA_256, GeneralValues.KeyType_EC, "P-256");
+#endif
 
             PskOneKey = new OneKey();
             PskOneKey.Add(CoseKeyKeys.KeyType, GeneralValues.KeyType_Octet);
@@ -30,14 +34,24 @@ namespace Com.AugustCellars.CoAP.DTLS
         [TestMethod]
         public void TestNoKey()
         {
-            DTLSClientEndPoint ep = new DTLSClientEndPoint(null);
+            try {
+                DTLSClientEndPoint ep =  new DTLSClientEndPoint((TlsKeyPair) null);
+                ep.Dispose();
+                Assert.Fail("Should not have reached here.");
+            }
+            catch (ArgumentNullException e) {
+                Assert.AreEqual(e.ParamName, "userKey");
+            }
         }
 
+#if SUPPORT_RPK
         [TestMethod]
         public void TestRpk()
         {
+            TlsKeyPair tlsKey = new TlsKeyPair(RpkOneKey.PublicKey(), RpkOneKey);
             DTLSClientEndPoint ep = new DTLSClientEndPoint(RpkOneKey);
         }
+#endif
 
         [TestMethod]
         public void NoEndPoint()
