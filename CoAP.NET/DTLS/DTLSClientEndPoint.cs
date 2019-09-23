@@ -90,7 +90,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             // Stack.Remove("Reliability");
             MessageEncoder = UdpCoapMesageEncoder;
             MessageDecoder = UdpCoapMessageDecoder;
-            EndpointSchema = "coaps";
+            EndpointSchema = new []{"coaps", "coaps+udp"};
             channel.TlsEventHandler += OnTlsEvent;
         }
 

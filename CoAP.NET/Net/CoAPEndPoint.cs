@@ -121,7 +121,7 @@ namespace Com.AugustCellars.CoAP.Net
             _matcher = new Matcher(config);
             _coapStack = new CoapStack(config);
             _channel.DataReceived += ReceiveData;
-            EndpointSchema = "coap";
+            EndpointSchema = new []{"coap", "coap+udp"};
         }
 
         /// <inheritdoc/>
@@ -143,7 +143,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <summary>
         /// What is the endpoint schema supported by this endpoint
         /// </summary>
-        public String EndpointSchema { get; set; }
+        public string[] EndpointSchema { get; set; }
 
         /// <inheritdoc/>
         public System.Net.EndPoint LocalEndPoint { get; private set; }
@@ -251,7 +251,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public void SendRequest(Request request)
         {
-            if (request.URI.Scheme != EndpointSchema) throw new Exception("Schema is incorrect for the end point");
+            if (Array.IndexOf(EndpointSchema, request.URI.Scheme) == -1) throw new CoAPException("Schema is incorrect for the end point");
             _executor.Start(() => _coapStack.SendRequest(request));
         }
 

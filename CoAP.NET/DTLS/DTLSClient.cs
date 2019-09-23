@@ -23,20 +23,20 @@ using PeterO.Cbor;
 namespace Com.AugustCellars.CoAP.DTLS
 {
 
-    class DtlsClient : DefaultTlsClient
+    public class DtlsClient : DefaultTlsClient
     {
         private readonly TlsPskIdentity _mPskIdentity;
         private TlsSession _mSession;
         public EventHandler<TlsEvent> TlsEventHandler;
         private readonly TlsKeyPair _tlsKeyPair;
 
-        internal DtlsClient(TlsSession session, TlsPskIdentity pskIdentity)
+        public DtlsClient(TlsSession session, TlsPskIdentity pskIdentity)
         {
             _mSession = session;
             _mPskIdentity = pskIdentity;
         }
 
-        internal DtlsClient(TlsSession session, TlsKeyPair userKey)
+        public DtlsClient(TlsSession session, TlsKeyPair userKey)
         {
             _mSession = session;
             _tlsKeyPair = userKey ?? throw new ArgumentNullException(nameof(userKey));
@@ -44,7 +44,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
 #if SUPPORT_TLS_CWT
         public KeySet CwtTrustKeySet { get; set; }
-        internal DtlsClient(TlsSession session, TlsKeyPair tlsKey, KeySet cwtTrustKeys)
+        public DtlsClient(TlsSession session, TlsKeyPair tlsKey, KeySet cwtTrustKeys)
         {
             _mSession = session;
             _tlsKeyPair = tlsKey ?? throw new ArgumentNullException(nameof(tlsKey));
@@ -62,11 +62,11 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             if (_tlsKeyPair != null) {
                 if (_tlsKeyPair.X509Certificate != null) {
-                    i = new int[] {
-                        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
-                        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8
-                    };
-                }
+                i = new int[] {
+                    CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+                    CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8
+                };
+            }
 #if SUPPORT_RPK
                 else if (_tlsKeyPair.PublicKey != null) {
                     i = new int[] {
@@ -77,11 +77,11 @@ namespace Com.AugustCellars.CoAP.DTLS
 #endif
 #if SUPPORT_TLS_CWT
                 else if (_tlsKeyPair.CertType == CertificateType.CwtPublicKey) {
-                    i = new int[] {
-                        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
-                        CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8
-                    };
-                }
+                i = new int[] {
+                    CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+                    CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8
+                };
+            }
 #endif
                 else {
                     //  We should never get here
@@ -89,11 +89,12 @@ namespace Com.AugustCellars.CoAP.DTLS
                 }
             }
             else {
-                i = new int[] {
-                    CipherSuite.TLS_PSK_WITH_AES_128_CCM_8,
-                };
+                    //  We should never get here
+                    i = new int[] {
+                        CipherSuite.TLS_PSK_WITH_AES_128_CCM_8
+                    };
             }
-
+ 
             TlsEvent e = new TlsEvent(TlsEvent.EventCode.GetCipherSuites) {
                 IntValues = i
             };
@@ -204,7 +205,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 return auth;
             }
 
-            throw new Exception("ICE");
+            throw new CoAPException("ICE");
         }
 
         private void MyTlsEventHandler(object sender, TlsEvent tlsEvent)
@@ -538,15 +539,15 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                             SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(param);
 
-                            return new DefaultTlsSignerCredentials(_mContext, new RawPublicKey(spi), privKey, new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
-                        }
-
+                        return new DefaultTlsSignerCredentials(_mContext, new RawPublicKey(spi), privKey, new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
                     }
+
+                }
 #endif
 #if SUPPORT_TLS_CWT
 
                     else if (TlsKey.CertType == CertificateType.CwtPublicKey) {
-                        OneKey k = TlsKey.PublicCwt.Cnf.Key;
+                    OneKey k = TlsKey.PublicCwt.Cnf.Key;
                         if (k.HasKeyType((int) GeneralValuesInt.KeyType_EC2) &&
                             k.HasAlgorithm(AlgorithmValues.ECDSA_256)) {
 

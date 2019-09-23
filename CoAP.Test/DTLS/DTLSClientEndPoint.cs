@@ -45,7 +45,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         }
 
 #if SUPPORT_RPK
-        [Test Method]
+        [TestMethod]
         public void TestRpk()
         {
             TlsKeyPair tlsKey = new TlsKeyPair(RpkOneKey.PublicKey(), RpkOneKey);

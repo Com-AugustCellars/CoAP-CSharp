@@ -165,7 +165,7 @@ namespace Com.AugustCellars.CoAP.Server
                 }
             }
 
-            throw new Exception("No UDP Endpoint exists.");
+            throw new CoAPException("No UDP Endpoint exists.");
         }
 #endif
 

@@ -27,7 +27,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         public KeySet CwtTrustKeySet { get; set; }
 
-        internal DtlsServer(TlsKeyPairSet serverKeys, KeySet userKeys)
+        public DtlsServer(TlsKeyPairSet serverKeys, KeySet userKeys)
         {
             _serverKeys = serverKeys;
             _userKeys = userKeys;
@@ -388,6 +388,8 @@ namespace Com.AugustCellars.CoAP.DTLS
                     throw new TlsFatalAlert(AlertDescription.certificate_unknown);
                 }
 
+                AuthenticationCertificate = (Certificate) clientCertificate;
+            
                 AuthenticationCertificate = (Certificate) clientCertificate;
             
         }
