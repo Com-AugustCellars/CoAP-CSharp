@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 
 <Project Sdk="Microsoft.NET.Sdk">
@@ -7,18 +7,21 @@
     <TargetFrameworks>netcoreapp2.0;net462;netstandard2.0</TargetFrameworks>
     <PackageId>Com.AugustCellars.CoAP</PackageId>
     <Id>Com.AugustCellars.CoAP</Id>
-    <PackageVersion>1.4.0.0</PackageVersion>
-    <Version>1.4.0.0</Version>
+    <PackageVersion>1.5.0.0</PackageVersion>
+    <Version>1.5.0.0</Version>
     <Authors>Jim Schaad</Authors>
     <Description>An implementation of the CBOR Object Signing and Encryption standards.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright @2016-8 Jim Schaad</Copyright>
+    <Copyright>Copyright @2016-9 Jim Schaad</Copyright>
     <PackageTags>COSE CBOR</PackageTags>
+    <license>BSD-3-Clause</license>
     
     <PackageReleaseNotes>
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
 This project is NOT intended to be used for commercial purposes.  It is intented only for research and verification work.
 
+1.5
+  - Update to use CBOR package 4.0.0 due to a security bug found.
 1.4
   - Start using CoAPException rather than Exception for items being thrown by our code
   - Test and fix code dealing with using DTLS with X509 certificates
@@ -231,7 +234,7 @@ This project is NOT intended to be used for commercial purposes.  It is intented
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Com.AugustCellars.COSE" Version="1.5.0" />
+    <PackageReference Include="Com.AugustCellars.COSE" Version="1.6.0" />
     <PackageReference Include="System.Collections.Specialized" Version="4.3.0" />
     <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
     <PackageReference Include="System.Net.Primitives" Version="4.3.0" />
