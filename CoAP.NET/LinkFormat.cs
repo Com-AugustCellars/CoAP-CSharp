@@ -317,7 +317,7 @@ namespace Com.AugustCellars.CoAP
 
                 foreach (CBORObject key in resource.Keys) {
                     string keyName = null;
-                    if (dictionary != null && key.Type == CBORType.Number) {
+                    if (dictionary != null && key.Type == CBORType.Integer) {
                         foreach (KeyValuePair<string, CBORObject> kvp in dictionary) {
                             if (key.Equals(kvp.Value)) {
                                 keyName = kvp.Key;
