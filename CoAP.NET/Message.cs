@@ -34,7 +34,7 @@ namespace Com.AugustCellars.CoAP
         private Byte[] _token;
         private Byte[] _payload;
         private String _payloadString;
-        private SortedDictionary<OptionType, LinkedList<Option>> _optionMap = new SortedDictionary<OptionType, LinkedList<Option>>();
+        private readonly SortedDictionary<OptionType, LinkedList<Option>> _optionMap = new SortedDictionary<OptionType, LinkedList<Option>>();
         private Boolean _acknowledged;
         private Boolean _rejected;
         private Boolean _cancelled;

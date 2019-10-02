@@ -393,7 +393,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 //  We may want a new exchange at this point if it relates to a new message for blockwise.
 
                 if (request.HasOption(OptionType.Block2)) {
-                    Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, null, request.Source);
+                    Exchange.KeyUri keyUri = new Exchange.KeyUri(request, request.Source);
                     BlockHolder block;
                     _ongoingExchanges.TryGetValue(keyUri, out block);
 
@@ -535,7 +535,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 if (encryptedResponse.HasOption(OptionType.Block2)) {
                     Request request = exchange.CurrentRequest;
-                    Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, null, response.Destination);
+                    Exchange.KeyUri keyUri = new Exchange.KeyUri(request, response.Destination);
 
                     //  Observe notification only send the first block, hence do not store them as ongoing
                     if (exchange.OSCOAP_ResponseBlockStatus != null &&

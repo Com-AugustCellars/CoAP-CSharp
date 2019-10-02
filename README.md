@@ -13,8 +13,7 @@ Reviews and suggestions would be appreciated.
 
 ## Copyright
 
-Copyright (c) 2011-2015, Longxiang He <longxianghe@gmail.com>,
-SmeshLink Technology Co.
+Copyright (c) 2016-9 , Jim Schaad <ietf@augustcellars.com>
 
 
 ## Content

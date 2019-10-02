@@ -39,7 +39,12 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="request">the request to send</param>
         public void SendRequest(Request request)
         {
-            Head.Filter.SendRequest(Head.NextFilter, null, request);
+            try {
+                Head.Filter.SendRequest(Head.NextFilter, null, request);
+            }
+            catch (Exception ex) {
+                log.Error("LayerStack.SendRequest - Exception during processing ", ex);
+            }
         }
 
         /// <summary>

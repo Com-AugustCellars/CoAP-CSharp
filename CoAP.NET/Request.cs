@@ -12,8 +12,6 @@
 using System;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Observe;
 #if INCLUDE_OSCOAP
@@ -26,7 +24,7 @@ namespace Com.AugustCellars.CoAP
     /// This class describes the functionality of a CoAP Request as
     /// a subclass of a CoAP Message. It provides:
     /// 1. operations to answer a request by a response using respond()
-    /// 2. different ways to handle incoming responses: receiveResponse() or Responsed event
+    /// 2. different ways to handle incoming responses: receiveResponse() or Respond event
     /// </summary>
     public class Request : Message
     {
@@ -46,7 +44,7 @@ namespace Com.AugustCellars.CoAP
         public event EventHandler<ResponseEventArgs> Responding;
 
         /// <summary>
-        /// Occurs when a observing request is reregistering.
+        /// Occurs when a observing request is re-registering.
         /// </summary>
         public event EventHandler<ReregisterEventArgs> Reregistering;
 
@@ -76,7 +74,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets a value indicating whether this request is a multicast request or not.
         /// </summary>
-        public new Boolean IsMulticast {
+        public new bool IsMulticast {
             get {
                 if (Destination == null) {
                     throw new CoAPException("Must set the destination before we can known");
@@ -120,8 +118,12 @@ namespace Com.AugustCellars.CoAP
                     if (string.IsNullOrEmpty(scheme)) scheme = CoapConstants.UriScheme;
                     scheme = scheme.ToLower();
 
+                    if (string.IsNullOrEmpty(host)) {
+                        throw new CoAPException("Must have a host specified in the URL");
+                    }
+
                     // set Uri-Host option if not IP literal
-                    if (!string.IsNullOrEmpty(host) && !regIP.IsMatch(host)
+                    if (!regIP.IsMatch(host)
                         && !host.Equals("localhost", StringComparison.OrdinalIgnoreCase)) {
                         UriHost = host;
                     }
@@ -202,14 +204,14 @@ namespace Com.AugustCellars.CoAP
         /// Should we attempt to reconnect to keep an observe relationship fresh
         /// in the event the MAX-AGE expires on the current value?
         /// </summary>
-        public Boolean ObserveReconnect { get; set; } = true;
+        public bool ObserveReconnect { get; set; } = true;
 
         /// <summary>
         /// Sets CoAP's observe option. If the target resource of this request
 	    /// responds with a success code and also sets the observe option, it will
         /// send more responses in the future whenever the resource's state changes.
         /// </summary>
-        /// <returns>Current requeset</returns>
+        /// <returns>Current request</returns>
         public Request MarkObserve()
         {
             Observe = 0;
@@ -219,7 +221,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Sets CoAP's observe option to the value of 1 to proactively cancel.
         /// </summary>
-        /// <returns>Current requeset</returns>
+        /// <returns>Current request</returns>
         public Request MarkObserveCancel()
         {
             Observe = 1;
@@ -232,11 +234,11 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="name">a <code>String</code> specifying the name of the parameter</param>
         /// <returns>a <code>String</code> representing the single value of the parameter</returns>
-        public String GetParameter(String name)
+        public string GetParameter(string name)
         {
             foreach (Option query in GetOptions(OptionType.UriQuery)) {
-                String val = query.StringValue;
-                if (String.IsNullOrEmpty(val)) {
+                string val = query.StringValue;
+                if (string.IsNullOrEmpty(val)) {
                     continue;
                 }
 
@@ -434,7 +436,7 @@ namespace Com.AugustCellars.CoAP
 #endregion
 
         /// <summary>
-        /// Set the context structure used to OSCOAP protect the message
+        /// Set the context structure used to OSCORE protect the message
         /// </summary>
         [ObsoleteAttribute("Use OscoreContext instead")]
         public SecurityContext OscoapContext
@@ -448,10 +450,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Return the security context associated with TLS.
         /// </summary>
-        public ISecureSession TlsContext
-        {
-            get =>(ISecureSession) Session;
-        }
+        public ISecureSession TlsContext => (ISecureSession) Session;
 
         /// <summary>
         /// Give information about what session the request came from.

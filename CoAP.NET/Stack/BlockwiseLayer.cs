@@ -23,7 +23,7 @@ namespace Com.AugustCellars.CoAP.Stack
 {
     public class BlockwiseLayer : AbstractLayer
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(BlockwiseLayer));
+        private static readonly ILogger log = LogManager.GetLogger(typeof(BlockwiseLayer));
 
         private int _maxMessageSize;
         private int _defaultBlockSize;
@@ -128,7 +128,7 @@ namespace Com.AugustCellars.CoAP.Stack
                         return;
                     }
 
-                    status.CurrentNUM = status.CurrentNUM + 1;
+                    status.CurrentNUM += 1;
                     if (block1.M) {
                         log.Debug("There are more blocks to come. Acknowledge this block.");
 
@@ -370,18 +370,14 @@ namespace Com.AugustCellars.CoAP.Stack
                         int szx = block2.SZX;
                         bool m = false;
 
-                        Request block = new Request(request.Method);
+                        Request block = new Request(request.Method) {
+                            Type = request.Type,
+                            Destination = request.IsMulticast ? response.Source : request.Destination,
+                            Session = request.Session
+                        };
                         // NON could make sense over SMS or similar transports
-                        block.Type = request.Type;
-                        if (request.IsMulticast) {
-                            block.Destination = response.Source;
-                        }
-                        else {
-                            block.Destination = request.Destination;
-                        }
                         block.SetOptions(request.GetOptions());
                         block.SetOption(new BlockOption(OptionType.Block2, num, szx, m));
-                        block.Session = request.Session;
                         // we use the same token to ease traceability (GET without Observe no longer cancels relations)
                         // block.Token = response.Token;
                         // make sure not to use Observe for block retrieval
