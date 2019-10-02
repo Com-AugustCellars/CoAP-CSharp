@@ -330,7 +330,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 ctx.Sender.Algorithm = algAEAD;
             }
 
-            if (ctx.Sender.Algorithm.Type != CBORType.Number) throw new CoAPException("Unsupported algorithm");
+            if (ctx.Sender.Algorithm.Type != CBORType.Integer) throw new CoAPException("Unsupported algorithm");
             switch ((AlgorithmValuesInt) ctx.Sender.Algorithm.AsInt32()) {
                 case AlgorithmValuesInt.AES_CCM_16_64_128:
                     cbKey = 128/8;
@@ -511,7 +511,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             ctx.Id = entityId ?? throw new ArgumentNullException(nameof(entityId));
             if (algKeyAgree == null) algKeyAgree = AlgorithmValues.ECDH_SS_HKDF_256;
 
-            if (ctx.Algorithm.Type != CBORType.Number) throw new ArgumentException("algorithm is unknown" );
+            if (ctx.Algorithm.Type != CBORType.Integer) throw new ArgumentException("algorithm is unknown" );
             switch ((AlgorithmValuesInt) ctx.Algorithm.AsInt32()) {
                 case AlgorithmValuesInt.AES_CCM_16_64_128:
                     keySize = 128 / 8;
