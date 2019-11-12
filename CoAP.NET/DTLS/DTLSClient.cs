@@ -2,8 +2,8 @@
 using System.Collections;
 using System.IO;
 using Com.AugustCellars.COSE;
-using Com.AugustCellars.WebToken.CWT;
 #if SUPPORT_TLS_CWT
+using Com.AugustCellars.WebToken.CWT;
 using Com.AugustCellars.WebToken;
 #endif
 using Org.BouncyCastle.Asn1.Nist;
