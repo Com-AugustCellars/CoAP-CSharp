@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Com.AugustCellars.COSE;
+#if SUPPORT_TLS_CWT
 using Com.AugustCellars.WebToken.CWT;
+#endif
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto.Tls;
 #if SUPPORT_TLS_CWT
