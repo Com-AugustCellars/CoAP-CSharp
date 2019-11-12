@@ -246,7 +246,7 @@ namespace Com.AugustCellars.CoAP.Stack
         public TFilter Get(string name)
         {
             IEntry<TFilter, TNextFilter> e = GetEntry(name);
-            return e == null ? default : e.Filter;
+            return e == null ? default(TFilter) : e.Filter;
         }
 
         /// <inheritdoc/>
