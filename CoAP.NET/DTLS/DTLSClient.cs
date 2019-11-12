@@ -2,6 +2,7 @@
 using System.Collections;
 using System.IO;
 using Com.AugustCellars.COSE;
+using Com.AugustCellars.WebToken.CWT;
 #if SUPPORT_TLS_CWT
 using Com.AugustCellars.WebToken;
 #endif
@@ -115,7 +116,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 try {
                     CwtPublicKey cwtPub = CwtPublicKey.Parse(io);
 
-                    CWT cwtServer = CWT.Decode(cwtPub.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
+                    Cwt cwtServer = Cwt.Decode(cwtPub.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
 
                     AsymmetricKeyParameter pubKey = cwtServer.Cnf.Key.AsPublicKey();
 
@@ -440,7 +441,7 @@ namespace Com.AugustCellars.CoAP.DTLS
             public void GetCwtKey(CwtPublicKey rpk)
             {
                 try {
-                    CWT cwt = CWT.Decode(rpk.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
+                    Cwt cwt = Cwt.Decode(rpk.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
 
                     AsymmetricKeyParameter pub = cwt.Cnf.Key.AsPublicKey();
                     SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pub);

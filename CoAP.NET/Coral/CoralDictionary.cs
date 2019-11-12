@@ -49,7 +49,7 @@ namespace Com.AugustCellars.CoAP.Coral
             foreach (KeyValuePair<int, string> o in _dictionary) {
                 if (value.Equals(CBORObject.FromObject(o.Value))) {
                     CBORObject newValue = CBORObject.FromObject(o.Key);
-                    if (value.Type == CBORType.Number) {
+                    if (value.Type == CBORType.Integer) {
                         newValue = CBORObject.FromObjectAndTag(newValue, DictionaryTag);
                     }
 
@@ -73,7 +73,7 @@ namespace Com.AugustCellars.CoAP.Coral
 
         public CBORObject Reverse(CBORObject value)
         {
-            if (value.Type != CBORType.Number) {
+            if (value.Type != CBORType.Integer) {
                 return value;
             }
 
@@ -87,7 +87,7 @@ namespace Com.AugustCellars.CoAP.Coral
 
             CBORObject result = CBORObject.FromObject(_dictionary[value.AsInt32()]);
 
-            if (result.Type == CBORType.Number) {
+            if (result.Type == CBORType.Integer) {
                 return value;
             }
 
