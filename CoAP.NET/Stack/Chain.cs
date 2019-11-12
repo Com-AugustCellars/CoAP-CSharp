@@ -287,21 +287,21 @@ namespace Com.AugustCellars.CoAP.Stack
         public TNextFilter GetNextFilter(string name)
         {
             IEntry<TFilter, TNextFilter> e = GetEntry(name);
-            return e == null ? default : e.NextFilter;
+            return e == null ? default(TNextFilter) : e.NextFilter;
         }
 
         /// <inheritdoc/>
         public TNextFilter GetNextFilter(TFilter filter)
         {
             IEntry<TFilter, TNextFilter> e = GetEntry(filter);
-            return e == null ? default : e.NextFilter;
+            return e == null ? default(TNextFilter) : e.NextFilter;
         }
 
         /// <inheritdoc/>
         public TNextFilter GetNextFilter(Type filterType)
         {
             IEntry<TFilter, TNextFilter> e = GetEntry(filterType);
-            return e == null ? default : e.NextFilter;
+            return e == null ? default(TNextFilter) : e.NextFilter;
         }
 
         /// <inheritdoc/>
