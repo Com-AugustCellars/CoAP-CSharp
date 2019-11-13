@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 
 <Project Sdk="Microsoft.NET.Sdk">
@@ -7,8 +7,8 @@
     <TargetFrameworks>netcoreapp2.0;net462;netstandard2.0</TargetFrameworks>
     <PackageId>Com.AugustCellars.CoAP</PackageId>
     <Id>Com.AugustCellars.CoAP</Id>
-    <PackageVersion>1.7.0.0</PackageVersion>
-    <Version>1.7.0.0</Version>
+    <PackageVersion>1.6.0.0</PackageVersion>
+    <Version>1.6.0.0</Version>
     <Authors>Jim Schaad</Authors>
     <Title>C# Implementation of CoAP</Title>
     <Description>An implementation of various CoAP standards.  Both client and server sides are included.</Description>
@@ -20,11 +20,13 @@
     
     <PackageReleaseNotes>
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
-This project is NOT intended to be used for commercial purposes.  It is intented only for research and verification work.
+It is intented primarily for research and verification work.
 
 1.6
-  - Use cache key fields for matching bitwise transfers
+  - Use cache key fields for matching blockwise transfers.
+  - Some corrections for blockwise transfers over TCP
 1.5
+  - Update to use CBOR package 4.0.0 due to a security bug found.
 1.4
   - Start using CoAPException rather than Exception for items being thrown by our code
   - Test and fix code dealing with using DTLS with X509 certificates

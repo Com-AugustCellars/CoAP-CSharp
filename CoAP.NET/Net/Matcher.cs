@@ -269,10 +269,6 @@ namespace Com.AugustCellars.CoAP.Net
                 }
             }
             else {
-                byte[] oscoapValue = null;
-                if (request.HasOption(OptionType.Oscoap)) {
-                    oscoapValue = request.Oscoap.RawValue;
-                }
                 Exchange.KeyUri keyUri = new Exchange.KeyUri(request, request.Source);
 
                 if (_Log.IsDebugEnabled) {
