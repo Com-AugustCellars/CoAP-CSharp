@@ -21,9 +21,9 @@ namespace Com.AugustCellars.CoAP
     /// </summary>
     public class Option
     {
-        private static readonly IConvertor<Int32> _Int32Convertor = new Int32Convertor();
-        private static readonly IConvertor<Int64> _Int64Convertor = new Int64Convertor();
-        private static readonly IConvertor<String> _StringConvertor = new StringConvertor();
+        private static readonly IConvertor<int> int32Convertor = new Int32Convertor();
+        private static readonly IConvertor<long> int64Convertor = new Int64Convertor();
+        private static readonly IConvertor<string> stringConvertor = new StringConvertor();
 
         /// <summary>
         /// Initializes an option.
@@ -42,34 +42,28 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets the name of the option that corresponds to its type.
         /// </summary>
-        public String Name
-        {
-            get => ToString(Type);
-        }
+        public string Name => ToString(Type);
 
         /// <summary>
         /// Gets the value's length in bytes of the option.
         /// </summary>
-        public Int32 Length
-        {
-            get => null == RawValue ? 0 : RawValue.Length;
-        }
+        public int Length => null == RawValue ? 0 : RawValue.Length;
 
         /// <summary>
         /// Gets or sets raw bytes value of the option in network byte order (big-endian).
         /// </summary>
-        public Byte[] RawValue { get; set; }
+        public byte[] RawValue { get; set; }
 
         /// <summary>
         /// Gets or sets string value of the option.
         /// </summary>
-        public String StringValue
+        public string StringValue
         {
-            get => _StringConvertor.Decode(RawValue);
+            get => stringConvertor.Decode(RawValue);
             set
             {
                 if (value == null) throw ThrowHelper.ArgumentNull("value");
-                RawValue = _StringConvertor.Encode(value);
+                RawValue = stringConvertor.Encode(value);
             }
         }
 
@@ -78,48 +72,43 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets int value of the option.
         /// </summary>
-        public Int32 IntValue
+        public int IntValue
         {
-            get => _Int32Convertor.Decode(RawValue);
-            set => RawValue = _Int32Convertor.Encode(value);
+            get => int32Convertor.Decode(RawValue);
+            set => RawValue = int32Convertor.Encode(value);
         }
 
         /// <summary>
         /// Gets or sets long value of the option.
         /// </summary>
-        public Int64 LongValue
+        public long LongValue
         {
-            get => _Int64Convertor.Decode(RawValue);
-            set => RawValue = _Int64Convertor.Encode(value);
+            get => int64Convertor.Decode(RawValue);
+            set => RawValue = int64Convertor.Encode(value);
         }
 
         /// <summary>
         /// Gets the value of the option according to its type.
         /// </summary>
-        public Object Value
+        public object Value
         {
             get
             {
                 IConvertor convertor = GetConvertor(Type);
-                return null == convertor ? null : convertor.Decode(RawValue);
+                return convertor?.Decode(RawValue);
             }
         }
 
         /// <summary>
         /// Gets a value indicating whether the option has a default value according to the draft.
         /// </summary>
-        public Boolean IsDefault
+        public bool IsDefault
         {
-            get
-            {
-                // TODO refactor
-                switch (Type)
-                {
-                    case OptionType.MaxAge:
-                        return IntValue == CoapConstants.DefaultMaxAge;
-                    default:
-                        return false;
+            get {
+                if (Type == OptionType.MaxAge) {
+                    return IntValue == CoapConstants.DefaultMaxAge;
                 }
+                return false;
             }
         }
 
@@ -127,7 +116,7 @@ namespace Com.AugustCellars.CoAP
         /// Format the value based on expected type.
         /// </summary>
         /// <returns></returns>
-        public String ToValueString()
+        public string ToValueString()
         {
             switch (GetFormatByType(Type))
             {
@@ -145,7 +134,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Returns a human-readable string representation of the option's value.
         /// </summary>
-        public override String ToString()
+        public override string ToString()
         {
             return ToString(Type) + ": " + ToValueString();
         }
@@ -154,17 +143,17 @@ namespace Com.AugustCellars.CoAP
         /// Gets the hash code of this object
         /// </summary>
         /// <returns>The hash code</returns>
-        public override Int32 GetHashCode()
+        public override int GetHashCode()
         {
-            const Int32 prime = 31;
-            Int32 result = (Int32) Type;
+            const int prime = 31;
+            int result = (int) Type;
             result = prime * result + ByteArrayUtils.ComputeHash(RawValue);
             return result;
         }
 
         
         /// <inheritdoc/>
-        public override Boolean Equals(Object obj)
+        public override bool Equals(object obj)
         {
             if (null == obj) return false;
             if (ReferenceEquals(this, obj)) return true;
@@ -172,7 +161,7 @@ namespace Com.AugustCellars.CoAP
 
             Option other = (Option) obj;
             if (Type != other.Type) return false;
-            if (RawValue == null && other.RawValue == null) return false;
+            if (RawValue == other.RawValue) return true;
             if (RawValue == null || other.RawValue == null) return false;
             if (RawValue.Length != other.RawValue.Length) return false;
             return Utils.AreSequenceEqualTo(RawValue, other.RawValue);
@@ -204,7 +193,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="type">The type of the option</param>
         /// <param name="raw">The raw bytes value of the option</param>
         /// <returns>The new option</returns>
-        public static Option Create(OptionType type, Byte[] raw)
+        public static Option Create(OptionType type, byte[] raw)
         {
             Option opt = Create(type);
             opt.RawValue = raw;
@@ -217,7 +206,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="type">The type of the option</param>
         /// <param name="str">The string value of the option</param>
         /// <returns>The new option</returns>
-        public static Option Create(OptionType type, String str)
+        public static Option Create(OptionType type, string str)
         {
             Option opt = Create(type);
             opt.StringValue = str;
@@ -230,7 +219,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="type">The type of the option</param>
         /// <param name="val">The int value of the option</param>
         /// <returns>The new option</returns>
-        public static Option Create(OptionType type, Int32 val)
+        public static Option Create(OptionType type, int val)
         {
             Option opt = Create(type);
             opt.IntValue = val;
@@ -243,7 +232,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="type">The type of the option</param>
         /// <param name="val">The long value of the option</param>
         /// <returns>The new option</returns>
-        public static Option Create(OptionType type, Int64 val)
+        public static Option Create(OptionType type, long val)
         {
             Option opt = Create(type);
             opt.LongValue = val;
@@ -254,44 +243,46 @@ namespace Com.AugustCellars.CoAP
         /// Splits a string into a set of options, e.g. a uri path.
         /// </summary>
         /// <param name="type">The type of options</param>
-        /// <param name="s">The string to be splited</param>
-        /// <param name="delimiter">The seperator string</param>
+        /// <param name="s">The string to be split</param>
+        /// <param name="delimiter">The separator string</param>
         /// <returns><see cref="System.Collections.Generic.IEnumerable&lt;T&gt;"/> of options</returns>
-        public static IEnumerable<Option> Split(OptionType type, String s, String delimiter)
+        public static IEnumerable<Option> Split(OptionType type, string s, string delimiter)
         {
             List<Option> opts = new List<Option>();
-            if (!String.IsNullOrEmpty(s))
+            if (!string.IsNullOrEmpty(s)) {
                 s = s.TrimStart('/');
-            if (!String.IsNullOrEmpty(s) &&  s.Contains("%")) {
+            }
+            if (!string.IsNullOrEmpty(s) &&  s.Contains("%")) {
                 s = s.Replace("%22", "\"");
             }
-            if (!String.IsNullOrEmpty(s)) {
-                string combined = null;
-                foreach (String segment in s.Split(new String[] { delimiter }, StringSplitOptions.None)) {
-                    // Combine segments which are quoted
-                    if (!string.IsNullOrEmpty(segment) && segment[0] == '"') {
-                        if (segment[segment.Length - 1] == '"') {
-                            opts.Add(Create(type, segment.Substring(1, segment.Length - 1)));
-                            continue;
-                        }
-                        combined = segment.Substring(1);
-                    }
-
-                    if (combined != null) {
-                        combined += delimiter;
-                        combined += segment;
-                        if (!string.IsNullOrEmpty(segment) && segment[segment.Length - 1] == '"') {
-                            combined = combined.Substring(1, combined.Length - 1);
-                            opts.Add(Create(type, combined));
-                            combined = null;
-                        }
-
+            if (string.IsNullOrEmpty(s)) {
+                return opts;
+            }
+            string combined = null;
+            foreach (string segment in s.Split(new string[] { delimiter }, StringSplitOptions.None)) {
+                // Combine segments which are quoted
+                if (!string.IsNullOrEmpty(segment) && segment[0] == '"') {
+                    if (segment[segment.Length - 1] == '"') {
+                        opts.Add(Create(type, segment.Substring(1, segment.Length - 1)));
                         continue;
                     }
-                    // empty path segments are allowed (e.g., /test vs /test/)
-                    if ("/".Equals(delimiter) || !String.IsNullOrEmpty(segment)) {
-                        opts.Add(Create(type, segment));
+                    combined = segment.Substring(1);
+                }
+
+                if (combined != null) {
+                    combined += delimiter;
+                    combined += segment;
+                    if (!string.IsNullOrEmpty(segment) && segment[segment.Length - 1] == '"') {
+                        combined = combined.Substring(1, combined.Length - 1);
+                        opts.Add(Create(type, combined));
+                        combined = null;
                     }
+
+                    continue;
+                }
+                // empty path segments are allowed (e.g., /test vs /test/)
+                if ("/".Equals(delimiter) || !string.IsNullOrEmpty(segment)) {
+                    opts.Add(Create(type, segment));
                 }
             }
             return opts;
@@ -301,16 +292,16 @@ namespace Com.AugustCellars.CoAP
         /// Joins the string values of a set of options.
         /// </summary>
         /// <param name="options">The list of options to be joined</param>
-        /// <param name="delimiter">The seperator string</param>
+        /// <param name="delimiter">The separator string</param>
         /// <returns>The joined string</returns>
-        public static String Join(IEnumerable<Option> options, String delimiter)
+        public static string Join(IEnumerable<Option> options, string delimiter)
         {
             if (null == options) {
-                return String.Empty;
+                return string.Empty;
             }
             else {
                 StringBuilder sb = new StringBuilder();
-                Boolean append = false;
+                bool append = false;
                 foreach (Option opt in options) {
                     if (append) {
                         sb.Append(delimiter);
@@ -330,55 +321,21 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="type">The option type to describe</param>
         /// <returns>A string describing the option type</returns>
-        public static String ToString(OptionType type)
+        public static string ToString(OptionType type)
         {
+            OptionData od;
+            OptionData.OptionInfoDictionary.TryGetValue(type, out od);
+
+            if (od != null) {
+                return od.OptionName;
+            }
+
+
             switch (type) {
                 case OptionType.Reserved:
                     return "Reserved";
-                case OptionType.ContentFormat:
-                    return "Content-Format";
-                case OptionType.MaxAge:
-                    return "Max-Age";
-                case OptionType.ProxyUri:
-                    return "Proxy-Uri";
-                case OptionType.ETag:
-                    return "ETag";
-                case OptionType.UriHost:
-                    return "Uri-Host";
-                case OptionType.LocationPath:
-                    return "Location-Path";
-                case OptionType.UriPort:
-                    return "Uri-Port";
-                case OptionType.LocationQuery:
-                    return "Location-Query";
-                case OptionType.UriPath:
-                    return "Uri-Path";
-                case OptionType.UriQuery:
-                    return "Uri-Query";
-                case OptionType.Observe:
-                    return "Observe";
-                case OptionType.Accept:
-                    return "Accept";
-                case OptionType.IfMatch:
-                    return "If-Match";
-#pragma warning disable 612, 618
-                case OptionType.FencepostDivisor:
-                    return "Fencepost-Divisor";
-#pragma warning restore 612, 618
-                case OptionType.Block2:
-                    return "Block2";
-                case OptionType.Block1:
-                    return "Block1";
-                case OptionType.Size2:
-                    return "Size2";
-                case OptionType.Size1:
-                    return "Size1";
-                case OptionType.IfNoneMatch:
-                    return "If-None-Match";
-                case OptionType.ProxyScheme:
-                    return "Proxy-Scheme";
                 default:
-                    return String.Format("Unknown ({0})", type);
+                    return $"Unknown ({type})";
             }
         }
 
@@ -389,35 +346,14 @@ namespace Com.AugustCellars.CoAP
         /// <returns>the option format corresponding to the option type</returns>
         public static OptionFormat GetFormatByType(OptionType type)
         {
-            switch (type) {
-                case OptionType.ContentFormat:
-                case OptionType.MaxAge:
-                case OptionType.UriPort:
-                case OptionType.Observe:
-                case OptionType.Block2:
-                case OptionType.Block1:
-                case OptionType.Size2:
-                case OptionType.Size1:
-                case OptionType.Accept:
-#pragma warning disable 612, 618
-                case OptionType.FencepostDivisor:
-#pragma warning restore 612, 618
-                    return OptionFormat.Integer;
-                case OptionType.UriHost:
-                case OptionType.UriPath:
-                case OptionType.UriQuery:
-                case OptionType.LocationPath:
-                case OptionType.LocationQuery:
-                case OptionType.ProxyUri:
-                case OptionType.ProxyScheme:
-                    return OptionFormat.String;
-                case OptionType.ETag:
-                case OptionType.IfMatch:
-                case OptionType.IfNoneMatch:
-                    return OptionFormat.Opaque;
-                default:
-                    return OptionFormat.Unknown;
+            OptionData od;
+            OptionData.OptionInfoDictionary.TryGetValue(type, out od);
+
+            if (od != null) {
+                return od.OptionFormat;
             }
+
+            return OptionFormat.Unknown;
         }
 
         /// <summary>
@@ -425,9 +361,9 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="type">the option type to check</param>
         /// <returns><code>true</code> if the option is critical</returns>
-        public static Boolean IsCritical(OptionType type)
+        public static bool IsCritical(OptionType type)
         {
-            return ((Int32)type & 1) > 0;
+            return ((int)type & 1) > 0;
         }
 
         /// <summary>
@@ -435,7 +371,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="type">the option type to check</param>
         /// <returns><code>true</code> if the option is elective</returns>
-        public static Boolean IsElective(OptionType type)
+        public static bool IsElective(OptionType type)
         {
             return !IsCritical(type);
         }
@@ -445,9 +381,9 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="type">the option type to check</param>
         /// <returns><code>true</code> if the option is unsafe</returns>
-        public static Boolean IsUnsafe(OptionType type)
+        public static bool IsUnsafe(OptionType type)
         {
-            return ((Int32)type & 2) > 0;
+            return ((int)type & 2) > 0;
         }
 
         /// <summary>
@@ -455,149 +391,163 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="type">the option type to check</param>
         /// <returns><code>true</code> if the option is safe</returns>
-        public static Boolean IsSafe(OptionType type)
+        public static bool IsSafe(OptionType type)
         {
             return !IsUnsafe(type);
         }
 
+        public static bool IsNotCacheKey(OptionType type)
+        {
+            return ((int) type & 0x1e) == 0x1c;
+        }
+
+        public static bool IsCacheKey(OptionType type)
+        {
+            return !IsNotCacheKey(type);
+        }
+
         private static IConvertor GetConvertor(OptionType type)
         {
-            switch (type) {
-                case OptionType.Reserved:
-                    return null;
-                case OptionType.ContentType:
-                case OptionType.MaxAge:
-                case OptionType.UriPort:
-                case OptionType.Observe:
-                case OptionType.Block2:
-                case OptionType.Block1:
-                case OptionType.Accept:
-#pragma warning disable 612, 618
-                case OptionType.FencepostDivisor:
-#pragma warning restore 612, 618
-                    return _Int32Convertor;
-                case OptionType.ProxyUri:
-                case OptionType.ETag:
-                case OptionType.UriHost:
-                case OptionType.LocationPath:
-                case OptionType.LocationQuery:
-                case OptionType.UriPath:
-                case OptionType.UriQuery:
-                case OptionType.IfMatch:
-                case OptionType.IfNoneMatch:
-                    return _StringConvertor;
+            OptionData od;
+            OptionData.OptionInfoDictionary.TryGetValue(type, out od);
+            if (od == null) {
+                return null;
+            }
+
+            switch (od.OptionFormat) {
+                case OptionFormat.Integer:
+                    return int32Convertor;
+
+                case OptionFormat.String:
+                    return stringConvertor;
+
+                case OptionFormat.Opaque:
+                case OptionFormat.Unknown:
                 default:
                     return null;
             }
         }
 
-        interface IConvertor
+        private interface IConvertor
         {
-            Object Decode(Byte[] bytes);
+            object Decode(byte[] bytes);
         }
 
-        interface IConvertor<T> : IConvertor
+        private interface IConvertor<T> : IConvertor
         {
-            new T Decode(Byte[] bytes);
-            Byte[] Encode(T value);
+            new T Decode(byte[] bytes);
+            byte[] Encode(T value);
         }
 
-        class Int32Convertor : IConvertor<Int32>
+        private class Int32Convertor : IConvertor<int>
         {
-            public Int32 Decode(Byte[] bytes)
+            public int Decode(byte[] bytes)
             {
-                if (null == bytes) {
+                if (null == bytes || bytes.Length == 0) {
                     return 0;
                 }
 
-                Int32 iOutcome = 0;
-                Byte bLoop;
-                for (Int32 i = 0; i < bytes.Length; i++) {
-                    bLoop = bytes[i];
-                    //iOutcome |= (bLoop & 0xFF) << (8 * i);
-                    iOutcome <<= 8;
-                    iOutcome |= (bLoop & 0xFF);
+                if (BitConverter.IsLittleEndian && bytes.Length > 1) {
+                    byte[] bytes2 = new byte[bytes.Length];
+                    Array.Copy(bytes, bytes2, bytes.Length);
+                    Array.Reverse(bytes2);
+                    bytes = bytes2;
                 }
-                return iOutcome;
+                byte[] intBytes = new byte[4];
+                Array.Copy(bytes, 0, intBytes, 0, bytes.Length);
+
+                return BitConverter.ToInt32(intBytes, 0);
             }
 
-            public Byte[] Encode(Int32 value)
+            public byte[] Encode(int value)
             {
-                Int32 len = 0;
-                for (Int32 i = 0; i < 4; i++) {
-                    if (value >= 1 << (i * 8) || value < 0) {
-                        len++;
-                    }
-                    else {
+                byte[] bytes = BitConverter.GetBytes(value);
+                if (BitConverter.IsLittleEndian) {
+                    Array.Reverse(bytes);
+                }
+
+                int i;
+                for (i = 0; i < bytes.Length; i++) {
+                    if (bytes[i] != 0) {
                         break;
                     }
                 }
-                Byte[] ret = new Byte[len];
-                for (Int32 i = 0; i < len; i++) {
-                    ret[len - i - 1] = (Byte)(value >> i * 8);
+
+                if (bytes.Length == i) {
+                    return new byte[0];
                 }
-                return ret;
+                byte[] returnBytes = new byte[bytes.Length-i];
+                Array.Copy(bytes, i, returnBytes, 0, returnBytes.Length);
+
+                return returnBytes;
             }
 
-            Object IConvertor.Decode(Byte[] bytes)
+            object IConvertor.Decode(byte[] bytes)
             {
                 return Decode(bytes);
             }
         }
 
-        class Int64Convertor : IConvertor<Int64>
+        private class Int64Convertor : IConvertor<long>
         {
-            public Int64 Decode(Byte[] bytes)
+            public long Decode(byte[] bytes)
             {
                 if (null == bytes) {
                     return 0;
                 }
 
-                Int64 iOutcome = 0;
-                Byte bLoop;
-                for (Int32 i = 0; i < bytes.Length; i++) {
-                    bLoop = bytes[i];
-                    iOutcome <<= 8;
-                    iOutcome |= (bLoop & 0xFFU);
+                if (BitConverter.IsLittleEndian && bytes.Length > 1) {
+                    byte[] bytes2 = new byte[bytes.Length];
+                    Array.Copy(bytes, bytes2, bytes.Length);
+                    Array.Reverse(bytes2);
+                    bytes = bytes2;
                 }
-                return iOutcome;
+                byte[] intBytes = new byte[8];
+                Array.Copy(bytes, 0, intBytes, 0, bytes.Length);
+
+                return BitConverter.ToInt64(intBytes, 0);
             }
 
-            public Byte[] Encode(Int64 value)
+            public byte[] Encode(long value)
             {
-                Int32 len = 0;
-                for (Int32 i = 0; i < 8; i++) {
-                    if (value >= 1L << (i * 8) || value < 0L)
-                        len++;
-                    else
+                byte[] bytes = BitConverter.GetBytes(value);
+                if (BitConverter.IsLittleEndian)
+                {
+                    Array.Reverse(bytes);
+                }
+
+                int i;
+                for (i = 0; i < bytes.Length; i++) {
+                    if (bytes[i] != 0) {
                         break;
+                    }
                 }
-                Byte[] ret = new Byte[len];
-                for (Int32 i = 0; i < len; i++) {
-                    ret[len - i - 1] = (Byte)(value >> i * 8);
-                }
-                return ret;
+
+                byte[] returnBytes = new byte[bytes.Length - i];
+                Array.Copy(bytes, i, returnBytes, 0, returnBytes.Length);
+
+                return returnBytes;
             }
 
-            Object IConvertor.Decode(Byte[] bytes)
+            object IConvertor.Decode(byte[] bytes)
             {
                 return Decode(bytes);
             }
         }
 
-        class StringConvertor : IConvertor<String>
+        private class StringConvertor : IConvertor<string>
         {
-            public String Decode(Byte[] bytes)
+            public string Decode(byte[] bytes)
             {
                 return null == bytes ? null : Encoding.UTF8.GetString(bytes);
             }
 
-            public Byte[] Encode(String value)
+            public byte[] Encode(string value)
             {
                 return Encoding.UTF8.GetBytes(value);
             }
 
-            Object IConvertor.Decode(Byte[] bytes)
+            object IConvertor.Decode(byte[] bytes)
             {
                 return Decode(bytes);
             }

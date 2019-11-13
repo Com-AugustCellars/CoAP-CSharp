@@ -304,7 +304,7 @@ namespace Com.AugustCellars.CoAP.Net
 
                         _channel.Send(Serialize(rst), e.Session, rst.Destination);
 
-                        _Log.Warn(m => m("Message format error caused by {0} and reseted.", e.EndPoint));
+                        _Log.Warn(m => m("Message format error caused by {0} and reset.", e.EndPoint));
                     }
                     return;
                 }

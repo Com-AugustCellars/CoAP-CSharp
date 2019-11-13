@@ -20,7 +20,7 @@ namespace Com.AugustCellars.CoAP.Stack
     public class BlockwiseStatus
     {
         public const int NoObserve = -1;
-        private List<byte[]> _blocks = new List<byte[]>();
+        private readonly List<byte[]> _blocks = new List<byte[]>();
 
         /// <summary>
         /// Instantiates a new blockwise status.

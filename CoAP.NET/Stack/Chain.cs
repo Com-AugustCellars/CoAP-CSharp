@@ -11,7 +11,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 
 namespace Com.AugustCellars.CoAP.Stack
@@ -28,13 +27,15 @@ namespace Com.AugustCellars.CoAP.Stack
         /// </summary>
         /// <param name="name">the filter's name we are looking for</param>
         /// <returns>the <see cref="IEntry&lt;TFilter, TNextFilter&gt;"/> with the given name, or null if not found</returns>
-        IEntry<TFilter, TNextFilter> GetEntry(String name);
+        IEntry<TFilter, TNextFilter> GetEntry(string name);
+
         /// <summary>
         /// Gets the <see cref="IEntry&lt;TFilter, TNextFilter&gt;"/> with the specified <paramref name="filter"/> in this chain.
         /// </summary>
         /// <param name="filter">the filter we are looking for</param>
         /// <returns>the <see cref="IEntry&lt;TFilter, TNextFilter&gt;"/>, or null if not found</returns>
         IEntry<TFilter, TNextFilter> GetEntry(TFilter filter);
+
         /// <summary>
         /// Gets the <see cref="IEntry&lt;TFilter, TNextFilter&gt;"/> with the specified <paramref name="filterType"/> in this chain.
         /// </summary>
@@ -42,19 +43,22 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="filterType">the type of filter we are looking for</param>
         /// <returns>the <see cref="IEntry&lt;TFilter, TNextFilter&gt;"/>, or null if not found</returns>
         IEntry<TFilter, TNextFilter> GetEntry(Type filterType);
+
         /// <summary>
         /// Gets the <typeparamref name="TFilter"/> with the specified <paramref name="name"/> in this chain.
         /// </summary>
         /// <param name="name">the filter's name</param>
         /// <returns>the <typeparamref name="TFilter"/>, or null if not found</returns>
-        TFilter Get(String name);
+        TFilter Get(string name);
+
         /// <summary>
         /// Gets the <typeparamref name="TNextFilter"/> of the <typeparamref name="TFilter"/>
         /// with the specified <paramref name="name"/> in this chain.
         /// </summary>
         /// <param name="name">the filter's name</param>
         /// <returns>the <typeparamref name="TNextFilter"/>, or null if not found</returns>
-        TNextFilter GetNextFilter(String name);
+        TNextFilter GetNextFilter(string name);
+
         /// <summary>
         /// Gets the <typeparamref name="TNextFilter"/> of the <typeparamref name="TFilter"/>
         /// with the specified <paramref name="filter"/> in this chain.
@@ -62,6 +66,7 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="filter">the filter</param>
         /// <returns>the <typeparamref name="TNextFilter"/>, or null if not found</returns>
         TNextFilter GetNextFilter(TFilter filter);
+
         /// <summary>
         /// Gets the <typeparamref name="TNextFilter"/> of the <typeparamref name="TFilter"/>
         /// with the specified <paramref name="filterType"/> in this chain.
@@ -70,41 +75,48 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="filterType">the type of filter</param>
         /// <returns>the <typeparamref name="TNextFilter"/>, or null if not found</returns>
         TNextFilter GetNextFilter(Type filterType);
+
         /// <summary>
         /// Gets all <see cref="IEntry&lt;TFilter, TNextFilter&gt;"/>s in this chain.
         /// </summary>
         /// <returns></returns>
         IEnumerable<IEntry<TFilter, TNextFilter>> GetAll();
+
         /// <summary>
         /// Checks if this chain contains a filter with the specified <paramref name="name"/>.
         /// </summary>
         /// <param name="name">the filter's name</param>
         /// <returns>true if this chain contains a filter with the specified <paramref name="name"/></returns>
-        Boolean Contains(String name);
+        bool Contains(string name);
+
         /// <summary>
         /// Checks if this chain contains the specified <paramref name="filter"/>.
         /// </summary>
         /// <param name="filter">the filter</param>
         /// <returns>true if this chain contains the specified <paramref name="filter"/></returns>
         Boolean Contains(TFilter filter);
+
         /// <summary>
         /// Checks if this chain contains a filter with the specified <paramref name="filterType"/>.
         /// </summary>
         /// <param name="filterType">the filter's type</param>
         /// <returns>true if this chain contains a filter with the specified <paramref name="filterType"/></returns>
         Boolean Contains(Type filterType);
+
         /// <summary>
         /// Adds the specified filter with the specified name at the beginning of this chain.
         /// </summary>
         /// <param name="name">the filter's name</param>
         /// <param name="filter">the filter to add</param>
-        void AddFirst(String name, TFilter filter);
+        void AddFirst(string name, TFilter filter);
+
         /// <summary>
         /// Adds the specified filter with the specified name at the end of this chain.
         /// </summary>
         /// <param name="name">the filter's name</param>
         /// <param name="filter">the filter to add</param>
-        void AddLast(String name, TFilter filter);
+        void AddLast(string name, TFilter filter);
+
         /// <summary>
         /// Adds the specified filter with the specified name just before the filter whose name is
         /// <paramref name="baseName"/> in this chain.
@@ -112,7 +124,8 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="baseName">the targeted filter's name</param>
         /// <param name="name">the filter's name</param>
         /// <param name="filter">the filter to add</param>
-        void AddBefore(String baseName, String name, TFilter filter);
+        void AddBefore(string baseName, string name, TFilter filter);
+
         /// <summary>
         /// Adds the specified filter with the specified name just after the filter whose name is
         /// <paramref name="baseName"/> in this chain.
@@ -120,31 +133,36 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="baseName">the targeted filter's name</param>
         /// <param name="name">the filter's name</param>
         /// <param name="filter">the filter to add</param>
-        void AddAfter(String baseName, String name, TFilter filter);
+        void AddAfter(string baseName, string name, TFilter filter);
+
         /// <summary>
         /// Replace the filter with the specified name with the specified new filter.
         /// </summary>
         /// <param name="name">the name of the filter to replace</param>
         /// <param name="newFilter">the new filter</param>
         /// <returns>the old filter</returns>
-        TFilter Replace(String name, TFilter newFilter);
+        TFilter Replace(string name, TFilter newFilter);
+
         /// <summary>
         /// Replace the specified filter with the specified new filter.
         /// </summary>
         /// <param name="oldFilter">the filter to replace</param>
         /// <param name="newFilter">the new filter</param>
         void Replace(TFilter oldFilter, TFilter newFilter);
+
         /// <summary>
         /// Removes the filter with the specified name from this chain.
         /// </summary>
         /// <param name="name">the name of the filter to remove</param>
         /// <returns>the removed filter</returns>
-        TFilter Remove(String name);
+        TFilter Remove(string name);
+
         /// <summary>
         /// Removes the specified filter.
         /// </summary>
         /// <param name="filter">the filter to remove</param>
         void Remove(TFilter filter);
+
         /// <summary>
         /// Removes all filters added to this chain.
         /// </summary>
@@ -160,11 +178,9 @@ namespace Com.AugustCellars.CoAP.Stack
     public abstract class Chain<TChain, TFilter, TNextFilter> : IChain<TFilter, TNextFilter>
         where TChain : Chain<TChain, TFilter, TNextFilter>
     {
-        private readonly IDictionary<String, Entry> _name2entry = new Dictionary<String, Entry>();
-        private readonly Entry _head;
-        private readonly Entry _tail;
+        private readonly IDictionary<string, Entry> _name2Entry = new Dictionary<string, Entry>();
         private readonly Func<TFilter, TFilter, Boolean> _equalsFunc;
-        private readonly Func<TChain, Entry, Entry, String, TFilter, Entry> _entryFactory;
+        private readonly Func<TChain, Entry, Entry, string, TFilter, Entry> _entryFactory;
 
         /// <summary>
         /// Instantiates.
@@ -174,8 +190,9 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="tailFilterFactory">the factory to create the tail <typeparamref name="TFilter"/></param>
         protected Chain(Func<Entry, TNextFilter> nextFilterFactory, Func<TFilter> headFilterFactory, Func<TFilter> tailFilterFactory)
             : this((chain, prev, next, name, filter) => new Entry(chain, prev, next, name, filter, nextFilterFactory),
-            headFilterFactory, tailFilterFactory)
-        { }
+                headFilterFactory, tailFilterFactory)
+        {
+        }
 
         /// <summary>
         /// Instantiates.
@@ -183,10 +200,11 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="entryFactory">the factory to create entries by (chain, prev, next, name, filter)</param>
         /// <param name="headFilterFactory">the factory to create the head <typeparamref name="TFilter"/></param>
         /// <param name="tailFilterFactory">the factory to create the tail <typeparamref name="TFilter"/></param>
-        protected Chain(Func<TChain, Entry, Entry, String, TFilter, Entry> entryFactory,
-            Func<TFilter> headFilterFactory, Func<TFilter> tailFilterFactory)
+        protected Chain(Func<TChain, Entry, Entry, string, TFilter, Entry> entryFactory,
+                        Func<TFilter> headFilterFactory, Func<TFilter> tailFilterFactory)
             : this(entryFactory, headFilterFactory, tailFilterFactory, (t1, t2) => Object.ReferenceEquals(t1, t2))
-        { }
+        {
+        }
 
         /// <summary>
         /// Instantiates.
@@ -195,43 +213,37 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="headFilterFactory">the factory to create the head <typeparamref name="TFilter"/></param>
         /// <param name="tailFilterFactory">the factory to create the tail <typeparamref name="TFilter"/></param>
         /// <param name="equalsFunc">the function to check equality between two <typeparamref name="TFilter"/>s</param>
-        protected Chain(Func<TChain, Entry, Entry, String, TFilter, Entry> entryFactory, 
-            Func<TFilter> headFilterFactory, Func<TFilter> tailFilterFactory,
-            Func<TFilter, TFilter, Boolean> equalsFunc)
+        protected Chain(Func<TChain, Entry, Entry, string, TFilter, Entry> entryFactory,
+                        Func<TFilter> headFilterFactory, Func<TFilter> tailFilterFactory,
+                        Func<TFilter, TFilter, Boolean> equalsFunc)
         {
             _equalsFunc = equalsFunc;
             _entryFactory = entryFactory;
-            _head = entryFactory((TChain)this, null, null, "head", headFilterFactory());
-            _tail = entryFactory((TChain)this, _head, null, "tail", tailFilterFactory());
-            _head._nextEntry = _tail;
+            Head = entryFactory((TChain) this, null, null, "head", headFilterFactory());
+            Tail = entryFactory((TChain) this, Head, null, "tail", tailFilterFactory());
+            Head.NextEntry = Tail;
         }
 
         /// <summary>
         /// Head of this chain.
         /// </summary>
-        protected Entry Head
-        {
-            get { return _head; }
-        }
+        protected Entry Head { get; }
 
         /// <summary>
         /// Tail of this chain.
         /// </summary>
-        protected Entry Tail
-        {
-            get { return _tail; }
-        }
+        protected Entry Tail { get; }
 
         /// <inheritdoc/>
-        public IEntry<TFilter, TNextFilter> GetEntry(String name)
+        public IEntry<TFilter, TNextFilter> GetEntry(string name)
         {
             Entry e;
-            _name2entry.TryGetValue(name, out e);
+            _name2Entry.TryGetValue(name, out e);
             return e;
         }
 
         /// <inheritdoc/>
-        public TFilter Get(String name)
+        public TFilter Get(string name)
         {
             IEntry<TFilter, TNextFilter> e = GetEntry(name);
             return e == null ? default(TFilter) : e.Filter;
@@ -240,36 +252,39 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <inheritdoc/>
         public IEntry<TFilter, TNextFilter> GetEntry(TFilter filter)
         {
-            Entry e = _head._nextEntry;
-            while (e != _tail)
-            {
-                if (_equalsFunc(e.Filter, filter))
+            Entry e = Head.NextEntry;
+            while (e != Tail) {
+                if (_equalsFunc(e.Filter, filter)) {
                     return e;
-                e = e._nextEntry;
+                }
+
+                e = e.NextEntry;
             }
+
             return null;
         }
 
         /// <inheritdoc/>
         public IEntry<TFilter, TNextFilter> GetEntry(Type filterType)
         {
-            Entry e = _head._nextEntry;
-            while (e != _tail)
-            {
+            Entry e = Head.NextEntry;
+            while (e != Tail) {
 #if NETSTANDARD1_3
                 if (filterType.GetTypeInfo().IsAssignableFrom(e.Filter.GetType().GetTypeInfo()))
                     return e;
 #else
-                if (filterType.IsAssignableFrom(e.Filter.GetType()))
+                if (filterType.IsInstanceOfType(e.Filter)) {
                     return e;
+                }
 #endif
-                e = e._nextEntry;
+                e = e.NextEntry;
             }
+
             return null;
         }
 
         /// <inheritdoc/>
-        public TNextFilter GetNextFilter(String name)
+        public TNextFilter GetNextFilter(string name)
         {
             IEntry<TFilter, TNextFilter> e = GetEntry(name);
             return e == null ? default(TNextFilter) : e.NextFilter;
@@ -292,16 +307,15 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <inheritdoc/>
         public IEnumerable<IEntry<TFilter, TNextFilter>> GetAll()
         {
-            Entry e = _head._nextEntry;
-            while (e != _tail)
-            {
+            Entry e = Head.NextEntry;
+            while (e != Tail) {
                 yield return e;
-                e = e._nextEntry;
+                e = e.NextEntry;
             }
         }
 
         /// <inheritdoc/>
-        public Boolean Contains(String name)
+        public Boolean Contains(string name)
         {
             return GetEntry(name) != null;
         }
@@ -319,29 +333,29 @@ namespace Com.AugustCellars.CoAP.Stack
         }
 
         /// <inheritdoc/>
-        public void AddFirst(String name, TFilter filter)
+        public void AddFirst(string name, TFilter filter)
         {
             CheckAddable(name);
-            Register(_head, name, filter);
+            Register(Head, name, filter);
         }
 
         /// <inheritdoc/>
-        public void AddLast(String name, TFilter filter)
+        public void AddLast(string name, TFilter filter)
         {
             CheckAddable(name);
-            Register(_tail._prevEntry, name, filter);
+            Register(Tail.PrevEntry, name, filter);
         }
 
         /// <inheritdoc/>
-        public void AddBefore(String baseName, String name, TFilter filter)
+        public void AddBefore(string baseName, string name, TFilter filter)
         {
             Entry baseEntry = CheckOldName(baseName);
             CheckAddable(name);
-            Register(baseEntry._prevEntry, name, filter);
+            Register(baseEntry.PrevEntry, name, filter);
         }
 
         /// <inheritdoc/>
-        public void AddAfter(String baseName, String name, TFilter filter)
+        public void AddAfter(string baseName, string name, TFilter filter)
         {
             Entry baseEntry = CheckOldName(baseName);
             CheckAddable(name);
@@ -349,7 +363,7 @@ namespace Com.AugustCellars.CoAP.Stack
         }
 
         /// <inheritdoc/>
-        public TFilter Replace(String name, TFilter newFilter)
+        public TFilter Replace(string name, TFilter newFilter)
         {
             Entry entry = CheckOldName(name);
             TFilter oldFilter = entry.Filter;
@@ -360,21 +374,21 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <inheritdoc/>
         public void Replace(TFilter oldFilter, TFilter newFilter)
         {
-            Entry e = _head._nextEntry;
-            while (e != _tail)
-            {
-                if (_equalsFunc(e.Filter, oldFilter))
-                {
+            Entry e = Head.NextEntry;
+            while (e != Tail) {
+                if (_equalsFunc(e.Filter, oldFilter)) {
                     e.Filter = newFilter;
                     return;
                 }
-                e = e._nextEntry;
+
+                e = e.NextEntry;
             }
+
             throw new ArgumentException("Filter not found: " + oldFilter.GetType().Name);
         }
 
         /// <inheritdoc/>
-        public TFilter Remove(String name)
+        public TFilter Remove(string name)
         {
             Entry entry = CheckOldName(name);
             Deregister(entry);
@@ -384,48 +398,48 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <inheritdoc/>
         public void Remove(TFilter filter)
         {
-            Entry e = _head._nextEntry;
-            while (e != _tail)
-            {
-                if (_equalsFunc(e.Filter, filter))
-                {
+            Entry e = Head.NextEntry;
+            while (e != Tail) {
+                if (_equalsFunc(e.Filter, filter)) {
                     Deregister(e);
                     return;
                 }
-                e = e._nextEntry;
+
+                e = e.NextEntry;
             }
+
             throw new ArgumentException("Filter not found: " + filter.GetType().Name);
         }
 
         /// <inheritdoc/>
         public void Clear()
         {
-            foreach (var entry in _name2entry.Values)
-            {
-                Deregister((Entry)entry);
+            foreach (var entry in _name2Entry.Values) {
+                Deregister(entry);
             }
         }
 
-        private void CheckAddable(String name)
+        private void CheckAddable(string name)
         {
-            if (_name2entry.ContainsKey(name))
+            if (_name2Entry.ContainsKey(name)) {
                 throw new ArgumentException("Other filter is using the same name '" + name + "'");
+            }
         }
 
-        private Entry CheckOldName(String baseName)
+        private Entry CheckOldName(string baseName)
         {
-            return (Entry)_name2entry[baseName];
+            return _name2Entry[baseName];
         }
 
-        private void Register(Entry prevEntry, String name, TFilter filter)
+        private void Register(Entry prevEntry, string name, TFilter filter)
         {
-            Entry newEntry = _entryFactory((TChain)this, prevEntry, prevEntry._nextEntry, name, filter);
+            Entry newEntry = _entryFactory((TChain) this, prevEntry, prevEntry.NextEntry, name, filter);
 
             OnPreAdd(newEntry);
 
-            prevEntry._nextEntry._prevEntry = newEntry;
-            prevEntry._nextEntry = newEntry;
-            _name2entry.Add(name, newEntry);
+            prevEntry.NextEntry.PrevEntry = newEntry;
+            prevEntry.NextEntry = newEntry;
+            _name2Entry.Add(name, newEntry);
 
             OnPostAdd(newEntry);
         }
@@ -442,45 +456,48 @@ namespace Com.AugustCellars.CoAP.Stack
         /// </summary>
         protected void Deregister0(Entry entry)
         {
-            Entry prevEntry = entry._prevEntry;
-            Entry nextEntry = entry._nextEntry;
-            prevEntry._nextEntry = nextEntry;
-            nextEntry._prevEntry = prevEntry;
+            Entry prevEntry = entry.PrevEntry;
+            Entry nextEntry = entry.NextEntry;
+            prevEntry.NextEntry = nextEntry;
+            nextEntry.PrevEntry = prevEntry;
 
-            _name2entry.Remove(entry.Name);
+            _name2Entry.Remove(entry.Name);
         }
 
         /// <summary>
         /// Fires before the entry is added to this chain.
         /// </summary>
-        protected virtual void OnPreAdd(Entry entry) { }
+        protected virtual void OnPreAdd(Entry entry)
+        {
+        }
 
         /// <summary>
         /// Fires after the entry is added to this chain.
         /// </summary>
-        protected virtual void OnPostAdd(Entry entry) { }
+        protected virtual void OnPostAdd(Entry entry)
+        {
+        }
 
         /// <summary>
         /// Fires before the entry is removed to this chain.
         /// </summary>
-        protected virtual void OnPreRemove(Entry entry) { }
+        protected virtual void OnPreRemove(Entry entry)
+        {
+        }
 
         /// <summary>
         /// Fires after the entry is removed to this chain.
         /// </summary>
-        protected virtual void OnPostRemove(Entry entry) { }
+        protected virtual void OnPostRemove(Entry entry)
+        {
+        }
 
         /// <summary>
         /// Represents an entry of filter in the chain.
         /// </summary>
         public class Entry : IEntry<TFilter, TNextFilter>
         {
-            private readonly TChain _chain;
-            private readonly String _name;
-            internal Entry _prevEntry;
-            internal Entry _nextEntry;
             private TFilter _filter;
-            private readonly TNextFilter _nextFilter;
 
             /// <summary>
             /// Instantiates.
@@ -492,95 +509,80 @@ namespace Com.AugustCellars.CoAP.Stack
             /// <param name="filter">the associated <typeparamref name="TFilter"/></param>
             /// <param name="nextFilterFactory">the factory to create <typeparamref name="TNextFilter"/> by (entry)</param>
             public Entry(TChain chain, Entry prevEntry, Entry nextEntry,
-                String name, TFilter filter, Func<Entry, TNextFilter> nextFilterFactory)
+                         string name, TFilter filter, Func<Entry, TNextFilter> nextFilterFactory)
             {
-                if (filter == null)
-                    throw new ArgumentNullException("filter");
-                if (name == null)
-                    throw new ArgumentNullException("name");
+                if (filter == null) {
+                    throw new ArgumentNullException(nameof(filter));
+                }
 
-                _chain = chain;
-                _prevEntry = prevEntry;
-                _nextEntry = nextEntry;
-                _name = name;
+                Chain = chain;
+                PrevEntry = prevEntry;
+                NextEntry = nextEntry;
+                Name = name ?? throw new ArgumentNullException(nameof(name));
                 _filter = filter;
-                _nextFilter = nextFilterFactory(this);
+                NextFilter = nextFilterFactory(this);
             }
 
             /// <inheritdoc/>
-            public String Name
-            {
-                get { return _name; }
-            }
+            public string Name { get; }
 
             /// <inheritdoc/>
             public TFilter Filter
             {
-                get { return _filter; }
-                set
-                {
-                    if (value == null)
-                        throw new ArgumentNullException("value");
+                get => _filter;
+                set {
+                    if (value == null) {
+                        throw new ArgumentNullException(nameof(value));
+                    }
+
                     _filter = value;
                 }
             }
 
             /// <inheritdoc/>
-            public TNextFilter NextFilter
-            {
-                get { return _nextFilter; }
-            }
+            public TNextFilter NextFilter { get; }
 
             /// <summary>
             /// Gets the chain this entry belongs to.
             /// </summary>
-            public TChain Chain
-            {
-                get { return _chain; }
-            }
+            public TChain Chain { get; }
 
             /// <summary>
             /// Gets the previous entry in the chain.
             /// </summary>
-            public Entry PrevEntry
-            {
-                get { return _prevEntry; }
-            }
+            public Entry PrevEntry { get; internal set; }
 
             /// <summary>
             /// Gets the next entry in the chain.
             /// </summary>
-            public Entry NextEntry
+            public Entry NextEntry { get; internal set; }
+
+            /// <inheritdoc/>
+            public void AddBefore(string name, TFilter filter)
             {
-                get { return _nextEntry; }
+                Chain.AddBefore(Name, name, filter);
             }
 
             /// <inheritdoc/>
-            public void AddBefore(String name, TFilter filter)
+            public void AddAfter(string name, TFilter filter)
             {
-                _chain.AddBefore(Name, name, filter);
-            }
-
-            /// <inheritdoc/>
-            public void AddAfter(String name, TFilter filter)
-            {
-                _chain.AddAfter(Name, name, filter);
+                Chain.AddAfter(Name, name, filter);
             }
 
             /// <inheritdoc/>
             public void Replace(TFilter newFilter)
             {
-                _chain.Replace(Name, newFilter);
+                Chain.Replace(Name, newFilter);
             }
 
             /// <inheritdoc/>
             public void Remove()
             {
-                _chain.Remove(Name);
+                Chain.Remove(Name);
             }
 
             /// <inheritdoc/>
-            public override String ToString()
+            public override string ToString()
             {
                 StringBuilder sb = new StringBuilder();
 
@@ -590,28 +592,24 @@ namespace Com.AugustCellars.CoAP.Stack
                 // Add the previous filter
                 sb.Append(", prev: '");
 
-                if (_prevEntry != null)
-                {
-                    sb.Append(_prevEntry.Name);
+                if (PrevEntry != null) {
+                    sb.Append(PrevEntry.Name);
                     sb.Append(':');
-                    sb.Append(_prevEntry.Filter.GetType().Name);
+                    sb.Append(PrevEntry.Filter.GetType().Name);
                 }
-                else
-                {
+                else {
                     sb.Append("null");
                 }
 
                 // Add the next filter
                 sb.Append("', next: '");
 
-                if (_nextEntry != null)
-                {
-                    sb.Append(_nextEntry.Name);
+                if (NextEntry != null) {
+                    sb.Append(NextEntry.Name);
                     sb.Append(':');
-                    sb.Append(_nextEntry.Filter.GetType().Name);
+                    sb.Append(NextEntry.Filter.GetType().Name);
                 }
-                else
-                {
+                else {
                     sb.Append("null");
                 }
 

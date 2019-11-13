@@ -178,15 +178,9 @@ namespace Com.AugustCellars.CoAP.Net
             if (response.HasOption(OptionType.Block2))
             {
                 Request request = exchange.CurrentRequest;
-#if INCLUDE_OSCOAP
-                byte[] oscoapKey = null;
-                if (request.HasOption(OptionType.Oscoap)) {
-                    oscoapKey = request.Oscoap.RawValue;
-                }
-                Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, oscoapKey, response.Destination);
-#else // !INCLUDE_OSCOAP
-                Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, response.Destination);
-#endif
+
+                Exchange.KeyUri keyUri = new Exchange.KeyUri(request, response.Destination);
+
                 // Observe notifications only send the first block, hence do not store them as ongoing
                 if (exchange.ResponseBlockStatus != null && !response.HasOption(OptionType.Observe))
                 {
@@ -275,15 +269,7 @@ namespace Com.AugustCellars.CoAP.Net
                 }
             }
             else {
-#if INCLUDE_OSCOAP
-                byte[] oscoapValue = null;
-                if (request.HasOption(OptionType.Oscoap)) {
-                    oscoapValue = request.Oscoap.RawValue;
-                }
-                Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, oscoapValue, request.Source);
-#else
-                Exchange.KeyUri keyUri = new Exchange.KeyUri(request.URI, request.Source);
-#endif
+                Exchange.KeyUri keyUri = new Exchange.KeyUri(request, request.Source);
 
                 if (_Log.IsDebugEnabled) {
                     _Log.Debug("Looking up ongoing exchange for " + keyUri);
@@ -367,8 +353,9 @@ namespace Com.AugustCellars.CoAP.Net
             if (_exchangesByToken.TryGetValue(keyToken, out exchange)) {
                 //  We need to play games if this is multicast
                 if (exchange.CurrentRequest.IsMulticast) {
-                    Exchange newExchange = new Exchange(exchange);
-                    newExchange.Request = exchange.Request;
+                    Exchange newExchange = new Exchange(exchange) {
+                        Request = exchange.Request
+                    };
                     exchange = newExchange;
                 }
 
@@ -456,15 +443,14 @@ namespace Com.AugustCellars.CoAP.Net
 
         private void OnExchangeCompleted(Object sender, EventArgs e)
         {
-            Exchange exchange = (Exchange)sender;
+            Exchange exchange = (Exchange) sender;
 
             /* 
 			 * Logging in this method leads to significant performance loss.
 			 * Uncomment logging code only for debugging purposes.
 			 */
 
-            if (exchange.Origin == Origin.Local)
-            {
+            if (exchange.Origin == Origin.Local) {
                 // this endpoint created the Exchange by issuing a request
                 Exchange.KeyID keyID = new Exchange.KeyID(exchange.CurrentRequest.ID, null, null);
                 Exchange.KeyToken keyToken = new Exchange.KeyToken(exchange.CurrentRequest.Token);
@@ -481,8 +467,7 @@ namespace Com.AugustCellars.CoAP.Net
                 // this endpoint created the Exchange to respond a request
 
                 Response response = exchange.CurrentResponse;
-                if (response != null && response.Type != MessageType.ACK)
-                {
+                if (response != null && response.Type != MessageType.ACK) {
                     // only response MIDs are stored for ACK and RST, no reponse Tokens
                     Exchange.KeyID midKey = new Exchange.KeyID(response.ID, null, response.Session);
                     //if (log.IsDebugEnabled)
@@ -491,27 +476,19 @@ namespace Com.AugustCellars.CoAP.Net
                 }
 
                 Request request = exchange.CurrentRequest;
-                if (request != null && (request.HasOption(OptionType.Block1) || response.HasOption(OptionType.Block2)))
-                {
-#if INCLUDE_OSCOAP
-                    byte[] oscoapValue = null;
-                    if (request.HasOption(OptionType.Oscoap)) {
-                        oscoapValue = request.Oscoap.RawValue;
-                    }
-                    Exchange.KeyUri uriKey = new Exchange.KeyUri(request.URI, oscoapValue, request.Source);
-#else
-                    Exchange.KeyUri uriKey = new Exchange.KeyUri(request.URI, request.Source);
-#endif
-                    if (_Log.IsDebugEnabled)
-                        _Log.Debug("Remote ongoing completed, cleaning up " + uriKey);
+                if (request != null && (request.HasOption(OptionType.Block1) || response.HasOption(OptionType.Block2))) {
+
+                    Exchange.KeyUri uriKey = new Exchange.KeyUri(request, request.Source);
+
+                    _Log.Debug(m => m($"Remote ongoing completed, cleaning up {uriKey}"));
+
                     Exchange exc;
                     _ongoingExchanges.TryRemove(uriKey, out exc);
                 }
 
                 // Remove all remaining NON-notifications if this exchange is an observe relation
                 ObserveRelation relation = exchange.Relation;
-                if (relation != null)
-                {
+                if (relation != null) {
                     RemoveNotificatoinsOf(relation);
                 }
             }

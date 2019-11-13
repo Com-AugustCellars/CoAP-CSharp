@@ -6,7 +6,7 @@ using Org.BouncyCastle.Crypto.Tls;
 
 using Com.AugustCellars.COSE;
 #if SUPPORT_TLS_CWT
-using Com.AugustCellars.WebToken;
+using Com.AugustCellars.WebToken.CWT;
 #endif
 using Org.BouncyCastle.Asn1.Nist;
 using Org.BouncyCastle.Asn1.X509;
@@ -117,7 +117,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 {
                     CwtPublicKey cwtPub = CwtPublicKey.Parse(io);
 
-                    CWT cwtServer = CWT.Decode(cwtPub.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
+                    Cwt cwtServer = Cwt.Decode(cwtPub.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
 
                     AsymmetricKeyParameter pubKey = cwtServer.Cnf.Key.AsPublicKey();
 
@@ -415,7 +415,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
 #if SUPPORT_TLS_CWT
             public KeySet CwtTrustRoots { get; set; }
-            public CWT CwtAuthenticationKey { get; }
+            public Cwt CwtAuthenticationKey { get; }
 #endif
 
             public virtual byte[] GetHint()
@@ -520,10 +520,10 @@ namespace Com.AugustCellars.CoAP.DTLS
 #if SUPPORT_TLS_CWT
             public void GetCwtKey(CwtPublicKey rpk)
             {
-                CWT cwt;
+                Cwt cwt;
 
                 try {
-                    cwt = CWT.Decode(rpk.EncodedCwt(), CwtTrustRoots, CwtTrustRoots);
+                    cwt = Cwt.Decode(rpk.EncodedCwt(), CwtTrustRoots, CwtTrustRoots);
 
                     AuthenticationKey = cwt.Cnf.Key;
                 }

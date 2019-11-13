@@ -24,17 +24,17 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// </summary>
         public class ReplayWindow
         {
-            BitArray _hits;
-            Int64 _baseValue;
+            private BitArray _hits;
+            public long BaseValue { get; private set; }
 
             /// <summary>
-            /// create a replaywindow and initialize where the floating window is.
+            /// create a replay window and initialize where the floating window is.
             /// </summary>
             /// <param name="baseValue">Start value to check for hits</param>
             /// <param name="arraySize">Size of the replay window</param>
             public ReplayWindow(int baseValue, int arraySize)
             {
-                _baseValue = baseValue;
+                BaseValue = baseValue;
                 _hits = new BitArray(arraySize);
             }
 
@@ -43,9 +43,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             /// </summary>
             /// <param name="index">value to check</param>
             /// <returns>true if should treat as replay</returns>
-            public bool HitTest(Int64 index)
+            public bool HitTest(long index)
             {
-                index -= _baseValue;
+                index -= BaseValue;
                 if (index < 0) return true;
                 if (index > _hits.Length) return false;
                 return _hits.Get((int)index);
@@ -57,12 +57,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             /// <param name="index">value that was seen</param>
             public void SetHit(Int64 index)
             {
-                index -= _baseValue;
+                index -= BaseValue;
                 if (index < 0) return;
                 if (index > _hits.Length) {
                     if (index < _hits.Length * 3 / 2) {
                         int v = _hits.Length / 2;
-                        _baseValue += v;
+                        BaseValue += v;
                         BitArray t = new BitArray(_hits.Length);
                         for (int i = 0; i < v; i++) {
                             t[i] = _hits[i + v];
@@ -72,7 +72,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         index -= v;
                     }
                     else {
-                        _baseValue = index;
+                        BaseValue = index;
                         _hits.SetAll(false);
                         index = 0;
                     }
@@ -222,7 +222,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public CBORObject CountersignKeyParams { get; set; }
         public int SignatureSize { get; } = 64;
 
-        public  Func<SecurityContext, byte[], EntityContext> Locate = null;
+        public  Func<SecurityContext, byte[], EntityContext> Locate { get; set; }
     
 
         /// <summary>
@@ -236,7 +236,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public EntityContext Sender { get; private set; } = new EntityContext();
 
         /// <summary>
-        /// Return the single receipient object
+        /// Return the single recipient object
         /// </summary>
         public EntityContext Recipient { get; private set; }
 

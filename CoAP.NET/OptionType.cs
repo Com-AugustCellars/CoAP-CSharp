@@ -9,6 +9,10 @@
  * Please see README for more information.
  */
 
+using System;
+using System.Collections.Generic;
+using Com.AugustCellars.CoAP.OSCOAP;
+
 namespace Com.AugustCellars.CoAP
 {
     /// <summary>
@@ -190,13 +194,6 @@ namespace Com.AugustCellars.CoAP
         /// BAD CSM option - only for SignalCode.Abort
         /// </summary>
         Signal_BadCSMOption = 2,
-
-        /// <summary>
-        /// no-op for fenceposting
-        /// <remarks>draft-bormann-coap-misc-04</remarks>
-        /// </summary>
-        [System.Obsolete]
-        FencepostDivisor = 114,
     }
 
     /// <summary>
@@ -208,5 +205,45 @@ namespace Com.AugustCellars.CoAP
         String,
         Opaque,
         Unknown
+    }
+
+    public class OptionData
+    {
+        public OptionType OptionNumber { get; }
+        public OptionFormat OptionFormat { get; }
+        public string OptionName { get; }
+        public Type OptionType { get; }
+
+        public OptionData(OptionType option, string name, OptionFormat format, Type type)
+        {
+            OptionNumber = option;
+            OptionFormat = format;
+            OptionName = name;
+            OptionType = type;
+        }
+
+        public static Dictionary<OptionType, OptionData> OptionInfoDictionary { get; } = new Dictionary<OptionType, OptionData>() {
+            {CoAP.OptionType.Accept, new OptionData(CoAP.OptionType.Accept, "Accept", OptionFormat.Integer, null) },
+            {CoAP.OptionType.ContentType, new OptionData(CoAP.OptionType.ContentType, "ContentType", OptionFormat.Integer, null) },
+            {CoAP.OptionType.Block1, new OptionData(CoAP.OptionType.Block1, "Block1", OptionFormat.Integer, typeof(BlockOption)) },
+            {CoAP.OptionType.Block2, new OptionData(CoAP.OptionType.Block2, "Block2", OptionFormat.Integer, typeof(BlockOption)) },
+            {CoAP.OptionType.ETag, new OptionData(CoAP.OptionType.ETag, "ETag", OptionFormat.Opaque, null) },
+            {CoAP.OptionType.IfMatch, new OptionData(CoAP.OptionType.IfMatch, "If-Match", OptionFormat.Opaque, null)},
+            {CoAP.OptionType.IfNoneMatch, new OptionData(CoAP.OptionType.IfNoneMatch, "If-None-Match", OptionFormat.Opaque, null) },
+            {CoAP.OptionType.LocationPath, new OptionData(CoAP.OptionType.LocationPath, "Location-Path", OptionFormat.String, null) },
+            {CoAP.OptionType.LocationQuery, new OptionData(CoAP.OptionType.LocationQuery, "Location-Query", OptionFormat.String, null) },
+            {CoAP.OptionType.MaxAge, new OptionData(CoAP.OptionType.MaxAge, "Max-Age", OptionFormat.Integer, null) },
+            {CoAP.OptionType.NoResponse, new OptionData(CoAP.OptionType.NoResponse, "No-Response", OptionFormat.Unknown, null)  },
+            {CoAP.OptionType.Observe, new OptionData(CoAP.OptionType.Observe, "Observe", OptionFormat.Integer, null)},
+            {CoAP.OptionType.Oscoap, new OptionData(CoAP.OptionType.Oscoap, "OSCORE", OptionFormat.Opaque, typeof(OscoapOption))},
+            {CoAP.OptionType.ProxyScheme, new OptionData(CoAP.OptionType.ProxyScheme, "ProxyScheme", OptionFormat.String, null) },
+            {CoAP.OptionType.ProxyUri, new OptionData(CoAP.OptionType.ProxyUri, "Proxy-Uri", OptionFormat.String, null) },
+            {CoAP.OptionType.Size1, new OptionData(CoAP.OptionType.Size1, "Size1", OptionFormat.Integer, null) },
+            {CoAP.OptionType.Size2, new OptionData(CoAP.OptionType.Size2, "Size2", OptionFormat.Integer, null) },
+            {CoAP.OptionType.UriHost, new OptionData(CoAP.OptionType.UriHost, "UriHost", OptionFormat.String, null)},
+            {CoAP.OptionType.UriPath, new OptionData(CoAP.OptionType.UriPath, "UriPath", OptionFormat.String, null) },
+            {CoAP.OptionType.UriPort, new OptionData(CoAP.OptionType.UriPort, "UriPort", OptionFormat.Integer, null) },
+            {CoAP.OptionType.UriQuery, new OptionData(CoAP.OptionType.UriQuery, "UriQuery", OptionFormat.String, null) },
+        };
     }
 }

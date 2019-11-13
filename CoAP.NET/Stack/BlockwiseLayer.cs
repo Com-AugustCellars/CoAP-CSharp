@@ -17,13 +17,12 @@ using System.Timers;
 #endif
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
-using Org.BouncyCastle.Crypto.Prng;
 
 namespace Com.AugustCellars.CoAP.Stack
 {
     public class BlockwiseLayer : AbstractLayer
     {
-        static readonly ILogger log = LogManager.GetLogger(typeof(BlockwiseLayer));
+        private static readonly ILogger log = LogManager.GetLogger(typeof(BlockwiseLayer));
 
         private int _maxMessageSize;
         private int _defaultBlockSize;
@@ -128,7 +127,7 @@ namespace Com.AugustCellars.CoAP.Stack
                         return;
                     }
 
-                    status.CurrentNUM = status.CurrentNUM + 1;
+                    status.CurrentNUM += 1;
                     if (block1.M) {
                         log.Debug("There are more blocks to come. Acknowledge this block.");
 
@@ -280,16 +279,22 @@ namespace Com.AugustCellars.CoAP.Stack
             BlockOption block1 = response.Block1;
             if (block1 != null) {
                 // TODO: What if request has not been sent blockwise (server error)
-                    log.Debug(m => m("Response acknowledges block " + block1));
-
+                log.Debug(m => m("Response acknowledges block " + block1));
                 BlockwiseStatus status = exchange.RequestBlockStatus;
+
+                if (exchange.Request.Session == null) {
+                    exchange.Request.Session = exchange.CurrentRequest.Session;
+                    if (exchange.Request.Session.IsReliable && exchange.Request.Session.MaxSendSize >= 1024) {
+                        status.CurrentSZX = 6;
+                    }
+                }
+
                 if (!status.Complete) {
                     // TODO: the response code should be CONTINUE. Otherwise deliver
                     // Send next block
                     int currentSize = 1 << (4 + status.CurrentSZX);
                     int nextNum = status.CurrentNUM + currentSize / block1.Size;
-                    if (log.IsDebugEnabled)
-                        log.Debug("Send next block num = " + nextNum);
+                    log.Debug(m => m("Send next block num = " + nextNum));
                     status.CurrentNUM = nextNum;
                     status.CurrentSZX = block1.SZX;
                     Request nextBlock = GetNextRequestBlock(exchange.Request, status);
@@ -297,8 +302,10 @@ namespace Com.AugustCellars.CoAP.Stack
                         //  Multicast jumps to the Unicast address
                         exchange.Request.Destination = response.Source;
                     }
-                    if (nextBlock.Token == null)
+                    if (nextBlock.Token == null) {
                         nextBlock.Token = response.Token; // reuse same token
+                    }
+
                     exchange.CurrentRequest = nextBlock;
                     base.SendRequest(nextLayer, exchange, nextBlock);
                     // do not deliver response
@@ -356,7 +363,7 @@ namespace Com.AugustCellars.CoAP.Stack
                     exchange.Request.FireResponding(response);
 
                     if (status.IsRandomAccess) {
-                        // The client has requested this specifc block and we deliver it
+                        // The client has requested this specific block and we deliver it
                         exchange.Response = response;
                         base.ReceiveResponse(nextLayer, exchange, response);
                     }
@@ -370,18 +377,14 @@ namespace Com.AugustCellars.CoAP.Stack
                         int szx = block2.SZX;
                         bool m = false;
 
-                        Request block = new Request(request.Method);
+                        Request block = new Request(request.Method) {
+                            Type = request.Type,
+                            Destination = request.IsMulticast ? response.Source : request.Destination,
+                            Session = request.Session
+                        };
                         // NON could make sense over SMS or similar transports
-                        block.Type = request.Type;
-                        if (request.IsMulticast) {
-                            block.Destination = response.Source;
-                        }
-                        else {
-                            block.Destination = request.Destination;
-                        }
                         block.SetOptions(request.GetOptions());
                         block.SetOption(new BlockOption(OptionType.Block2, num, szx, m));
-                        block.Session = request.Session;
                         // we use the same token to ease traceability (GET without Observe no longer cancels relations)
                         // block.Token = response.Token;
                         // make sure not to use Observe for block retrieval
@@ -438,9 +441,8 @@ namespace Com.AugustCellars.CoAP.Stack
             if (request.HasOption(OptionType.Block2)) {
                 BlockOption block2 = request.Block2;
                 BlockwiseStatus status2 = new BlockwiseStatus(request.ContentType, block2.NUM, block2.SZX);
-                if (log.IsDebugEnabled)
-                    log.Debug("Request with early block negotiation " + block2 +
-                              ". Create and set new Block2 status: " + status2);
+                log.Debug(m => m("Request with early block negotiation " + block2 + 
+                                 ". Create and set new Block2 status: " + status2));
                 exchange.ResponseBlockStatus = status2;
             }
         }
@@ -598,8 +600,9 @@ namespace Com.AugustCellars.CoAP.Stack
             message.SetOptions(last.GetOptions());
 
             int length = 0;
-            foreach (byte[] block in status.Blocks)
+            foreach (byte[] block in status.Blocks) {
                 length += block.Length;
+            }
 
             byte[] payload = new byte[length];
             int offset = 0;
@@ -622,7 +625,7 @@ namespace Com.AugustCellars.CoAP.Stack
                 }
                 return request.PayloadSize > _maxMessageSize;
             }
-                return false;
+            return false;
         }
 
         private bool RequiresBlockwise(Exchange exchange, Response response)

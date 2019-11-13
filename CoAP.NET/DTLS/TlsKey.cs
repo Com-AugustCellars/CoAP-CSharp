@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Com.AugustCellars.COSE;
+#if SUPPORT_TLS_CWT
+using Com.AugustCellars.WebToken.CWT;
+#endif
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto.Tls;
 #if SUPPORT_TLS_CWT
@@ -18,7 +21,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         public OneKey PublicKey { get; }
 #endif
 #if SUPPORT_TLS_CWT
-        public CWT PublicCwt { get; }
+        public Cwt PublicCwt { get; }
 #endif
         
         public  X509CertificateStructure[] X509Certificate { get; }
@@ -48,7 +51,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 #endif
 
 #if SUPPORT_TLS_CWT
-        public TlsKeyPair(CWT publicKey, OneKey privateKey)
+        public TlsKeyPair(Cwt publicKey, OneKey privateKey)
         {
             this.PrivateKey = privateKey;
             this.PublicCwt = publicKey;
