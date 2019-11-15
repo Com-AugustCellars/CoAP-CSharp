@@ -105,7 +105,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// Gets or sets the status of the security blockwise transfer of the request,
         /// or null in case of a normal transfer,
         /// </summary>
-        public BlockwiseStatus OSCOAP_RequestBlockStatus { get; set; }
+        public BlockwiseStatus OscoreRequestBlockStatus { get; set; }
 
         /// <summary>
         /// Gets or sets the status of the security blockwise transfer of the response,
@@ -284,7 +284,7 @@ namespace Com.AugustCellars.CoAP.Net
                     return false;
                 }
 
-                return _id == other._id && object.Equals(_endpoint, other._endpoint); // && (_session == other._session);
+                return _id == other._id && Equals(_endpoint, other._endpoint); // && (_session == other._session);
             }
 
             /// <inheritdoc/>

@@ -15,6 +15,7 @@ using System.Net;
 using Com.AugustCellars.CoAP.Channel;
 using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Log;
+using Com.AugustCellars.CoAP.OSCOAP;
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.CoAP.Threading;
 using DataReceivedEventArgs = Com.AugustCellars.CoAP.Channel.DataReceivedEventArgs;
@@ -42,7 +43,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <returns>Message decoder object</returns>
         public delegate IMessageDecoder FindMessageDecoder(byte[] data);
 
-        protected readonly IChannel _channel;
+        protected readonly IChannel dataChannel;
         readonly CoapStack _coapStack;
         private IMessageDeliverer _deliverer;
         private readonly IMatcher _matcher;
@@ -116,11 +117,11 @@ namespace Com.AugustCellars.CoAP.Net
         /// </summary>
         public CoAPEndPoint(IChannel channel, ICoapConfig config)
         {
-            _channel = channel ?? throw new ArgumentNullException(nameof(channel));
+            dataChannel = channel ?? throw new ArgumentNullException(nameof(channel));
             Config = config;
             _matcher = new Matcher(config);
             _coapStack = new CoapStack(config);
-            _channel.DataReceived += ReceiveData;
+            dataChannel.DataReceived += ReceiveData;
             EndpointSchema = new []{"coap", "coap+udp"};
         }
 
@@ -155,6 +156,9 @@ namespace Com.AugustCellars.CoAP.Net
             get => _deliverer ?? (_deliverer = new ClientMessageDeliverer());
         }
 
+        /// <inheritdoc/>
+        public SecurityContextSet SecurityContexts { get; set; }
+
         /// <summary>
         /// Return the message decoder to use with the end point
         /// </summary>
@@ -186,7 +190,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public bool AddMulticastAddress(IPEndPoint ep)
         {
-            return _channel.AddMulticastAddress(ep);
+            return dataChannel.AddMulticastAddress(ep);
         }
 #endif
 
@@ -201,11 +205,11 @@ namespace Com.AugustCellars.CoAP.Net
                 Executor = Executors.Default;
             }
 
-            LocalEndPoint = _channel.LocalEndPoint;
+            LocalEndPoint = dataChannel.LocalEndPoint;
             try {
                 _matcher.Start();
-                _channel.Start();
-                LocalEndPoint = _channel.LocalEndPoint;
+                dataChannel.Start();
+                LocalEndPoint = dataChannel.LocalEndPoint;
             }
             catch {
                 _Log.Warn(m => m("Cannot start endpoint at {0}", LocalEndPoint));
@@ -223,7 +227,7 @@ namespace Com.AugustCellars.CoAP.Net
             }
 
             _Log.Debug(m => m("Stopping endpoint bound to {0}", LocalEndPoint));
-            _channel.Stop();
+            dataChannel.Stop();
             _matcher.Stop();
             _matcher.Clear();
         }
@@ -241,7 +245,7 @@ namespace Com.AugustCellars.CoAP.Net
                 Stop();
             }
 
-            _channel.Dispose();
+            dataChannel.Dispose();
             IDisposable d = _matcher as IDisposable;
             if (d != null) {
                 d.Dispose();
@@ -302,7 +306,7 @@ namespace Com.AugustCellars.CoAP.Net
 
                         Fire(SendingEmptyMessage, rst);
 
-                        _channel.Send(Serialize(rst), e.Session, rst.Destination);
+                        dataChannel.Send(Serialize(rst), e.Session, rst.Destination);
 
                         _Log.Warn(m => m("Message format error caused by {0} and reset.", e.EndPoint));
                     }
@@ -423,8 +427,8 @@ namespace Com.AugustCellars.CoAP.Net
                                     op2.IntValue = (int) op.Type;
                                     signal.AddOption(op2);
 
-                                    _channel.Send(Serialize(signal), e.Session, e.EndPoint);
-                                    _channel.Abort(e.Session);
+                                    dataChannel.Send(Serialize(signal), e.Session, e.EndPoint);
+                                    dataChannel.Abort(e.Session);
                                     break;
                             }
                         }
@@ -433,7 +437,7 @@ namespace Com.AugustCellars.CoAP.Net
                     case SignalCode.Ping:
                         signal = new SignalMessage(SignalCode.Pong);
                         signal.Token = message.Token;
-                        _channel.Send(Serialize(signal), e.Session, e.EndPoint);
+                        dataChannel.Send(Serialize(signal), e.Session, e.EndPoint);
                         break;
 
                     case SignalCode.Pong:
@@ -441,11 +445,11 @@ namespace Com.AugustCellars.CoAP.Net
                         break;
 
                     case SignalCode.Release:
-                        _channel.Release(e.Session);
+                        dataChannel.Release(e.Session);
                         break;
 
                     case SignalCode.Abort:
-                        _channel.Abort(e.Session);
+                        dataChannel.Abort(e.Session);
                         break;
                 }
             }
@@ -460,8 +464,9 @@ namespace Com.AugustCellars.CoAP.Net
 
             Fire(SendingEmptyMessage, rst);
 
-            if (!rst.IsCancelled)
-                _channel.Send(Serialize(rst),  null /*message.Session*/, rst.Destination);
+            if (!rst.IsCancelled) {
+                dataChannel.Send(Serialize(rst),  null /*message.Session*/, rst.Destination);
+            }
         }
 
         private Byte[] Serialize(EmptyMessage message)
@@ -539,9 +544,9 @@ namespace Com.AugustCellars.CoAP.Net
 
             if (!request.IsCancelled) {
                 if (request.Session == null) {
-                    request.Session = _channel.GetSession(request.Destination);
+                    request.Session = dataChannel.GetSession(request.Destination);
                 }
-                _channel.Send(Serialize(request), request.Session, request.Destination);
+                dataChannel.Send(Serialize(request), request.Session, request.Destination);
             }
         }
 
@@ -552,7 +557,7 @@ namespace Com.AugustCellars.CoAP.Net
             Fire(SendingResponse, response);
 
             if (!response.IsCancelled) {
-                _channel.Send(Serialize(response), response.Session, response.Destination);
+                dataChannel.Send(Serialize(response), response.Session, response.Destination);
             }
         }
 
@@ -563,7 +568,7 @@ namespace Com.AugustCellars.CoAP.Net
             Fire(SendingEmptyMessage, message);
 
             if (!message.IsCancelled) {
-                _channel.Send(Serialize(message), exchange.Request.Session, message.Destination);
+                dataChannel.Send(Serialize(message), exchange.Request.Session, message.Destination);
             }
         }
     }

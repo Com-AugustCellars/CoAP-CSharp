@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Net;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
+using Com.AugustCellars.CoAP.OSCOAP;
 using Com.AugustCellars.CoAP.Server.Resources;
 
 namespace Com.AugustCellars.CoAP.Server
@@ -28,6 +29,8 @@ namespace Com.AugustCellars.CoAP.Server
         private readonly List<IEndPoint> _endpoints = new List<IEndPoint>();
         private readonly System.Net.EndPoint _endPointSupplied;
         private IMessageDeliverer _deliverer;
+
+        public SecurityContextSet SecurityContexts { get; } = new SecurityContextSet();
 
         /// <summary>
         /// Constructs a server with default configuration.
@@ -141,6 +144,7 @@ namespace Com.AugustCellars.CoAP.Server
         public void AddEndPoint(IEndPoint endpoint)
         {
             endpoint.MessageDeliverer = _deliverer;
+            endpoint.SecurityContexts = SecurityContexts;
             _endpoints.Add(endpoint);
         }
 
@@ -310,14 +314,13 @@ namespace Com.AugustCellars.CoAP.Server
         {
 
             public RootResource(CoapServer server)
-                : base(String.Empty)
+                : base(string.Empty)
             {
             }
 
             protected override void DoGet(CoapExchange exchange)
             {
-
-                exchange.Respond("Ni Hao from CoAP.NET " + Spec.Name);
+                exchange.Respond("Ni Hao from Com.AugustCellars.CoAP " + Spec.Name);
             }
         }
     }

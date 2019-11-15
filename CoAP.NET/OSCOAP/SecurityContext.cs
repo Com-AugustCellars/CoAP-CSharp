@@ -55,11 +55,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             /// Set a value has having been seen.
             /// </summary>
             /// <param name="index">value that was seen</param>
-            public void SetHit(Int64 index)
+            /// <returns>true if the zone was shifted</returns>
+            public bool SetHit(long index)
             {
+                bool returnValue = false;
                 index -= BaseValue;
-                if (index < 0) return;
+                if (index < 0) return false;
                 if (index > _hits.Length) {
+                    returnValue = true;
                     if (index < _hits.Length * 3 / 2) {
                         int v = _hits.Length / 2;
                         BaseValue += v;
@@ -78,6 +81,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     }
                 }
                 _hits.Set((int) index, true);
+                return returnValue;
             }
         }
         #endregion
@@ -138,6 +142,17 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             public int SequenceNumber { get; set; }
 
             /// <summary>
+            /// At what frequency should the IV update event be sent?
+            /// SequenceNumber % SequenceInterval == 0
+            /// </summary>
+            public int SequenceInterval { get; set; } = 100;
+
+            /// <summary>
+            /// Should an IV update event be sent?
+            /// </summary>
+            public bool SendSequenceNumberUpdate => (SequenceNumber % SequenceInterval) == 0;
+
+            /// <summary>
             /// Return the sequence number as a byte array.
             /// </summary>
             public byte[] PartialIV
@@ -193,7 +208,34 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             /// <summary>
             /// Increment the sequence/parital IV
             /// </summary>
-            public void IncrementSequenceNumber() { SequenceNumber += 1; }
+            public void IncrementSequenceNumber()
+            {
+                SequenceNumber += 1;
+                if (SequenceNumber > MaxSequenceNumber) {
+                    throw new CoAPException("Oscore Partial IV exhaustion");
+                }
+            }
+
+            /// <summary>
+            /// Check to see if all of the Partial IV Sequence numbers are exhausted.
+            /// </summary>
+            /// <returns>true if exhausted</returns>
+            public bool SequenceNumberExhausted => SequenceNumber >= MaxSequenceNumber;
+
+            private int _maxSequenceNumber = 0x1f;
+            /// <summary>
+            /// Set/get the maximum sequence number.  Limited to five bits.
+            /// </summary>
+            public int MaxSequenceNumber
+            {
+                get => _maxSequenceNumber;
+                set {
+                    if (value > 0x1f || value < 0) {
+                        throw new CoAPException("value must be no more than 0x1f");
+                    }
+                    _maxSequenceNumber = value;
+                }
+            }
 
             /// <summary>
             /// The key to use for counter signing purposes
@@ -205,7 +247,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             {
                 string ret = $"kid= {BitConverter.ToString(Id)} key={BitConverter.ToString(Key)} IV={BitConverter.ToString(BaseIV)} PartialIV={BitConverter.ToString(PartialIV)}\n";
                 if (SigningKey != null) {
-                    ret += $" {SigningKey.AsCBOR().ToString()}";
+                    ret += $" {SigningKey.AsCBOR()}";
                 }
 
                 return ret;
@@ -213,17 +255,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         }
 #endregion
 
-
-
         private static int _contextNumber;
         private byte[] _masterSecret;
         private byte[] _salt;
         public CBORObject CountersignParams { get; set; }
         public CBORObject CountersignKeyParams { get; set; }
         public int SignatureSize { get; } = 64;
-
-        public  Func<SecurityContext, byte[], EntityContext> Locate { get; set; }
-    
 
         /// <summary>
         /// What is the global unique context number for this context.
@@ -255,7 +292,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// For contexts that are created by the system this will be a list of
         /// COSE Web Tokens for authorization
         /// </summary>
-        public Object UserData { get; set; }
+        public object UserData { get; set; }
+
+        /// <summary>
+        /// Mark this context as being replaced with a new context
+        /// </summary>
+        public SecurityContext ReplaceWithSecurityContext { get; set; }
 
         /// <summary>
         /// Create a new empty security context
@@ -266,6 +308,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// Create a new security context to hold info for group.
         /// </summary>
         /// <param name="groupId"></param>
+        [Obsolete ("Unused Constructor")]
         public SecurityContext(byte[] groupId)
         {
             Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
@@ -303,9 +346,23 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             Recipients.Add(recipientId, x);
         }
 
+        public void ReplaceSender(byte[] senderId, OneKey signKey)
+        {
+            if (!signKey.HasAlgorithm(Sender.SigningAlgorithm)) {
+                throw new ArgumentException("signature algorithm not correct");
+            }
 
+            EntityContext x = DeriveEntityContext(_masterSecret, GroupId, senderId, _salt, Sender.Algorithm);
+            x.SigningKey = signKey;
+            x.SigningAlgorithm = Sender.SigningAlgorithm;
+
+            Sender = x;
+        }
+
+
+        #region  Key Derivation Functions
         /// <summary>
-        /// Given the set of inputs, perform the crptographic operations that are needed
+        /// Given the set of inputs, perform the cryptographic operations that are needed
         /// to build a security context for a single sender and recipient.
         /// </summary>
         /// <param name="masterSecret">pre-shared key</param>
@@ -433,7 +490,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         }
 
         /// <summary>
-        /// Given the set of inputs, perform the crptographic operations that are needed
+        /// Given the set of inputs, perform the cryptographic operations that are needed
         /// to build a security context for a single sender and recipient.
         /// </summary>
         /// <param name="masterSecret">pre-shared key</param>
@@ -451,10 +508,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                                                          byte[][] recipientIds, OneKey[] recipientSignKeys, 
                                                          byte[] masterSalt = null, CBORObject algAEAD = null, CBORObject algKeyAgree = null)
         {
-            SecurityContext ctx = new SecurityContext();
-            ctx.Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer());
-            ctx._masterSecret = masterSecret;
-            ctx._salt = masterSalt;
+            SecurityContext ctx = new SecurityContext {
+                Recipients = new Dictionary<byte[], EntityContext>(new ByteArrayComparer()), 
+                _masterSecret = masterSecret,
+                _salt = masterSalt
+            };
 
             if ((recipientIds != null && recipientSignKeys != null) && (recipientIds.Length != recipientSignKeys.Length)) {
                 throw new ArgumentException("recipientsIds and recipientSignKey must be the same length");
@@ -491,7 +549,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
 
         /// <summary>
-        /// Given the set of inputs, perform the crptographic operations that are needed
+        /// Given the set of inputs, perform the cryptographic operations that are needed
         /// to build a security context for a single sender and recipient.
         /// </summary>
         /// <param name="masterSecret">pre-shared key</param>
@@ -576,32 +634,38 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             return ctx;
         }
-
+#endregion
 
         public bool IsGroupContext => Recipients != null;
 
-#if DEBUG
-        static public int FutzError { get; set; }
-#endif
+        public event EventHandler<OscoreEvent> OscoreEvents;
+
+        public void OnEvent(OscoreEvent e)
+        {
+            EventHandler<OscoreEvent> eventHandler = OscoreEvents;
+            eventHandler?.Invoke(this, e);
+        }
 
         /// <inheritdoc />
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder("SecurityContext: ");
             sb.Append($"Secret: {BitConverter.ToString(_masterSecret)}\n");
-            sb.Append($"Sender: {Sender.ToString()}");
+            sb.Append($"Sender: {Sender}");
             if (IsGroupContext) {
                 foreach (KeyValuePair<byte[], EntityContext> entity in Recipients) {
-                    sb.Append($"Entity: {entity.Value.ToString()}\n");
+                    sb.Append($"Entity: {entity.Value}\n");
 
                 }
             }
             else {
-                sb.Append($"Recipient: {Recipient.ToString()}");
+                sb.Append($"Recipient: {Recipient}");
             }
 
             return sb.ToString();
         }
+
+#region Equality comparer for bytes
 
         public class ByteArrayComparer : EqualityComparer<byte[]>
         {
@@ -636,5 +700,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 return obj.Length;
             }
         }
+#endregion
+
     }
 }
