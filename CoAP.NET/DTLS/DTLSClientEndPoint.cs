@@ -126,8 +126,8 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         public KeySet CwtTrustKeySet
         {
-            get { return ((DTLSClientChannel) _channel).CwtTrustKeySet; }
-            set { ((DTLSClientChannel) _channel).CwtTrustKeySet = value; }
+            get { return ((DTLSClientChannel) dataChannel).CwtTrustKeySet; }
+            set { ((DTLSClientChannel) dataChannel).CwtTrustKeySet = value; }
         }
     }
 }

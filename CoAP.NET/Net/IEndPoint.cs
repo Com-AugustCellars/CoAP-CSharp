@@ -11,7 +11,7 @@
 
 using System;
 using System.Net;
-using System.Reflection;
+using Com.AugustCellars.CoAP.OSCOAP;
 
 namespace Com.AugustCellars.CoAP.Net
 {
@@ -37,6 +37,10 @@ namespace Com.AugustCellars.CoAP.Net
         /// Gets or sets the message deliverer.
         /// </summary>
         IMessageDeliverer MessageDeliverer { get; set; }
+        /// <summary>
+        /// Gets/sets the OSCORE contexts
+        /// </summary>
+        SecurityContextSet SecurityContexts { get; set; }
         /// <summary>
         /// Gets the outbox.
         /// </summary>

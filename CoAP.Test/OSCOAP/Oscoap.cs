@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Com.AugustCellars.CoAP.Net;
-using Com.AugustCellars.CoAP.OSCOAP;
 using Com.AugustCellars.CoAP.Server;
 using Com.AugustCellars.CoAP.Server.Resources;
 
@@ -15,15 +11,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
     [TestClass]
     public class Oscoap
     {
-        Int32 _serverPort;
+        int _serverPort;
         CoapServer _server;
-        Resource _resource;
-        String _expected;
-        Int32 _notifications;
-        Boolean _failed;
-        private static readonly byte[] _ClientId = Encoding.UTF8.GetBytes("client");
-        private static readonly byte[] _ServerId = Encoding.UTF8.GetBytes("server");
-        private static readonly byte[] _Secret = new byte[] { 01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23 };
+        private static readonly byte[] clientId = Encoding.UTF8.GetBytes("client");
+        private static readonly byte[] serverId = Encoding.UTF8.GetBytes("server");
+        private static readonly byte[] secret = new byte[] { 01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x21, 0x22, 0x23 };
 
 
         [TestInitialize]
@@ -43,11 +35,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public void Ocoap_Get()
         {
             CoapClient client = new CoapClient($"coap://localhost:{_serverPort}/abc") {
-                OscoreContext = SecurityContext.DeriveContext(_Secret, null, _ClientId, _ServerId)
+                OscoreContext = SecurityContext.DeriveContext(secret, null, clientId, serverId)
             };
             Response r = client.Get();
             Assert.AreEqual("/abc", r.PayloadString);
-
         }
 
         private void CreateServer()
@@ -68,7 +59,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             _serverPort = ((System.Net.IPEndPoint) endpoint.LocalEndPoint).Port;
 
             SecurityContextSet oscoapContexts = new SecurityContextSet();
-            SecurityContextSet.AllContexts.Add(SecurityContext.DeriveContext(_Secret, null, _ServerId, _ClientId));
+            _server.SecurityContexts.Add(SecurityContext.DeriveContext(secret, null, serverId, clientId));
         }
 
         class EchoLocation : Resource

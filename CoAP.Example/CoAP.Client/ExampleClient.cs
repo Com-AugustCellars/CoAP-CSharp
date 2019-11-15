@@ -264,6 +264,7 @@ namespace Com.AugustCellars.CoAP.Examples
         {
             if (fileName == null) fileName = "ServerKeys.cbor";
             KeySet keys = new KeySet();
+            SecurityContextSet newSet = new SecurityContextSet();
 
             FileStream fs = new FileStream(fileName, FileMode.Open);
             using (BinaryReader reader = new BinaryReader(fs)) {
@@ -281,7 +282,7 @@ namespace Com.AugustCellars.CoAP.Examples
                                 key[CBORObject.FromObject("RecipID")].GetByteString(),
                                 key[CBORObject.FromObject("SenderID")].GetByteString(), null,
                                 key[CoseKeyKeys.Algorithm]);
-                            SecurityContextSet.AllContexts.Add(ctx);
+                            newSet.Add(ctx);
                             break;
                         }
                         else if (usage == "oscoap-group") {
@@ -292,7 +293,7 @@ namespace Com.AugustCellars.CoAP.Examples
                             foreach (CBORObject recipient in key[CBORObject.FromObject("recipients")].Values) {
                                 ctx.AddRecipient(recipient[CBORObject.FromObject("RecipID")].GetByteString(), new OneKey( recipient[CBORObject.FromObject("sign")]));
                             }
-                            SecurityContextSet.AllContexts.Add(ctx);
+                            newSet.Add(ctx);
                         }
                     }
 
@@ -304,7 +305,7 @@ namespace Com.AugustCellars.CoAP.Examples
             }
 
             //
-            return SecurityContextSet.AllContexts;
+            return newSet;
 
         }
     }

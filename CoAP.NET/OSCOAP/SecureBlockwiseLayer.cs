@@ -73,7 +73,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     log.Debug("Request payload " + request.PayloadSize + "/" + _maxMessageSize + " requires Blockwise.");
                 BlockwiseStatus status = FindRequestBlockStatus(exchange, request);
                 Request block = GetNextRequestBlock(request, status);
-                exchange.OSCOAP_RequestBlockStatus = status;
+                exchange.OscoreRequestBlockStatus = status;
                 exchange.CurrentRequest = block;
                 base.SendRequest(nextLayer, exchange, block);
             }
@@ -105,7 +105,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     if (log.IsDebugEnabled)
                         log.Debug("Block1 num is 0, the client has restarted the blockwise transfer. Reset status.");
                     status = new BlockwiseStatus(request.ContentType);
-                    exchange.OSCOAP_RequestBlockStatus = status;
+                    exchange.OscoreRequestBlockStatus = status;
                 }
 
                 if (block1.NUM == status.CurrentNUM)
@@ -306,7 +306,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 if (log.IsDebugEnabled)
                     log.Debug("Response acknowledges block " + block1);
 
-                BlockwiseStatus status = exchange.OSCOAP_RequestBlockStatus;
+                BlockwiseStatus status = exchange.OscoreRequestBlockStatus;
                 if (!status.Complete)
                 {
                     // TODO: the response code should be CONTINUE. Otherwise deliver
@@ -451,12 +451,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// </summary>
         private BlockwiseStatus FindRequestBlockStatus(Exchange exchange, Request request)
         {
-            BlockwiseStatus status = exchange.OSCOAP_RequestBlockStatus;
+            BlockwiseStatus status = exchange.OscoreRequestBlockStatus;
             if (status == null)
             {
                 status = new BlockwiseStatus(request.ContentType);
                 status.CurrentSZX = BlockOption.EncodeSZX(_defaultBlockSize);
-                exchange.OSCOAP_RequestBlockStatus = status;
+                exchange.OscoreRequestBlockStatus = status;
                 if (log.IsDebugEnabled)
                     log.Debug("There is no assembler status yet. Create and set new Block1 status: " + status);
             }

@@ -8,6 +8,7 @@ using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.CoAP.Util;
 using Com.AugustCellars.COSE;
+using Org.BouncyCastle.Utilities.Encoders;
 using PeterO.Cbor;
 using Attributes = Com.AugustCellars.COSE.Attributes;
 
@@ -16,8 +17,8 @@ namespace Com.AugustCellars.CoAP.OSCOAP
     public class OscoapLayer : AbstractLayer
     {
         static readonly ILogger _Log = LogManager.GetLogger(typeof(OscoapLayer));
-        static readonly byte[] _FixedHeader = new byte[] {0x40, 0x01, 0xff, 0xff};
-        bool _replayWindow = true;
+        static readonly byte[] fixedHeader = new byte[] {0x40, 0x01, 0xff, 0xff};
+        bool _replayWindow;
         readonly ConcurrentDictionary<Exchange.KeyUri, BlockHolder> _ongoingExchanges = new ConcurrentDictionary<Exchange.KeyUri, BlockHolder>();
 
         class BlockHolder
@@ -28,14 +29,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
             public BlockHolder(Exchange exchange)
             {
-                _requestStatus = exchange.OSCOAP_RequestBlockStatus;
+                _requestStatus = exchange.OscoreRequestBlockStatus;
                 _responseStatus = exchange.OSCOAP_ResponseBlockStatus;
                 _response = exchange.Response;
             }
 
             public void RestoreTo(Exchange exchange)
             {
-                exchange.OSCOAP_RequestBlockStatus = _requestStatus;
+                exchange.OscoreRequestBlockStatus = _requestStatus;
                 exchange.OSCOAP_ResponseBlockStatus = _responseStatus;
                 exchange.Response = _response;
             }
@@ -73,6 +74,20 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     exchange.OscoreContext = ctx;
                 }
 
+                if (ctx.Sender.SequenceNumberExhausted) {
+                    OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.PivExhaustion, null, null, ctx, ctx.Sender);
+                    _Log.Info(m => m($"Partial IV exhaustion occured for {Base64.ToBase64String(ctx.Sender.Key)}"));
+
+                    ctx.OnEvent(e);
+                    if (e.SecurityContext == ctx) {
+                        throw new CoAPException("Kill message from IV exhaustion");
+                    }
+
+                    ctx = e.SecurityContext;
+                    exchange.OscoreContext = ctx;
+                    request.OscoreContext = ctx;
+                }
+
                 Codec.IMessageEncoder me = Spec.NewMessageEncoder();
                 Request encryptedRequest = new Request(request.Method);
 
@@ -85,6 +100,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 _Log.Info(m => m("New inner response message\n{0}", encryptedRequest.ToString()));
 
                 ctx.Sender.IncrementSequenceNumber();
+                if (ctx.Sender.SendSequenceNumberUpdate) {
+                    OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.SenderIvSave, null, null, ctx, ctx.Sender);
+                    ctx.OnEvent(e);
+                }
 
                 Encrypt0Message enc = new Encrypt0Message(false);
                 byte[] msg = me.Encode(encryptedRequest);
@@ -113,7 +132,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 aad.Add(CBORObject.FromObject(ctx.Sender.PartialIV));
                 aad.Add(CBORObject.FromObject(new byte[0]));  // I options go here
 
-                _Log.Info(m => m("SendRequest: AAD = {0}", BitConverter.ToString(aad.EncodeToBytes())));
+                _Log.Info(m => m($"SendRequest: AAD = {BitConverter.ToString(aad.EncodeToBytes())}"));
 
                 enc.SetExternalData(aad.EncodeToBytes());
                 enc.AddAttribute(HeaderKeys.IV, ctx.Sender.GetIV(ctx.Sender.PartialIV), Attributes.DO_NOT_SEND);
@@ -218,10 +237,19 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     }
 
                     if (gid != null) {
-                        contexts = SecurityContextSet.AllContexts.FindByGroupId(gid.GetByteString());
+                        contexts =  exchange.EndPoint.SecurityContexts.FindByGroupId(gid.GetByteString());
+                        if (contexts.Count == 0) {
+                            OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.UnknownGroupIdentifier, gid.GetByteString(), kid.GetByteString(), null, null);
+
+                            exchange.EndPoint.SecurityContexts.OnEvent(e);
+
+                            if (e.SecurityContext != null) {
+                                contexts.Add(e.SecurityContext);
+                            }
+                        }
                     }
                     else {
-                        contexts = SecurityContextSet.AllContexts.FindByKid(kid.GetByteString());
+                        contexts = exchange.EndPoint.SecurityContexts.FindByKid(kid.GetByteString());
                     }
 
                     if (contexts.Count == 0) {
@@ -253,108 +281,126 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 string responseString = "General decrypt failure";
 
-                foreach (SecurityContext context in contexts) {
-                    SecurityContext.EntityContext recip = context.Recipient;
-                    if (gid != null) {
-                        if (recip != null) {
-                            if (!SecurityContext.ByteArrayComparer.AreEqual(recip.Id, kid.GetByteString())) { 
-                                continue;
-                            } 
-                        }
-                        else {
-                            if (context.Recipients.ContainsKey(kid.GetByteString())) {
-                                recip = context.Recipients[kid.GetByteString()];
+                for (int pass = 0; pass < 2; pass++) {
+                    //  Don't try and get things fixed the first time around if more than one context exists.'
+                    responseString = "General decrypt failure";
+                    if (contexts.Count == 1) {
+                        pass = 1;
+                    }
+
+                    foreach (SecurityContext context in contexts) {
+                        SecurityContext.EntityContext recip = context.Recipient;
+                        if (gid != null) {
+                            if (recip != null) {
+                                if (!SecurityContext.ByteArrayComparer.AreEqual(recip.Id, kid.GetByteString())) {
+                                    continue;
+                                }
                             }
                             else {
-                                if (context.Locate == null) {
-                                    continue;
+                                if (context.Recipients.ContainsKey(kid.GetByteString())) {
+                                    recip = context.Recipients[kid.GetByteString()];
                                 }
-                                recip = context.Locate(context, kid.GetByteString());
-                                if (recip == null) {
+                                else if (pass == 1) {
+                                    OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.UnknownKeyIdentifier, gid.GetByteString(), kid.GetByteString(), context, null);
+                                    context.OnEvent(e);
+                                    if (e.RecipientContext == null) { 
+                                        continue;
+                                    }
+
+                                    if (e.SecurityContext != context) {
+                                        continue;
+                                    }
+                                    recip = e.RecipientContext;
+                                }
+                                else {
                                     continue;
                                 }
                             }
                         }
-                    }
 
-                    if (false && _replayWindow && recip.ReplayWindow.HitTest(seqNo)) {
-                        _Log.Info(m => m("Hit test on {0} failed", seqNo));
-                        responseString = "Hit test - duplicate";
-                        continue;
-                    }
-                    else {
-                        _Log.Info(m=>m("Hit test disabled"));
-                    }
-
-                    aad[1] = CBORObject.NewArray();
-                    aad[1].Add(recip.Algorithm);
-                    if (context.Sender.SigningKey != null) {
-                        aad[1].Add(context.Sender.SigningKey[CoseKeyKeys.Algorithm]);
-                        if (context.CountersignParams != null) {
-                            aad[1].Add(context.CountersignParams);
+                        if (_replayWindow && recip.ReplayWindow.HitTest(seqNo)) {
+                            _Log.Info(m => m("Hit test on {0} failed", seqNo));
+                            responseString = "Hit test - duplicate";
+                            continue;
+                        }
+                        else {
+                            _Log.Info(m => m("Hit test disabled"));
                         }
 
-                        if (context.CountersignKeyParams != null) {
-                            aad[1].Add(context.CountersignKeyParams);
-                        }
+                        aad[1] = CBORObject.NewArray();
+                        aad[1].Add(recip.Algorithm);
+                        if (context.Sender.SigningKey != null) {
+                            aad[1].Add(context.Sender.SigningKey[CoseKeyKeys.Algorithm]);
+                            if (context.CountersignParams != null) {
+                                aad[1].Add(context.CountersignParams);
+                            }
 
-                        int cbSignature = context.SignatureSize;
-                        byte[] rgbSignature = new byte[cbSignature];
-                        byte[] rgbPayload = new byte[request.Payload.Length - cbSignature];
+                            if (context.CountersignKeyParams != null) {
+                                aad[1].Add(context.CountersignKeyParams);
+                            }
 
-                        Array.Copy(request.Payload, rgbPayload, rgbPayload.Length);
-                        Array.Copy(request.Payload, rgbPayload.Length, rgbSignature, 0, cbSignature);
+                            int cbSignature = context.SignatureSize;
+                            byte[] rgbSignature = new byte[cbSignature];
+                            byte[] rgbPayload = new byte[request.Payload.Length - cbSignature];
 
-                        CounterSignature1 cs1 = new CounterSignature1(rgbSignature);
-                        cs1.AddAttribute(HeaderKeys.Algorithm, context.Sender.SigningAlgorithm, Attributes.DO_NOT_SEND);
-                        cs1.SetObject(msg);
-                        cs1.SetKey(recip.SigningKey);
+                            Array.Copy(request.Payload, rgbPayload, rgbPayload.Length);
+                            Array.Copy(request.Payload, rgbPayload.Length, rgbSignature, 0, cbSignature);
 
-                        aad.Add(op.RawValue);
-                        byte[] aadData = aad.EncodeToBytes();
-                        cs1.SetExternalData(aadData);
-                        msg.SetEncryptedContent(rgbPayload);
+                            CounterSignature1 cs1 = new CounterSignature1(rgbSignature);
+                            cs1.AddAttribute(HeaderKeys.Algorithm, context.Sender.SigningAlgorithm, Attributes.DO_NOT_SEND);
+                            cs1.SetObject(msg);
+                            cs1.SetKey(recip.SigningKey);
 
-                        try {
-                            if (!msg.Validate(cs1)) {
+                            aad.Add(op.RawValue);
+                            byte[] aadData = aad.EncodeToBytes();
+                            cs1.SetExternalData(aadData);
+                            msg.SetEncryptedContent(rgbPayload);
+
+                            try {
+                                if (!msg.Validate(cs1)) {
+                                    continue;
+                                }
+
+                            }
+                            catch (CoseException) {
+                                // try the next possible one
                                 continue;
                             }
 
                         }
-                        catch (CoseException e) {
-                            // try the next possible one
-                            continue;
+
+                        if (aad.Count == 6) {
+                            aad.Remove(aad[5]);
                         }
 
-                    }
+                        if (_Log.IsInfoEnabled) {
+                            _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
+                            _Log.Info("IV = " + BitConverter.ToString(recip.GetIV(partialIV).GetByteString()));
+                            _Log.Info("Key = " + BitConverter.ToString(recip.Key));
+                        }
 
-                    if (aad.Count == 6) {
-                        aad.Remove(aad[5]);
-                    }
+                        msg.SetExternalData(aad.EncodeToBytes());
 
-                    if (_Log.IsInfoEnabled) {
-                        _Log.Info("AAD = " + BitConverter.ToString(aad.EncodeToBytes()));
-                        _Log.Info("IV = " + BitConverter.ToString(recip.GetIV(partialIV).GetByteString()));
-                        _Log.Info("Key = " + BitConverter.ToString(recip.Key));
-                    }
+                        msg.AddAttribute(HeaderKeys.Algorithm, recip.Algorithm, Attributes.DO_NOT_SEND);
+                        msg.AddAttribute(HeaderKeys.IV, recip.GetIV(partialIV), Attributes.DO_NOT_SEND);
 
-                    msg.SetExternalData(aad.EncodeToBytes());
+                        try {
+                            ctx = context;
+                            payload = msg.Decrypt(recip.Key);
+                            if (recip.ReplayWindow.SetHit(seqNo)) {
+                                OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.HitZoneMoved, null, null, ctx, recip);
+                                context.OnEvent(e);
+                            }
 
-                    msg.AddAttribute(HeaderKeys.Algorithm, recip.Algorithm, Attributes.DO_NOT_SEND);
-                    msg.AddAttribute(HeaderKeys.IV, recip.GetIV(partialIV), Attributes.DO_NOT_SEND);
+                        }
+                        catch (Exception e) {
+                            if (_Log.IsInfoEnabled) _Log.Info("--- ", e);
+                            ctx = null;
+                        }
 
-                    try {
-                        ctx = context;
-                        payload = msg.Decrypt(recip.Key);
-                        recip.ReplayWindow.SetHit(seqNo);
-                    }
-                    catch (Exception e) {
-                        if (_Log.IsInfoEnabled) _Log.Info("--- ",  e);
-                        ctx = null;
-                    }
-
-                    if (ctx != null) {
-                        break;
+                        if (ctx != null) {
+                            break;
+                        }
                     }
                 }
 
@@ -373,9 +419,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 exchange.OscoapSequenceNumber = partialIV;
                 exchange.OscoapSenderId = kid.GetByteString();
 
-                byte[] newRequestData = new byte[payload.Length + _FixedHeader.Length-1];
-                Array.Copy(_FixedHeader, newRequestData, _FixedHeader.Length);
-                Array.Copy(payload, 1, newRequestData, _FixedHeader.Length, payload.Length-1);
+                byte[] newRequestData = new byte[payload.Length + fixedHeader.Length-1];
+                Array.Copy(fixedHeader, newRequestData, fixedHeader.Length);
+                Array.Copy(payload, 1, newRequestData, fixedHeader.Length, payload.Length-1);
                 newRequestData[1] = payload[0];
 
                 Codec.IMessageDecoder me = Spec.NewMessageDecoder(newRequestData);
@@ -425,6 +471,28 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         {
             if (exchange.OscoreContext != null) {
                 SecurityContext ctx = exchange.OscoreContext;
+
+                if (ctx.ReplaceWithSecurityContext != null) {
+                    while (ctx.ReplaceWithSecurityContext != null) {
+                        ctx = ctx.ReplaceWithSecurityContext;
+                    }
+
+                    exchange.OscoreContext = ctx;
+                }
+
+                if (ctx.Sender.SequenceNumberExhausted && response.HasOption(OptionType.Observe)) {
+                    OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.PivExhaustion, null, null, ctx, ctx.Sender);
+                    _Log.Info(m => m($"Partial IV exhaustion occured for {Base64.ToBase64String(ctx.Sender.Key)}"));
+
+                    ctx.OnEvent(e);
+                    ctx = e.SecurityContext;
+                    if (ctx.Sender.SequenceNumberExhausted) {
+                        throw new CoAPException("Kill message from IV exhaustion");
+                    }
+
+                    ctx = e.SecurityContext;
+                    exchange.OscoreContext = ctx;
+                }
 
                 Codec.IMessageEncoder me = Spec.NewMessageEncoder();
                 Response encryptedResponse = new Response((StatusCode) response.Code);
@@ -477,6 +545,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                                      Attributes.UNPROTECTED);
                     enc.AddAttribute(HeaderKeys.IV, ctx.Sender.GetIV(ctx.Sender.PartialIV), Attributes.DO_NOT_SEND);
                     ctx.Sender.IncrementSequenceNumber();
+                    if (ctx.Sender.SendSequenceNumberUpdate) {
+                        OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.SenderIvSave, null, null, ctx, ctx.Sender);
+                        ctx.OnEvent(e);
+                    }
                     if (ctx.IsGroupContext) {
                         enc.AddAttribute(HeaderKeys.KeyId, CBORObject.FromObject(ctx.Sender.Id),
                                          Attributes.UNPROTECTED);
@@ -543,18 +615,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         //  Remember ongoing blockwise GET requests
                         BlockHolder blockInfo = new BlockHolder(exchange);
                         if (Utils.Put(_ongoingExchanges, keyUri, blockInfo) == null) {
-                            if (_Log.IsInfoEnabled)
-                                _Log.Info("Ongoing Block2 started late, storing " + keyUri + " for " + request);
-
+                            _Log.Info($"Ongoing Block2 started late, storing {keyUri} for {request}");
                         }
-                        else {
-                            if (_Log.IsInfoEnabled)
-                                _Log.Info("Ongoing Block2 continued, storing " + keyUri + " for " + request);
+                        else { 
+                            _Log.Info($"Ongoing Block2 continued, storing {keyUri} for {request}");
                         }
                     }
-                    else {
-                        if (_Log.IsInfoEnabled)
-                            _Log.Info("Ongoing Block2 completed, cleaning up " + keyUri + " for " + request);
+                    else { 
+                        _Log.Info($"Ongoing Block2 completed, cleaning up {keyUri} for {request}");
                         BlockHolder exc;
                         _ongoingExchanges.TryRemove(keyUri, out exc);
                     }
@@ -591,14 +659,38 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     }
 
                     CBORObject kid = msg.FindAttribute(HeaderKeys.KeyId);
-                    if (kid == null) {
+                    if (kid == null)
+                    {
                         //  this is not currently a valid state to be in
                         return;
                     }
-                    recip = ctx.Recipients[kid.GetByteString()];
+
+                    CBORObject gid = msg.FindAttribute(HeaderKeys.KidContext);
+                    if (gid != null && !SecurityContext.ByteArrayComparer.AreEqual(ctx.GroupId, gid.GetByteString())) {
+                        OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.UnknownGroupIdentifier, gid.GetByteString(), kid.GetByteString(), null, null);
+                        ctx.OnEvent(e);
+
+                        if (e.SecurityContext == null) {
+                            return;
+                        }
+
+                        ctx = e.SecurityContext;
+                    }
+
+                    if (gid == null) {
+                        gid = CBORObject.FromObject(ctx.GroupId);
+                    }
+
+                    ctx.Recipients.TryGetValue(kid.GetByteString(), out recip);
                     if (recip == null) {
-                        // M00TODO - deal with asking the user for a recipient structure at this point.
-                        return;
+                        OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.UnknownKeyIdentifier, gid.GetByteString(), kid.GetByteString(), ctx, null);
+                        ctx.OnEvent(e);
+
+                        if (e.RecipientContext == null) {
+                            return;
+                        }
+
+                        recip = e.RecipientContext;
                     }
 
                     if (msg.FindAttribute(HeaderKeys.PartialIV) == null) {
@@ -687,7 +779,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         }
 
                     }
-                    catch (CoseException e) {
+                    catch (CoseException) {
                         // try the next possible one
                         return;
                     }
@@ -695,11 +787,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 byte[] payload = msg.Decrypt(recip.Key);
 
-                recip.ReplayWindow.SetHit(seqNo);
+                if (recip.ReplayWindow.SetHit(seqNo)) {
+                    OscoreEvent e = new OscoreEvent(OscoreEvent.EventCode.HitZoneMoved, null, null, ctx, recip);
+                    ctx.OnEvent(e);
+                }
 
-                byte[] rgb = new byte[payload.Length + _FixedHeader.Length - 1];
-                Array.Copy(_FixedHeader, rgb, _FixedHeader.Length);
-                Array.Copy(payload, 1, rgb, _FixedHeader.Length, payload.Length-1);
+                byte[] rgb = new byte[payload.Length + fixedHeader.Length - 1];
+                Array.Copy(fixedHeader, rgb, fixedHeader.Length);
+                Array.Copy(payload, 1, rgb, fixedHeader.Length, payload.Length-1);
                 rgb[1] = payload[0];
                 Codec.IMessageDecoder me = Spec.NewMessageDecoder(rgb);
                 Response decryptedReq = me.DecodeResponse();
@@ -765,14 +860,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
 
                 string p = unprotected.ProxyUri.AbsolutePath;
-                if (p != null) {
-                    encrypted.UriPath = p;
-                }
+                encrypted.UriPath = p;
 
-                if (unprotected.ProxyUri.Query != null) {
-                    encrypted.AddUriQuery(unprotected.ProxyUri.Query);
-                    unprotected.ClearUriQuery();
-                }
+                encrypted.AddUriQuery(unprotected.ProxyUri.Query);
+                unprotected.ClearUriQuery();
 
                 unprotected.URI = new Uri(strUri + "/");
             }
@@ -802,7 +893,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
             }
 
-            foreach (Option op in toDelete) unprotected.RemoveOptions(op.Type);
+            foreach (Option op in toDelete) {
+                unprotected.RemoveOptions(op.Type);
+            }
+
             unprotected.URI = null;
         }
 
@@ -837,7 +931,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
             }
 
-            foreach (Option op in toDelete) unprotected.RemoveOptions(op.Type);
+            foreach (Option op in toDelete) {
+                unprotected.RemoveOptions(op.Type);
+            }
         }
 
         private static void RestoreOptions(Message response, Message decryptedReq)
@@ -866,7 +962,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
             }
 
-            foreach (Option op in toDelete) response.RemoveOptions(op.Type);
+            foreach (Option op in toDelete) {
+                response.RemoveOptions(op.Type);
+            }
 
             foreach (Option op in decryptedReq.GetOptions()) {
                 switch (op.Type) {

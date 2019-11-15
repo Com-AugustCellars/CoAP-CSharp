@@ -1,22 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Com.AugustCellars.CoAP.OSCOAP
 {
     /// <summary>
     /// Collection of OSCOAP security contexts
     /// </summary>
-    public class SecurityContextSet
+    public class SecurityContextSet : IEnumerable<SecurityContext>
     {
-        /// <summary>
-        /// Collection of all OSCOAP security contexts on the system.
-        /// </summary>
- 
-        public static SecurityContextSet AllContexts = new SecurityContextSet();
-
         /// <summary>
         /// Get the count of all security contexts.
         /// </summary>
-        public int Count { get => All.Count;}
+        public int Count => All.Count;
 
         /// <summary>
         /// Add a new context to the set
@@ -27,8 +23,15 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             All.Add(ctx);
         }
 
+        public void Add(SecurityContextSet set)
+        {
+            foreach (SecurityContext c in set) {
+                All.Add(c);
+            }
+        }
+
         /// <summary>
-        /// Secuirty contexts for the object
+        /// Security contexts for the object
         /// </summary>
         public List<SecurityContext> All { get; } = new List<SecurityContext>();
 
@@ -43,10 +46,13 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             foreach (SecurityContext ctx in All) {
                 if (ctx.Recipient != null &&  kid.Length == ctx.Recipient.Id.Length) {
                     bool match = true;
-                    for (int i=0; i<kid.Length;i++) if (kid[i] != ctx.Recipient.Id[i]) {
+                    for (int i=0; i<kid.Length;i++) {
+                        if (kid[i] != ctx.Recipient.Id[i]) {
                             match = false;
                             break;
                         }
+                    }
+
                     if (match) contexts.Add(ctx);
                 }
             }
@@ -74,6 +80,25 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
             }
             return contexts;
+        }
+
+
+        public event EventHandler<OscoreEvent> OscoreEvents;
+
+        public void OnEvent(OscoreEvent e)
+        {
+            EventHandler<OscoreEvent> eventHandler = OscoreEvents;
+            eventHandler?.Invoke(null, e);
+        }
+
+        public IEnumerator<SecurityContext> GetEnumerator()
+        {
+            return All.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return All.GetEnumerator();
         }
     }
 }
