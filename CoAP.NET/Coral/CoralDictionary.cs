@@ -1,19 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Org.BouncyCastle.Asn1.Crmf;
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP.Coral
 {
-    public class CoralDictionary : System.Collections.IEnumerable
+    public class CoralDictionary : IEnumerable
     {
         public const int DictionaryTag = 99999;
 
-        public static CoralDictionary Default = new CoralDictionary() {
+        public static CoralDictionary Default { get; } = new CoralDictionary() {
             {0, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"},
             {1, "http://www.iana.org/assignments/relation/item>"},
             {2, "http://www.iana.org/assignments/relation/collection"},
@@ -29,12 +25,12 @@ namespace Com.AugustCellars.CoAP.Coral
 
         private readonly Dictionary<int, string> _dictionary = new Dictionary<int, string>();
 
-        public CoralDictionary()
-        {
-        }
-
         public CoralDictionary Add(int key, string value)
         {
+            if (key < 0) {
+                throw new ArgumentException("Key must be non-negative value", nameof(key));
+            }
+
             _dictionary.Add(key, value);
             return this;
         }
@@ -46,15 +42,12 @@ namespace Com.AugustCellars.CoAP.Coral
 
         public CBORObject Lookup(CBORObject value)
         {
-            foreach (KeyValuePair<int, string> o in _dictionary) {
-                if (value.Equals(CBORObject.FromObject(o.Value))) {
-                    CBORObject newValue = CBORObject.FromObject(o.Key);
-                    if (value.Type == CBORType.Integer) {
-                        newValue = CBORObject.FromObjectAndTag(newValue, DictionaryTag);
-                    }
+            if (value.Type == CBORType.TextString) {
+                return Lookup(value.AsString());
+            }
 
-                    return newValue;
-                }
+            if (value.Type == CBORType.Integer && !value.IsTagged && value.AsInt32() >= 0) {
+                return CBORObject.FromObjectAndTag(value, DictionaryTag);
             }
 
             return value;
@@ -71,18 +64,32 @@ namespace Com.AugustCellars.CoAP.Coral
             return CBORObject.FromObject(value);
         }
 
+
+        /// <summary>
+        /// Reverse the dictionary encoding of a value.
+        /// If it cannot be decoded then return null, in this case the value must be an integer.
+        /// </summary>
+        /// <param name="value">Value to decode</param>
+        /// <returns>Original value if it can be decoded.</returns>
         public CBORObject Reverse(CBORObject value)
         {
-            if (value.Type != CBORType.Integer) {
+            if (value.IsTagged) {
+                if (value.HasOneTag(DictionaryTag)) {
+                    return value.UntagOne();
+                }
+                if (value.HasTag(DictionaryTag)) {
+                    throw new ArgumentException("CoRAL dictionary tag 6.TBD6 unexpectedly located");
+                }
+
                 return value;
             }
 
-            if (value.HasTag(DictionaryTag) && value.MostOuterTag.ToInt32Unchecked() == DictionaryTag) {
-                return value.UntagOne();
+            if (value.Type != CBORType.Integer || value.AsInt32() < 0) {
+                return value;
             }
 
             if (!_dictionary.ContainsKey(value.AsInt32())) {
-                return value;
+                return null;
             }
 
             CBORObject result = CBORObject.FromObject(_dictionary[value.AsInt32()]);
