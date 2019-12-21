@@ -130,7 +130,7 @@ namespace CoAP.Test.Std10.Utils
         private static IEnumerable<string[]> KlausData()
         {
             string fileName = "CoRAL\\Klaus.csv";
-            if (!Directory.Exists(fileName)) {
+            if (!File.Exists(fileName)) {
                 fileName = "Klaus.csv";
             }
             IEnumerable<string> rows = System.IO.File.ReadAllLines(fileName);
