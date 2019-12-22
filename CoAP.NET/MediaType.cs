@@ -30,21 +30,6 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public const int TextPlain = 0;
         /// <summary>
-        /// text/xml
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int TextXml = 1;
-        /// <summary>
-        /// text/csv
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int TextCsv = 2;
-        /// <summary>
-        /// text/html
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int TextHtml = 3;
-        /// <summary>
         /// Application/cose; cose-type="cose-encrypt0"
         /// </summary>
         public const int ApplicationCoseEncrypt0 = 16;
@@ -56,36 +41,6 @@ namespace Com.AugustCellars.CoAP
         /// Application/cose; cose-type="cose-sign1"
         /// </summary>
         public const int ApplicationCoseSign1 = 18;
-        /// <summary>
-        /// image/gif
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ImageGif = 21;
-        /// <summary>
-        /// image/jpeg
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ImageJpeg = 22;
-        /// <summary>
-        /// image/png
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ImagePng = 23;
-        /// <summary>
-        /// image/tiff
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ImageTiff = 24;
-        /// <summary>
-        /// audio/raw
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int AudioRaw = 25;
-        /// <summary>
-        /// video/raw
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int VideoRaw = 26;
         /// <summary>
         /// application/link-format
         /// </summary>
@@ -99,39 +54,9 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public const int ApplicationOctetStream = 42;
         /// <summary>
-        /// application/rdf+xml
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ApplicationRdfXml = 43;
-        /// <summary>
-        /// application/soap+xml
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ApplicationSoapXml = 44;
-        /// <summary>
-        /// application/atom+xml
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ApplicationAtomXml = 45;
-        /// <summary>
-        /// application/xmpp+xml
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ApplicationXmppXml = 46;
-        /// <summary>
         /// application/exi
         /// </summary>
         public const int ApplicationExi = 47;
-        /// <summary>
-        /// application/fastinfoset
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ApplicationFastinfoset = 48;
-        /// <summary>
-        /// application/soap+fastinfoset
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ApplicationSoapFastinfoset = 49;
         /// <summary>
         /// application/json [RFC 7159]
         /// </summary>
@@ -140,11 +65,6 @@ namespace Com.AugustCellars.CoAP
         /// application/json-patch+json [RFC 6902]
         /// </summary>
         public const int ApplicationJsonPatchJson = 51;
-        /// <summary>
-        /// application/x-obix-binary
-        /// </summary>
-        [Obsolete("Media type was never registered")]
-        public const int ApplicationXObixBinary = 51;
         /// <summary>
         /// application/merge-patch+json [RFC 7396]
         /// </summary>
@@ -214,27 +134,10 @@ namespace Com.AugustCellars.CoAP
         static MediaType()
         {
             registry.Add(TextPlain, new MediaTypeInfo(new string[] { "text/plain", "txt" }, true));
-            registry.Add(TextXml, new MediaTypeInfo(new string[] { "text/xml", "xml" }, true));
-            registry.Add(TextCsv, new MediaTypeInfo(new string[] { "text/csv", "csv" }, true));
-            registry.Add(TextHtml, new MediaTypeInfo(new string[] { "text/html", "html" }, true));
-
-            registry.Add(ImageGif, new MediaTypeInfo(new string[] { "image/gif", "gif" }));
-            registry.Add(ImageJpeg, new MediaTypeInfo(new string[] { "image/jpeg", "jpg" }));
-            registry.Add(ImagePng, new MediaTypeInfo(new string[] { "image/png", "png" }));
-            registry.Add(ImageTiff, new MediaTypeInfo(new string[] { "image/tiff", "tif" }));
-            registry.Add(AudioRaw, new MediaTypeInfo(new string[] { "audio/raw", "raw" }));
-            registry.Add(VideoRaw, new MediaTypeInfo(new string[] { "video/raw", "raw" }));
 
             registry.Add(ApplicationLinkFormat, new MediaTypeInfo(new string[] { "application/link-format", "wlnk" }, true));
             registry.Add(ApplicationXml, new MediaTypeInfo(new string[] { "application/xml", "xml" }, true));
             registry.Add(ApplicationOctetStream, new MediaTypeInfo(new string[] { "application/octet-stream", "bin" }));
-            registry.Add(ApplicationRdfXml, new MediaTypeInfo(new string[] {"application/rdf+xml", "rdf"}, true));
-            registry.Add(ApplicationSoapXml, new MediaTypeInfo(new string[] {"application/soap+xml", "soap"}, true));
-            registry.Add(ApplicationAtomXml, new MediaTypeInfo(new string[] {"application/atom+xml", "atom"}, true));
-            registry.Add(ApplicationXmppXml, new MediaTypeInfo(new string[] {"application/xmpp+xml", "xmpp"}, true));
-            registry.Add(ApplicationFastinfoset, new MediaTypeInfo(new string[] { "application/fastinfoset", "finf"}));
-            registry.Add(ApplicationSoapFastinfoset, new MediaTypeInfo(new string[] {"application/soap+fastinfoset", "soap.finf"}));
-            registry.Add(ApplicationXObixBinary, new MediaTypeInfo(new string[] { "application/x-obix-binary", "obix" }));
             registry.Add(ApplicationExi, new MediaTypeInfo(new string[] { "application/exi", "exi" }));
             registry.Add(ApplicationJson, new MediaTypeInfo(new string[] { "application/json", "json" }, false));  // Compressed w/ deflate
 
@@ -246,9 +149,10 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="mediaType">The media type to be checked</param>
         /// <returns>True iff the media type is a type of image</returns>
+        [Obsolete("No image media types exist anymore - only returns false")]
         public static Boolean IsImage(int mediaType)
         {
-            return mediaType >= ImageGif && mediaType <= ImageTiff;
+            return false;
         }
 
         public static Boolean IsPrintable(int mediaType)

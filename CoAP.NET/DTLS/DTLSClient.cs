@@ -325,7 +325,9 @@ namespace Com.AugustCellars.CoAP.DTLS
         {
             private readonly TlsContext _mContext;
             public EventHandler<TlsEvent> TlsEventHandler;
+#if SUPPORT_RPK || SUPPORT_TLS_CWT
             private KeySet _serverKeys;
+#endif
             private TlsKeyPair TlsKey { get; set; }
 #if SUPPORT_TLS_CWT
             public KeySet CwtTrustKeySet { get; set; }

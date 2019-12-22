@@ -34,7 +34,7 @@ namespace Com.AugustCellars.CoAP.Deduplication
             = new ConcurrentDictionary<Exchange.KeyID, Exchange>();
         private Timer _timer;
         private readonly ICoapConfig _config;
-        private int _period;
+        // private int _period;
 
         public SweepDeduplicator(ICoapConfig config)
         {
