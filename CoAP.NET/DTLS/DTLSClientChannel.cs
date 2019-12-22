@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using Com.AugustCellars.CoAP.Channel;
+using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.COSE;
 #if SUPPORT_TLS_CWT
 using Com.AugustCellars.WebToken;
@@ -20,65 +21,20 @@ namespace Com.AugustCellars.CoAP.DTLS
         public const Int32 DefaultReceivePacketSize = 4096;
 
         private readonly System.Net.EndPoint _localEndPoint;
-        private Int32 _receiveBufferSize = DefaultReceivePacketSize;
-        private Int32 _sendBufferSize;
-        private Int32 _receivePacketSize;
         private readonly int _port;
         private UDPChannel _udpChannel;
         private readonly TlsKeyPair _userKey;
         public KeySet CwtTrustKeySet { get; set; }
 
         public EventHandler<TlsEvent> TlsEventHandler;
+        private readonly ILogger _log = LogManager.GetLogger(nameof(DTLSClientChannel));
 
-#if false
-        /// <summary>
-        /// Create a client only channel and use a randomly assigned port on
-        /// the client UDP port.
-        /// </summary>
-        /// <param name="userKey">Authentication Key</param>
-        public DTLSClientChannel(OneKey userKey) : this(userKey, 0)
-        {
-        }
 
-        /// <summary>
-        /// Create a client only channel and use a given point
-        /// </summary>
-        /// <param name="userKey">Authentication Key</param>
-        /// <param name="port">client side UDP port</param>
-        public DTLSClientChannel(OneKey userKey, Intint32 port)
-        {
-            _port = port;
-            _userKey = userKey;
-        }
-
-#endif
         public DTLSClientChannel(TlsKeyPair userKey, int port)
         {
             _port = port;
             _userKey = userKey ?? throw new ArgumentNullException(nameof(userKey));
         }
-#if false
-#if SUPPORT_TLS_CWT
-        public DTLSClientChannel(CWT cwt, OneKey userKey, KeySet cwtTrustKeys, int port)
-        {
-            _port = port;
-            _userKey = userKey;
-            _userCwt = cwt;
-            CwtTrustKeySet = cwtTrustKeys;
-        }
-#endif
-
-        /// <summary>
-        /// Create a client only channel and use a given endpoint
-        /// </summary>
-        /// <param name="userKey">Authentication Key</param>
-        /// <param name="ep">client side endpoint</param>
-        public DTLSClientChannel(OneKey userKey, System.Net.EndPoint ep)
-        {
-            _localEndPoint = ep;
-            _userKey = userKey;
-        }
-#endif
 
         /// <summary>
         /// Create a client only channel and use a given endpoint
@@ -96,36 +52,25 @@ namespace Com.AugustCellars.CoAP.DTLS
         public event EventHandler<DataReceivedEventArgs> DataReceived;
 
         /// <inheritdoc/>
-        public System.Net.EndPoint LocalEndPoint {
-            get =>_udpChannel == null ? (_localEndPoint ?? new IPEndPoint(IPAddress.IPv6Any, _port)) : _udpChannel.LocalEndPoint; 
-        }
+        public System.Net.EndPoint LocalEndPoint => _udpChannel == null ? (_localEndPoint ?? new IPEndPoint(IPAddress.IPv6Any, _port)) : _udpChannel.LocalEndPoint;
 
         /// <summary>
         /// Gets or sets the <see cref="Socket.ReceiveBufferSize"/>.
         /// </summary>
-        public Int32 ReceiveBufferSize {
-            get => _receiveBufferSize;
-            set => _receiveBufferSize = value;
-        }
+        public int ReceiveBufferSize { get; set; } = DefaultReceivePacketSize;
 
         /// <summary>
         /// Gets or sets the <see cref="Socket.SendBufferSize"/>.
         /// </summary>
-        public Int32 SendBufferSize {
-            get => _sendBufferSize;
-            set => _sendBufferSize = value;
-        }
+        public int SendBufferSize { get; set; }
 
         /// <summary>
         /// Gets or sets the size of buffer for receiving packet.
         /// The default value is <see cref="DefaultReceivePacketSize"/>.
         /// </summary>
-        public Int32 ReceivePacketSize {
-            get => _receivePacketSize;
-            set => _receivePacketSize = value;
-        }
+        public int ReceivePacketSize { get; set; }
 
-        private Int32 _running;
+        private int _running;
 
         /// <inheritdoc/>
         public bool AddMulticastAddress(IPEndPoint ep)
@@ -159,12 +104,13 @@ namespace Com.AugustCellars.CoAP.DTLS
         }
 
         /// <summary>
-        /// Tell the channel to stop processing data cand clean itself up.
+        /// Tell the channel to stop processing data and clean itself up.
         /// </summary>
         public void Stop()
         {
-            if (System.Threading.Interlocked.Exchange(ref _running, 0) == 0)
+            if (System.Threading.Interlocked.Exchange(ref _running, 0) == 0) {
                 return;
+            }
 
             lock (_sessionList) {
                 foreach (DTLSSession session in _sessionList) {
@@ -228,24 +174,23 @@ namespace Com.AugustCellars.CoAP.DTLS
 #endif
                     session = new DTLSSession(ipEndPoint, DataReceived, _userKey);
 #if SUPPORT_TLS_CWT
-            }
+                }
 #endif
 
                 session.TlsEventHandler += OnTlsEvent;
                 AddSession(session);
 
-
                 session.Connect(_udpChannel);
             }
             catch {
-                ;
+                _log.Error("Failed to establish a DTLS session");
             }
 
 
             return session;
         }
 
-        private void OnTlsEvent(Object o, TlsEvent e)
+        private void OnTlsEvent(object o, TlsEvent e)
         {
             EventHandler<TlsEvent> handler = TlsEventHandler;
             if (handler != null) {
@@ -258,6 +203,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// Send data through the DTLS channel to other side
         /// </summary>
         /// <param name="data">Data to be sent</param>
+        /// <param name="sessionReceive">What session was the request on</param>
         /// <param name="ep">Where to send it</param>
         public void Send(byte[] data, ISession sessionReceive, System.Net.EndPoint ep)
         {
@@ -270,9 +216,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                 DTLSSession session = FindSession(ipEndPoint);
                 if (session == null) {
-#if DEBUG
-                    Console.WriteLine("We should have already setup a session");
-#endif
+                    _log.Warn("Setup a new session - ");
 
                     //  Create a new session to send with if we don't already have one
 
@@ -282,9 +226,8 @@ namespace Com.AugustCellars.CoAP.DTLS
                     session.Connect(_udpChannel);
                 }
                 else if (session != sessionReceive) {
-#if DEBUG
-                    Console.WriteLine("Don't send because the sessions are different");
-#endif
+                    _log.Warn("Don't send because the sessions are different");
+                    return;
                 }
 
                 //  Queue the data onto the session.
@@ -293,14 +236,12 @@ namespace Com.AugustCellars.CoAP.DTLS
                 session.WriteData();
             }
             catch (Exception e) {
-#if DEBUG
-                Console.WriteLine("Error in DTLSClientChannel Sending - " + e.ToString());
-#endif
+                _log.Error($"Error in DTLSClientChannel Sending - {e}");
                 throw;
             }
         }
 
-        private void ReceiveData(Object sender, DataReceivedEventArgs e)
+        private void ReceiveData(object sender, DataReceivedEventArgs e)
         {
             lock (_sessionList) {
                 foreach (DTLSSession session in _sessionList) {
@@ -330,8 +271,9 @@ namespace Com.AugustCellars.CoAP.DTLS
             lock (_sessionList) {
 
                 foreach (DTLSSession session in _sessionList) {
-                    if (session.EndPoint.Equals(ipEndPoint))
+                    if (session.EndPoint.Equals(ipEndPoint)) {
                         return session;
+                    }
                 }
             }
             return null;

@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Compile Remove="Properties\AssemblyInfo.cs" />
+    <Compile Remove="Resources\ImageResource.cs" />
   </ItemGroup>
 
 

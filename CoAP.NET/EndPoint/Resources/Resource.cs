@@ -15,7 +15,6 @@ using System.Linq;
 using System.Text;
 using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Observe;
-using Com.AugustCellars.CoAP.Util;
 using Com.AugustCellars.CoAP.Server.Resources;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Threading;
@@ -27,13 +26,12 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
     /// </summary>
     public partial class RemoteResource : IComparable<RemoteResource>, IResource
     {
-        private static ILogger log = LogManager.GetLogger(typeof(Resource));
+        private static readonly ILogger log = LogManager.GetLogger(typeof(Resource));
 
         private Int32 _totalSubResourceCount;
         private HashSet<LinkAttribute> _attributes;
         private RemoteResource _parent;
         private SortedDictionary<String, RemoteResource> _subResources;
-        private Boolean _hidden;
 
         /// <summary>
         /// Initialize a resource.
@@ -51,22 +49,19 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         public RemoteResource(String resourceIdentifier, Boolean hidden)
         {
             Name = resourceIdentifier;
-            _hidden = hidden;
+            Hidden = hidden;
             _attributes = new HashSet<LinkAttribute>();
         }
 
         /// <inheritdoc/>
-        public String Uri
-        {
-            get => Path + Name;
-        }
+        public string Uri => Path + Name;
 
         /// <summary>
         /// Gets the URI of this resource.
         /// </summary>
-        public String Path
+        public string Path
         {
-            get => String.Empty;
+            get => string.Empty;
             set => throw new NotSupportedException();
         }
 
@@ -83,12 +78,6 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         /// <inheritdoc/>
         public ResourceAttributes Attributes { get; } = new ResourceAttributes();
 
-        [Obsolete("Use Attributes")]
-        public ICollection<LinkAttribute> LinkAttributes
-        {
-            get { return _attributes; }
-        }
-
         [Obsolete("use Attributes.Get()")]
         public IList<LinkAttribute> GetAttributes(String name)
         {
@@ -100,36 +89,24 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
             return newList.AsReadOnly();
         }
 
-        [Obsolete("use Attributes.Add()")]
-        public Boolean SetAttribute(LinkAttribute attr)
+        private Boolean SetAttribute(LinkAttribute attr)
         {
             Attributes.Add(attr.Name, attr.Value.ToString());
             return true;
         }
 
-        [Obsolete("use Attributes.Clear()")]
-        public Boolean ClearAttribute(String name)
+        private Boolean ClearAttribute(String name)
         {
             Attributes.Clear(name);
             return true;
         }
 
         /// <inheritdoc/>
-        public Boolean Visible
-        {
-            get => !_hidden;
-        }
+        public bool Visible => !Hidden;
 
-        public Boolean Hidden
-        {
-            get { return _hidden; }
-            set { _hidden = value; }
-        }
+        public bool Hidden { get; set; }
 
-        public IList<string> ResourceTypes
-        {
-            get { return GetStringValues(GetAttributes(LinkFormat.ResourceType)); }
-        }
+        public IList<string> ResourceTypes => Attributes.GetValues(LinkFormat.ResourceType).ToList();
 
         /// <summary>
         /// Gets or sets the type attribute of this resource.
@@ -147,25 +124,15 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         /// <summary>
         /// Gets or sets the title attribute of this resource.
         /// </summary>
-        public String Title
+        public string Title
         {
-            get
-            {
-                IList<LinkAttribute> attrs = GetAttributes(LinkFormat.Title);
-                return attrs.Count == 0 ? null : attrs[0].StringValue;
-            }
-            set
-            {
-                ClearAttribute(LinkFormat.Title);
-                SetAttribute(new LinkAttribute(LinkFormat.Title, value));
-            }
+            get => Attributes.Title;
+            set => Attributes.Title = value;
         }
 
-        public IList<String> InterfaceDescriptions
-        {
-            get { return GetStringValues(GetAttributes(LinkFormat.InterfaceDescription)); }
-        }
+        public IList<string> InterfaceDescriptions => Attributes.GetValues(LinkFormat.InterfaceDescription).ToList();
 
+#if false
         /// <summary>
         /// Gets or sets the interface description attribute of this resource.
         /// </summary>
@@ -178,11 +145,14 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
             }
             set { SetAttribute(new LinkAttribute(LinkFormat.InterfaceDescription, value)); }
         }
+#endif
 
+#if false
         public IList<Int32> GetContentTypeCodes
         {
             get { return GetIntValues(GetAttributes(LinkFormat.ContentType)); }
         }
+#endif
 
         /// <summary>
         /// Gets or sets the content type code attribute of this resource.
@@ -190,7 +160,7 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         [Obsolete("Use Attributes.GetContentTypes()")]
         public Int32 ContentTypeCode
         {
-            get
+            get 
             {
                 IList<LinkAttribute> attrs = GetAttributes(LinkFormat.ContentType);
                 return attrs.Count == 0 ? 0 : attrs[0].IntValue;
@@ -203,12 +173,8 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         /// </summary>
         public Int32 MaximumSizeEstimate
         {
-            get
-            {
-                IList<LinkAttribute> attrs = GetAttributes(LinkFormat.MaxSizeEstimate);
-                return attrs.Count == 0 ? -1 : attrs[0].IntValue;
-            }
-            set { SetAttribute(new LinkAttribute(LinkFormat.MaxSizeEstimate, value)); }
+            get => Attributes.MaximumSizeEstimate;
+            set => Attributes.MaximumSizeEstimate = value;
         }
 
         /// <summary>
@@ -216,12 +182,8 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
         /// </summary>
         public Boolean Observable
         {
-            get { return GetAttributes(LinkFormat.Observable).Count > 0; }
-            set
-            {
-                if (value) SetAttribute(new LinkAttribute(LinkFormat.Observable, value));
-                else ClearAttribute(LinkFormat.Observable);
-            }
+            get => Attributes.Observable;
+            set => Attributes.Observable = value;
         }
 
         /// <summary>
@@ -414,12 +376,16 @@ namespace Com.AugustCellars.CoAP.EndPoint.Resources
             if (title != null) sb.AppendFormat(" {0}", title);
             sb.AppendLine();
 
-            foreach (LinkAttribute attr in LinkAttributes) {
-                if (attr.Name.Equals(LinkFormat.Title)) continue;
-                for (Int32 i = 0; i < indent + 3; i++) sb.Append(" ");
-                sb.AppendFormat("- ");
-                attr.Serialize(sb);
-                sb.AppendLine();
+            foreach (string  key in Attributes.Keys) {
+                if (key.Equals(LinkFormat.Title)) continue;
+
+                foreach (string val in Attributes.GetValues(key)) {
+                    for (Int32 i = 0; i < indent + 3; i++) sb.Append(" ");
+                    for (Int32 i = 0; i < indent + 3; i++) sb.Append(" ");
+                    sb.Append($"{key} = {val}");
+                    sb.AppendLine();
+
+                }
             }
 
             if (_subResources != null)

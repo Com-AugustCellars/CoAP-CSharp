@@ -27,7 +27,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
         private readonly EventHandler<DataReceivedEventArgs> _dataReceived;
 
-        private readonly EventHandler<SessionEventArgs> _sessionEvents;
+        // private readonly EventHandler<SessionEventArgs> _sessionEvents;
 
         public EventHandler<TlsEvent> TlsEventHandler;
 #if SUPPORT_TLS_CWT
