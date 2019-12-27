@@ -59,6 +59,7 @@ namespace Com.AugustCellars.CoAP
 
             string resp4 = client.Get().ResponseText;
             Assert.AreEqual(CONTENT_2, resp4);
+            Thread.Sleep(100);
 
             // Observe the resource
             string expected = CONTENT_2;
