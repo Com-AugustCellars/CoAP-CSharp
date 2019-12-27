@@ -17,6 +17,6 @@ jobs:
            name: Unit Tests
            command: |
               ls
-              dotnet build --framework=netcoreapp2.0 CoAP.Std10.sln
               dotnet test --framework=netcoreapp2.0 CoAP.Std10.sln
-           
+              ls bin/Debug/netcoreapp2.0
+              ls bin/Debug/netcoreapp2.0/CoRAL
