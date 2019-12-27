@@ -80,7 +80,6 @@ namespace CoAP.Test.Std10.Utils
         }
 
         [TestMethod]
-        [DeploymentItem("CoRAL\\Klaus.csv")]
         [DynamicData(nameof(KlausData), DynamicDataSourceType.Method)]
         public void TestsFromKlaus(string line, string left, string middle, string right, string baseText, string relativeText, string resultText, string skip)
         {
