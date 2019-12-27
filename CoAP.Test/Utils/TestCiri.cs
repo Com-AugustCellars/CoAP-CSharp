@@ -128,7 +128,7 @@ namespace CoAP.Test.Std10.Utils
 
         private static IEnumerable<string[]> KlausData()
         {
-            string fileName = "CoRAL\\Klaus.csv";
+            string fileName = Path.Combine("CoRAL", "Klaus.csv");
             if (!File.Exists(fileName)) {
                 fileName = "Klaus.csv";
             }

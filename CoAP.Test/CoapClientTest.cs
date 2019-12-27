@@ -64,6 +64,8 @@ namespace Com.AugustCellars.CoAP
             string expected = CONTENT_2;
             int notifyTest = 0;
             int actualTest = 0;
+            int doubleObserve = 0;
+            int lastObserver = -1;
             CoapObserveRelation obs1 = client.Observe(response =>
                 {
                     Interlocked.Increment(ref notifications);
@@ -71,30 +73,40 @@ namespace Com.AugustCellars.CoAP
 
                     actualTest += (payload == expected) ? 0 : 1;
                     notifyTest += (response.HasOption(OptionType.Observe) ? 0 : 1);
+                    if (response.Observe != null) {
+                        doubleObserve += (response.Observe == lastObserver ? 1 : 0);
+
+                        lastObserver = (int) response.Observe;
+                    }
+
                     syncEvent.Reset();
                 }, Fail);
             Assert.IsFalse(obs1.Canceled);
 
             syncEvent.WaitOne(100);
             Assert.AreEqual(1, notifications);
+            Assert.AreEqual(0, doubleObserve);
 
             _resource.Changed();
             syncEvent.WaitOne(100);
             Assert.AreEqual(0, actualTest);
             Assert.AreEqual(0, notifyTest);
             Assert.AreEqual(2, notifications);
+            Assert.AreEqual(0, doubleObserve);
 
             _resource.Changed();
             syncEvent.WaitOne(100);
             Assert.AreEqual(0, actualTest);
             Assert.AreEqual(0, notifyTest);
             Assert.AreEqual(3, notifications);
+            Assert.AreEqual(0, doubleObserve);
 
             _resource.Changed();
             syncEvent.WaitOne(100);
             Assert.AreEqual(0, actualTest);
             Assert.AreEqual(0, notifyTest);
             Assert.AreEqual(4, notifications);
+            Assert.AreEqual(0, doubleObserve);
 
             Thread.Sleep(100);
             expected = CONTENT_3;
