@@ -84,29 +84,31 @@ namespace Com.AugustCellars.CoAP
             Assert.IsFalse(obs1.Canceled);
 
             syncEvent.WaitOne(100);
+            Assert.AreEqual(0, actualTest);
+            Assert.AreEqual(0, notifyTest);
+            Assert.AreEqual(0, doubleObserve);
             Assert.AreEqual(1, notifications);
-            Assert.AreEqual(0, doubleObserve);
 
             _resource.Changed();
             syncEvent.WaitOne(100);
             Assert.AreEqual(0, actualTest);
             Assert.AreEqual(0, notifyTest);
+            Assert.AreEqual(0, doubleObserve);
             Assert.AreEqual(2, notifications);
-            Assert.AreEqual(0, doubleObserve);
 
             _resource.Changed();
             syncEvent.WaitOne(100);
             Assert.AreEqual(0, actualTest);
             Assert.AreEqual(0, notifyTest);
+            Assert.AreEqual(0, doubleObserve);
             Assert.AreEqual(3, notifications);
-            Assert.AreEqual(0, doubleObserve);
 
             _resource.Changed();
             syncEvent.WaitOne(100);
             Assert.AreEqual(0, actualTest);
             Assert.AreEqual(0, notifyTest);
-            Assert.AreEqual(4, notifications);
             Assert.AreEqual(0, doubleObserve);
+            Assert.AreEqual(4, notifications);
 
             Thread.Sleep(100);
             expected = CONTENT_3;
@@ -115,6 +117,7 @@ namespace Com.AugustCellars.CoAP
             syncEvent.WaitOne(100);
             Assert.AreEqual(0, actualTest);
             Assert.AreEqual(0, notifyTest);
+            Assert.AreEqual(0, doubleObserve);
             Assert.AreEqual(5, notifications);
 
             // Try a put and receive a METHOD_NOT_ALLOWED
