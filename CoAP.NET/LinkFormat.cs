@@ -468,10 +468,10 @@ namespace Com.AugustCellars.CoAP
             CBORObject obj = CBORObject.NewArray();
             CBORObject href;
             if (uriRelative == null) {
-                href =Ciri.ToCbor(resource.Path + resource.Name);
+                href =Cori.ToCbor(resource.Path + resource.Name);
             }
             else {
-                href = Ciri.ToCbor(new Uri(uriRelative, resource.Path + resource.Name));
+                href = Cori.ToCbor(new Uri(uriRelative, resource.Path + resource.Name));
             }
 
             CoralBody body = new CoralBody();

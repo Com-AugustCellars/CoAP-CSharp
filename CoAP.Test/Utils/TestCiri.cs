@@ -14,10 +14,10 @@ namespace CoAP.Test.Std10.Utils
     {
         [TestMethod]
         [DataRow("coap:", "[1, \"coap\"]")]
-        [DataRow("coap://hostName", "[1, \"coap\", 2, \"hostName\"]")]
+        [DataRow("coap://hostName", "[1, \"coap\", 2, \"hostName\", 4, 5683]")]
         [DataRow("coap://server:99", "[1, \"coap\", 2, \"server\", 4, 99]")]
-        [DataRow("coap://1.2.3.4", "[1, \"coap\", 3, h'01020304']")]
-        [DataRow("coap://[1::4]", "[1, \"coap\", 3, h'00010000000000000000000000000004']")]
+        [DataRow("coap://1.2.3.4", "[1, \"coap\", 3, h'01020304', 4, 5683]")]
+        [DataRow("coap://[1::4]", "[1, \"coap\", 3, h'00010000000000000000000000000004', 4, 5683]")]
         [DataRow("coap://[1::2]:99", "[1, \"coap\", 3, h'00010000000000000000000000000002', 4, 99]")]
         [DataRow("//server", "[2, \"server\"]")]
         [DataRow("coap:/path", "[1, \"coap\", 5, 0, 6, \"path\"]")]
@@ -37,7 +37,7 @@ namespace CoAP.Test.Std10.Utils
 
         public void Parse(string url, string cbor)
         {
-            Ciri o = new Ciri(url);
+            Cori o = new Cori(url);
             Assert.AreEqual(cbor, o.Data.ToString());
             string rebuild = o.ToString();
             Assert.AreEqual(url, rebuild);
@@ -46,36 +46,36 @@ namespace CoAP.Test.Std10.Utils
 
         [TestMethod]
         [DataRow("http://a/b/c/d?p&q", "g:h", "[1, \"g\", 6, \"h\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"g\"]")]
-        [DataRow("http://a/b/c/d?p&q", "./g", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"g\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g/", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"g\", 6, \"\"]")]
-        [DataRow("http://a/b/c/d?p&q", "/g", "[1, \"http\", 2, \"a\", 6, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", "./g", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g/", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"g\", 6, \"\"]")]
+        [DataRow("http://a/b/c/d?p&q", "/g", "[1, \"http\", 2, \"a\", 4, 80, 6, \"g\"]")]
         [DataRow("http://a/b/c/d?p&q", "//g", "[1, \"http\", 2, \"g\"]")]
-        [DataRow("http://a/b/c/d?p&q", "?y", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"d\", 7, \"y\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g?y", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"g\", 7, \"y\"]")]
-        [DataRow("http://a/b/c/d?p&q", "#s", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"d\", 7, \"p\", 7, \"q\", 8, \"s\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g#s", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"g\", 8, \"s\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g?y#s", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"g\", 7, \"y\", 8, \"s\"]")]
-        [DataRow("http://a/b/c/d?p&q", "", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"d\", 7, \"p\", 7, \"q\"]")]
+        [DataRow("http://a/b/c/d?p&q", "?y", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"d\", 7, \"y\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g?y", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"g\", 7, \"y\"]")]
+        [DataRow("http://a/b/c/d?p&q", "#s", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"d\", 7, \"p\", 7, \"q\", 8, \"s\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g#s", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"g\", 8, \"s\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g?y#s", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"g\", 7, \"y\", 8, \"s\"]")]
+        [DataRow("http://a/b/c/d?p&q", "", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"d\", 7, \"p\", 7, \"q\"]")]
         // M00DONTFIX - There is a difference between URL resolve and CIRI resolve where a trailing empty directory is not always added
         //       This is per Klaus.   Personally I find it objectionable
-        [DataRow("http://a/b/c/d?p&q", ".", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\"]")]
-        [DataRow("http://a/b/c/d?p&q", "./", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"c\", 6, \"\"]")]
-        [DataRow("http://a/b/c/d?p&q", "..", "[1, \"http\", 2, \"a\", 6, \"b\"]")]
-        [DataRow("http://a/b/c/d?p&q", "../", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"\"]")]
-        [DataRow("http://a/b/c/d?p&q", "../g", "[1, \"http\", 2, \"a\", 6, \"b\", 6, \"g\"]")]
-        [DataRow("http://a/b/c/d?p&q", "../..", "[1, \"http\", 2, \"a\"]")]
-        [DataRow("http://a/b/c/d?p&q", "../../", "[1, \"http\", 2, \"a\"]")]
-        [DataRow("http://a/b/c/d?p&q", "../../g", "[1, \"http\", 2, \"a\", 6, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", ".", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\"]")]
+        [DataRow("http://a/b/c/d?p&q", "./", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"c\", 6, \"\"]")]
+        [DataRow("http://a/b/c/d?p&q", "..", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\"]")]
+        [DataRow("http://a/b/c/d?p&q", "../", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"\"]")]
+        [DataRow("http://a/b/c/d?p&q", "../g", "[1, \"http\", 2, \"a\", 4, 80, 6, \"b\", 6, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", "../..", "[1, \"http\", 2, \"a\", 4, 80]")]
+        [DataRow("http://a/b/c/d?p&q", "../../", "[1, \"http\", 2, \"a\", 4, 80]")]
+        [DataRow("http://a/b/c/d?p&q", "../../g", "[1, \"http\", 2, \"a\", 4, 80, 6, \"g\"]")]
         public void Resolve(string baseUri, string href, string cbor)
         {
-            Ciri baseCiri = new Ciri(baseUri);
-            Ciri hrefCiri = new Ciri(href);
+            Cori baseCori = new Cori(baseUri);
+            Cori hrefCori = new Cori(href);
 
-            Console.WriteLine(baseCiri.Data.ToString());
-            Console.WriteLine(hrefCiri.Data.ToString());
+            Console.WriteLine(baseCori.Data.ToString());
+            Console.WriteLine(hrefCori.Data.ToString());
 
-            Ciri resolved = hrefCiri.ResolveTo(baseCiri);
+            Cori resolved = hrefCori.ResolveTo(baseCori);
             Assert.AreEqual(cbor, resolved.Data.ToString());
         }
 
@@ -89,36 +89,36 @@ namespace CoAP.Test.Std10.Utils
                 CBORObject cborRight = CBORObject.DecodeFromBytes(HexToString(right));
                 CBORObject cborMiddle = CBORObject.DecodeFromBytes(HexToString(middle));
 
-                Console.WriteLine($"line # = {line}");
-                Console.WriteLine($"base = {cborLeft}");
-                Console.WriteLine($"href = {cborMiddle}");
-                Console.WriteLine($"result = {cborRight}");
+                // Console.WriteLine($"line # = {line}");
+                // Console.WriteLine($"base = {cborLeft}");
+                // Console.WriteLine($"href = {cborMiddle}");
+                // Console.WriteLine($"result = {cborRight}");
 
-                Ciri ciriBase = new Ciri(cborLeft);
-                Ciri ciriRight = new Ciri(cborRight);
-                Ciri ciriMiddle = new Ciri(cborMiddle);
+                Cori coriBase = new Cori(cborLeft);
+                Cori coriRight = new Cori(cborRight);
+                Cori coriMiddle = new Cori(cborMiddle);
 
-                Assert.IsTrue(ciriBase.IsAbsolute());
-                Assert.IsFalse(ciriBase.IsRelative());
-                Assert.IsTrue(ciriRight.IsAbsolute());
-                Assert.IsFalse(ciriRight.IsRelative());
-                Assert.IsTrue(ciriMiddle.IsWellFormed());
+                Assert.IsTrue(coriBase.IsAbsolute());
+                Assert.IsFalse(coriBase.IsRelative());
+                Assert.IsTrue(coriRight.IsAbsolute());
+                Assert.IsFalse(coriRight.IsRelative());
+                Assert.IsTrue(coriMiddle.IsWellFormed());
 
-                Ciri result = ciriMiddle.ResolveTo(ciriBase, 9000);
-                Assert.AreEqual(ciriRight, result);
+                Cori result = coriMiddle.ResolveTo(coriBase, 9000);
+                Assert.AreEqual(coriRight, result);
 
                 if (cborMiddle.Count > 0 && cborMiddle[0].AsInt32() == 5 && cborMiddle[1].AsInt32() == 1) {
                     return;
                 }
 
-                Ciri newHref = ciriRight.MakeRelative(ciriBase);
-                Console.WriteLine($"computed href = {newHref.Data}");
+                Cori newHref = coriRight.MakeRelative(coriBase);
+                // Console.WriteLine($"computed href = {newHref.Data}");
 
-                Ciri resolve2 = newHref.ResolveTo(ciriBase);
-                Assert.AreEqual(ciriRight.Data.ToString(), resolve2.Data.ToString());
+                Cori resolve2 = newHref.ResolveTo(coriBase);
+                Assert.AreEqual(coriRight.Data.ToString(), resolve2.Data.ToString());
 
                 if (skip != "0") {
-                   // Assert.AreEqual(ciriMiddle.Data.ToString(), newHref.Data.ToString());
+                   // Assert.AreEqual(coriMiddle.Data.ToString(), newHref.Data.ToString());
                 }
 
             }
@@ -176,11 +176,11 @@ namespace CoAP.Test.Std10.Utils
             Console.WriteLine($"href = {cborMiddle}");
             Console.WriteLine($"result = {cborRight}");
 
-            Ciri ciriBase = new Ciri(cborLeft);
-            Ciri ciriRight = new Ciri(cborRight);
-            Ciri ciriMiddle = new Ciri(cborMiddle);
+            Cori coriBase = new Cori(cborLeft);
+            Cori ciriRight = new Cori(cborRight);
+            Cori ciriMiddle = new Cori(cborMiddle);
 
-            Ciri newHref = ciriRight.MakeRelative(ciriBase);
+            Cori newHref = ciriRight.MakeRelative(coriBase);
             Assert.AreEqual(ciriMiddle.Data.ToString(), newHref.Data.ToString());
         }
 #endif

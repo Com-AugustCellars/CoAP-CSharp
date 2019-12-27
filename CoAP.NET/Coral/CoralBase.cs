@@ -16,19 +16,20 @@ namespace Com.AugustCellars.CoAP.Coral
             Uri = baseUri;
         }
 
-        public override CBORObject EncodeToCBORObject(Ciri unused, CoralDictionary dictionary)
+        public override CBORObject EncodeToCBORObject(Cori unused, CoralDictionary dictionary)
         {
             CBORObject node = CBORObject.NewArray();
 
             node.Add(1);
-            node.Add(Ciri.ToCbor(Uri));
+            node.Add(Cori.ToCbor(Uri));
 
             return node;
         }
 
         /// <inheritdoc />
-        public override void BuildString(StringBuilder builder)
+        public override void BuildString(StringBuilder builder, string pad)
         {
+            builder.Append(pad);
             builder.Append(Uri);
             builder.Append("\n");
         }

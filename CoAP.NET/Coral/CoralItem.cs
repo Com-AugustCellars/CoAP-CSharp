@@ -10,8 +10,8 @@ namespace Com.AugustCellars.CoAP.Coral
 {
     public abstract class CoralItem
     {
-        public abstract CBORObject EncodeToCBORObject(Ciri baseCiri, CoralDictionary dictionary);
-        public abstract void BuildString(StringBuilder builder);
+        public abstract CBORObject EncodeToCBORObject(Cori baseCori, CoralDictionary dictionary);
+        public abstract void BuildString(StringBuilder builder, string pad);
 
         public static bool IsLiteral(CBORObject value)
         {
@@ -31,6 +31,9 @@ namespace Com.AugustCellars.CoAP.Coral
 
             case CBORType.SimpleValue:
                 return value.IsNull;
+
+            case CBORType.Array: // CoRI
+                return false;
 
             default:
                 return false;

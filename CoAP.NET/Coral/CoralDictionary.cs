@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Com.AugustCellars.CoAP.Util;
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP.Coral
@@ -23,7 +24,7 @@ namespace Com.AugustCellars.CoAP.Coral
             {10, "http://coreapps.org/coap#method"}
         };
 
-        private readonly Dictionary<int, string> _dictionary = new Dictionary<int, string>();
+        private readonly Dictionary<int, object> _dictionary = new Dictionary<int, object>();
 
         public CoralDictionary Add(int key, string value)
         {
@@ -35,28 +36,68 @@ namespace Com.AugustCellars.CoAP.Coral
             return this;
         }
 
+        public CoralDictionary Add(int key, CBORObject value)
+        {
+            if (key < 0) {
+                throw new ArgumentException("Key must be a non-negative value", nameof(key));
+            }
+
+            if (!CoralItem.IsLiteral(value)) {
+                throw new ArgumentException("Value must be a literal value");
+            }
+
+            if (value.Type == CBORType.TextString) {
+                _dictionary.Add(key, value.AsString());
+            }
+            else {
+                _dictionary.Add(key, value);
+            }
+
+            return this;
+        }
+
+        public CoralDictionary Add(int key, Cori value)
+        {
+            if (key < 0) {
+                throw new ArgumentException("Key must be a non-negative value", nameof(key));
+            }
+
+            _dictionary.Add(key, value);
+            return this;
+        }
+
         public IEnumerator GetEnumerator()
         {
             return ((IEnumerable) _dictionary).GetEnumerator();
         }
 
-        public CBORObject Lookup(CBORObject value)
+        public CBORObject Lookup(CBORObject value, bool isIntLegal)
         {
             if (value.Type == CBORType.TextString) {
-                return Lookup(value.AsString());
+                return Lookup(value.AsString(), isIntLegal);
             }
 
-            if (value.Type == CBORType.Integer && !value.IsTagged && value.AsInt32() >= 0) {
-                return CBORObject.FromObjectAndTag(value, DictionaryTag);
+            foreach (KeyValuePair<int, object> o in _dictionary) {
+                if (value.Equals(o.Value)) {
+                    if (isIntLegal) {
+                        return CBORObject.FromObjectAndTag(o.Key, DictionaryTag);
+                    }
+
+                    return CBORObject.FromObject(o.Key);
+                }
             }
 
             return value;
         }
 
-        public CBORObject Lookup(string value)
+        public CBORObject Lookup(string value, bool isIntLegal)
         {
-            foreach (KeyValuePair<int, string> o in _dictionary) {
+            foreach (KeyValuePair<int, object> o in _dictionary) {
                 if (value.Equals(o.Value)) {
+                    if (isIntLegal) {
+                        return CBORObject.FromObjectAndTag(o.Key, DictionaryTag);
+                    }
+
                     return CBORObject.FromObject(o.Key);
                 }
             }
@@ -64,33 +105,55 @@ namespace Com.AugustCellars.CoAP.Coral
             return CBORObject.FromObject(value);
         }
 
+        public CBORObject Lookup(Cori value, bool isIntLegal)
+        {
+            foreach (KeyValuePair<int, object> o in _dictionary) {
+                if (value.Equals(o.Value)) {
+                    if (isIntLegal) {
+                        return CBORObject.FromObjectAndTag(o.Key, DictionaryTag);
+                    }
+                    return CBORObject.FromObject(o.Key);
+                }
+            }
+
+            return value.Data;
+        }
 
         /// <summary>
         /// Reverse the dictionary encoding of a value.
         /// If it cannot be decoded then return null, in this case the value must be an integer.
         /// </summary>
         /// <param name="value">Value to decode</param>
+        /// <param name="isIntLegal">Can an integer value be used here?</param>
         /// <returns>Original value if it can be decoded.</returns>
-        public CBORObject Reverse(CBORObject value)
+        public object Reverse(CBORObject value, bool isIntLegal)
         {
             if (value.IsTagged) {
                 if (value.HasOneTag(DictionaryTag)) {
-                    return value.UntagOne();
-                }
-                if (value.HasTag(DictionaryTag)) {
-                    throw new ArgumentException("CoRAL dictionary tag 6.TBD6 unexpectedly located");
+                    return Reverse(value.UntagOne(), false);
                 }
 
+                if (CoralItem.IsLiteral(value)) {
+                    return value;
+                }
+                throw new ArgumentException("Value is not a literal value", nameof(value));
+            }
+
+            if (value.Type == CBORType.Integer && (isIntLegal || value.AsInt32() < 0)) {
                 return value;
             }
 
-            if (value.Type != CBORType.Integer || value.AsInt32() < 0) {
-                return value;
+            if (value.Type != CBORType.Integer) {
+                if (value.Type == CBORType.Array || CoralItem.IsLiteral(value)) {
+                    return value;
+                }
+                throw new ArgumentException($"The value '{value}' is not a literal value", nameof(value));
             }
 
             if (!_dictionary.ContainsKey(value.AsInt32())) {
                 return null;
             }
+
 
             CBORObject result = CBORObject.FromObject(_dictionary[value.AsInt32()]);
 

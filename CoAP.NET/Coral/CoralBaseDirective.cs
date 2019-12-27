@@ -8,9 +8,9 @@ namespace Com.AugustCellars.CoAP.Coral
 {
     public class CoralBaseDirective : CoralItem
     {
-        public Ciri BaseValue { get; }
+        public Cori BaseValue { get; }
 
-        public CoralBaseDirective(Ciri value)
+        public CoralBaseDirective(Cori value)
         {
             if (!value.IsWellFormed()) {
                 throw new ArgumentException("URI is not well formed", nameof(value));
@@ -18,7 +18,7 @@ namespace Com.AugustCellars.CoAP.Coral
             BaseValue = value;
         }
 
-        public CoralBaseDirective(CBORObject value, Ciri baseCiri)
+        public CoralBaseDirective(CBORObject value, Cori baseCori)
         {
             if (value.Type != CBORType.Array || value.Count != 2) {
                 throw new ArgumentException();
@@ -32,12 +32,12 @@ namespace Com.AugustCellars.CoAP.Coral
                 throw new ArgumentException();
             }
 
-            Ciri temp = new Ciri(value[1]);
+            Cori temp = new Cori(value[1]);
             if (!temp.IsWellFormed()) {
                 throw new ArgumentException("base value is not well formed", nameof(value));
             }
 
-            temp = temp.ResolveTo(baseCiri);
+            temp = temp.ResolveTo(baseCori);
             if (!temp.IsAbsolute()) {
                 throw new ArgumentException("new base URI must be an absolute URI", nameof(value));
             }
@@ -46,12 +46,12 @@ namespace Com.AugustCellars.CoAP.Coral
         }
 
         /// <inheritdoc />
-        public override CBORObject EncodeToCBORObject(Ciri baseCiri, CoralDictionary dictionary)
+        public override CBORObject EncodeToCBORObject(Cori baseCori, CoralDictionary dictionary)
         {
             CBORObject result = CBORObject.NewArray();
             result.Add(1);
-            if (baseCiri != null) {
-                Ciri relative = BaseValue.MakeRelative(baseCiri);
+            if (baseCori != null) {
+                Cori relative = BaseValue.MakeRelative(baseCori);
                 result.Add(relative.Data);
             }
             else {
@@ -62,8 +62,9 @@ namespace Com.AugustCellars.CoAP.Coral
         }
 
         /// <inheritdoc />
-        public override void BuildString(StringBuilder builder)
+        public override void BuildString(StringBuilder builder, string pad)
         {
+            builder.Append(pad);
             builder.AppendFormat($"#base <{BaseValue.Data}>\n");
         }
     }

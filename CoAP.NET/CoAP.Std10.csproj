@@ -141,6 +141,7 @@ It is intented primarily for research and verification work.
     <Compile Include="Coral\CoralBaseDirective.cs" />
     <Compile Include="Coral\CoralDocument.cs" />
     <Compile Include="Coral\CoralForm.cs" />
+    <Compile Include="Coral\CoralFormField.cs" />
     <Compile Include="Coral\CoralItem.cs" />
     <Compile Include="Coral\CoralLink.cs" />
     <Compile Include="Deduplication\CropRotation.cs" />
@@ -234,7 +235,7 @@ It is intented primarily for research and verification work.
     <Compile Include="Threading\TaskExecutor.cs" />
     <Compile Include="Util\ArrayEqualityComparer.cs" />
     <Compile Include="Util\ByteArrayUtils.cs" />
-    <Compile Include="Util\Ciri.cs" />
+    <Compile Include="Util\Cori.cs" />
     <Compile Include="Util\Scanner.cs" />
     <Compile Include="Util\System.Collections.Generic\SynchronizedCollection.cs" />
     <Compile Include="Util\ThrowHelper.cs" />

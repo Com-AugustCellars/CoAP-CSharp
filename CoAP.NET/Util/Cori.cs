@@ -8,22 +8,23 @@ using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP.Util
 {
-    public class Ciri
+    public class Cori
     {
         public CBORObject Data { get; }
 
-        public Ciri(CBORObject uri)
+        public Cori(CBORObject uri)
         {
             Data = uri;
         }
 
-        public Ciri(string uri)
+        public Cori(string uri)
         {
             List<object> data = new List<object>();
             char[] characters = uri.ToCharArray();
             int iStart = 0;
             int i = 0;
             int len = characters.Length;
+            string scheme = null;
 
             //  Look for a scheme
             while (i < len && characters[i] != ':') {
@@ -35,8 +36,9 @@ namespace Com.AugustCellars.CoAP.Util
             }
 
             if (i < len && characters[i] == ':') {
+                scheme = uri.Substring(iStart, i - iStart);
                 data.Add(OptionScheme);
-                data.Add(uri.Substring(iStart, i - iStart));
+                data.Add(scheme);
                 iStart = i + 1;
                 i++;
             }
@@ -93,6 +95,12 @@ namespace Com.AugustCellars.CoAP.Util
                     i += 1;
                     iStart = i;
                 }
+                else {
+                    if (scheme != null && UriInformation.UriDefaults.ContainsKey(scheme)) {
+                        data.Add(OptionPort);
+                        data.Add(UriInformation.UriDefaults[scheme].DefaultPort);
+                    }
+                }
 
                 if (i < len && characters[i] == '/') {
                     i += 1;
@@ -102,7 +110,7 @@ namespace Com.AugustCellars.CoAP.Util
 
             if (i < len && characters[i] == '/') {
                 data.Add(OptionPathType);
-                data.Add(pathTypeAbsolutePath);
+                data.Add(PathTypeAbsolutePath);
                 i += 1;
                 iStart = i;
             }
@@ -125,14 +133,14 @@ namespace Com.AugustCellars.CoAP.Util
                         throw new Exception("Error?");
                     }
 
-                    pathType = pathTypeRelativePath;
+                    pathType = PathTypeRelativePath;
                 }
                 else if (s == "..") {
-                    if (pathType >= pathTypeRelativePath) {
+                    if (pathType >= PathTypeRelativePath) {
                         pathType += 1;
                     }
                     else if (pathType == -1) {
-                        pathType = pathTypeRelativePath1Up;
+                        pathType = PathTypeRelativePath1Up;
                     }
                     else {
                         throw new Exception("Error?");
@@ -283,14 +291,14 @@ namespace Com.AugustCellars.CoAP.Util
         private const int OptionFragment = 8;
         private const int OptionEnd = 9;
 
-        private const int pathTypeAbsolutePath = 0;
-        private const int pathTypeAppendRelation = 1;
-        private const int pathTypeAppendPath = 2;
-        private const int pathTypeRelativePath = 3;
-        private const int pathTypeRelativePath1Up = 4;
-        private const int pathTypeRelativePath2Up = 5;
-        private const int pathTypeRelativePath3Up = 6;
-        private const int pathTypeRelativePath4Up = 7;
+        private const int PathTypeAbsolutePath = 0;
+        private const int PathTypeAppendRelation = 1;
+        private const int PathTypeAppendPath = 2;
+        private const int PathTypeRelativePath = 3;
+        private const int PathTypeRelativePath1Up = 4;
+        private const int PathTypeRelativePath2Up = 5;
+        private const int PathTypeRelativePath3Up = 6;
+        private const int PathTypeRelativePath4Up = 7;
 
 
         private static readonly int[][] transistions = new[] {
@@ -348,13 +356,13 @@ namespace Com.AugustCellars.CoAP.Util
             return root.Values.Count == 0 || (root.Type == CBORType.Array && root[0].AsInt32() != OptionScheme && IsWellFormed(root));
         }
 
-        public Ciri ResolveTo(Ciri baseRef, int relation = 0)
+        public Cori ResolveTo(Cori baseRef, int relation = 0)
         {
             CBORObject o = Resolve(baseRef.Data, Data, relation);
             if (o == null) {
                 throw new CoAPException("Unable to resolve the two URIs.");
             }
-            return new Ciri(o);
+            return new Cori(o);
 
         }
 
@@ -383,21 +391,21 @@ namespace Com.AugustCellars.CoAP.Util
                 href.RemoveRange(0, 2);
             }
             else if (option == OptionPath) {
-                type = pathTypeRelativePath;
+                type = PathTypeRelativePath;
                 option = OptionPathType;
             }
 
-            if (option != OptionPathType || type == pathTypeAbsolutePath) {
+            if (option != OptionPathType || type == PathTypeAbsolutePath) {
                 CopyUntil(baseRef, result, option);
             }
             else {
                 CopyUntil(baseRef, result, OptionQuery);
 
-                if (type == pathTypeAppendRelation) {
+                if (type == PathTypeAppendRelation) {
                     AppendAndNormalize(result, OptionPath, CBORObject.FromObject(relation.ToString()));
                 }
 
-                while (type > pathTypeAppendPath) {
+                while (type > PathTypeAppendPath) {
                     if (result.Count == 0 || result[result.Count - 2].AsInt32() != OptionPath) {
                         break;
                     }
@@ -430,7 +438,7 @@ namespace Com.AugustCellars.CoAP.Util
                 int last = output.Count - 1;
                 if (output.Count >= 4 && output[last-1].AsInt32() == OptionPath && output[last].AsString() == "" &&
                     (output[last - 3].AsInt32() < OptionPathType ||
-                     (output[last - 3].AsInt32() == OptionPathType && output[last - 2].AsInt32() == pathTypeAbsolutePath))) {
+                     (output[last - 3].AsInt32() == OptionPathType && output[last - 2].AsInt32() == PathTypeAbsolutePath))) {
                     output.RemoveRange(output.Count - 2, 2);
                 }
 
@@ -467,6 +475,7 @@ namespace Com.AugustCellars.CoAP.Util
             int index = 0;
             int option = 0;
             bool seenQuery = false;
+            string scheme = null;
 
             foreach (CBORObject o in cbor.Values) {
                 if (index % 2 == 0) {
@@ -480,6 +489,7 @@ namespace Com.AugustCellars.CoAP.Util
                     case OptionScheme:
                         sb.Append(o.AsString());
                         sb.Append(":");
+                        scheme = o.AsString();
                         break;
 
                     case OptionHostName:
@@ -501,26 +511,29 @@ namespace Com.AugustCellars.CoAP.Util
                         break;
 
                     case OptionPort:
-                        sb.Append(":");
-                        sb.Append(o.AsInt32());
+                        if (scheme == null || !UriInformation.UriDefaults.ContainsKey(scheme) || o.AsInt32() != UriInformation.UriDefaults[scheme].DefaultPort) {
+                            sb.Append(":");
+                            sb.Append(o.AsInt32());
+                        }
+
                         emitSlash = true;
                         break;
 
                     case OptionPathType:
                         switch (o.AsInt32()) {
-                                case pathTypeAbsolutePath:
+                                case PathTypeAbsolutePath:
                                     sb.Append("/");
                                     break;
 
-                                case pathTypeRelativePath:
+                                case PathTypeRelativePath:
                                     sb.Append(".");
                                     emitSlash = true;
                                     break;
 
                                 default:
                                     int count = o.AsInt32();
-                                    if (count >= pathTypeRelativePath1Up && count <= 127) {
-                                        count = count - pathTypeRelativePath1Up;
+                                    if (count >= PathTypeRelativePath1Up && count <= 127) {
+                                        count = count - PathTypeRelativePath1Up;
                                         for (int i = 0; i < count; i++) {
                                             sb.Append("../");
                                         }
@@ -564,14 +577,14 @@ namespace Com.AugustCellars.CoAP.Util
             return sb.ToString();
         }
 
-        public Ciri MakeRelative(Ciri baseHref)
+        public Cori MakeRelative(Cori baseHref)
         {
             if (!baseHref.IsAbsolute() || !IsAbsolute()) {
                 throw new ArgumentException("Must be absolute URIs");
             } 
 
             if (this.Equals(baseHref)) {
-                return new Ciri(CBORObject.NewArray());
+                return new Cori(CBORObject.NewArray());
             }
 
             List<CBORObject> baseUri = new List<CBORObject>(baseHref.Data.Values);
@@ -620,83 +633,83 @@ namespace Com.AugustCellars.CoAP.Util
 
             if (removedTail && lastOption == OptionPort) {
                 if (baseUri.Count == 0) {
-                    href.Insert(0, CBORObject.FromObject(pathTypeAbsolutePath));
+                    href.Insert(0, CBORObject.FromObject(PathTypeAbsolutePath));
                     href.Insert(0, CBORObject.FromObject(OptionPathType));
                 }
                 else if (baseUri.Count == 2) {
-                    href.Insert(0, CBORObject.FromObject(pathTypeRelativePath));
+                    href.Insert(0, CBORObject.FromObject(PathTypeRelativePath));
                     href.Insert(0, CBORObject.FromObject(OptionPathType));
                 }
                 else {
-                    href.Insert(0, CBORObject.FromObject(pathTypeRelativePath1Up + baseUri.Count - 1));
+                    href.Insert(0, CBORObject.FromObject(PathTypeRelativePath1Up + baseUri.Count - 1));
                     href.Insert(0, CBORObject.FromObject(OptionPathType));
                 }
-                return new Ciri(ArrayToCbor(href));
+                return new Cori(ArrayToCbor(href));
             }
 
 
             if (removedTail && lastOption == OptionPath) {
                 if (baseUri.Count == 0) {
-                    href.Insert(0, CBORObject.FromObject(pathTypeAppendPath));
+                    href.Insert(0, CBORObject.FromObject(PathTypeAppendPath));
                     href.Insert(0, CBORObject.FromObject(OptionPathType));
                 }
                 else if (baseUri.Count == 2) {
-                    href.Insert(0, CBORObject.FromObject(pathTypeRelativePath));
+                    href.Insert(0, CBORObject.FromObject(PathTypeRelativePath));
                     href.Insert(0, CBORObject.FromObject(OptionPathType));
                 }
                 else {
-                    href.Insert(0, CBORObject.FromObject(pathTypeRelativePath1Up + baseUri.Count - 1));
+                    href.Insert(0, CBORObject.FromObject(PathTypeRelativePath1Up + baseUri.Count - 1));
                     href.Insert(0, CBORObject.FromObject(OptionPathType));
                 }
-                return new Ciri(ArrayToCbor(href));
+                return new Cori(ArrayToCbor(href));
             }
 
             if (baseUri.Count == 0 && href.Count == 0) {
                 // Not sure how we got here as this should have been dealt with already.
-                return new Ciri(CBORObject.NewArray());
+                return new Cori(CBORObject.NewArray());
             }
 
             if (baseUri.Count == 0 || baseUri[0].AsInt32() <= OptionPort) {
                 //  Ran the entire base set - what is left is the relative URI
                 //  If we did not get down to the port option, then what is left is the relative URI
                 if (lastOption == OptionPath) {
-                    href.Insert(0, CBORObject.FromObject(pathTypeAppendPath));
+                    href.Insert(0, CBORObject.FromObject(PathTypeAppendPath));
                     href.Insert(0, CBORObject.FromObject(OptionPathType));
                 }
-                return new Ciri(ArrayToCbor(href));
+                return new Cori(ArrayToCbor(href));
             }
 
             if (href.Count == 0) {
                 if (lastOption == OptionPort) {
                     href.Add(CBORObject.FromObject( OptionPathType));
-                    href.Add(CBORObject.FromObject(pathTypeAbsolutePath));
-                    return new Ciri( ArrayToCbor(href));
+                    href.Add(CBORObject.FromObject(PathTypeAbsolutePath));
+                    return new Cori( ArrayToCbor(href));
                 }
                 else if (baseUri.Count == 2) {
                     href.Add(CBORObject.FromObject(OptionPathType));
-                    href.Add(CBORObject.FromObject(pathTypeRelativePath));
-                    return new Ciri(ArrayToCbor(href));
+                    href.Add(CBORObject.FromObject(PathTypeRelativePath));
+                    return new Cori(ArrayToCbor(href));
                 }
                 else {
                     href.Add(CBORObject.FromObject(OptionPathType));
-                    href.Add(CBORObject.FromObject(pathTypeRelativePath + baseUri.Count/2 - 1));
-                    return new Ciri(ArrayToCbor(href));
+                    href.Add(CBORObject.FromObject(PathTypeRelativePath + baseUri.Count/2 - 1));
+                    return new Cori(ArrayToCbor(href));
                 }
             }
 
             if (baseUri.Count > 0 && lastOption >= OptionPath) {
-                href.Insert(0, CBORObject.FromObject(pathTypeRelativePath + baseUri.Count/2  - 1));
+                href.Insert(0, CBORObject.FromObject(PathTypeRelativePath + baseUri.Count/2  - 1));
                 href.Insert(0, CBORObject.FromObject(OptionPathType));
-                return new Ciri(ArrayToCbor(href));
+                return new Cori(ArrayToCbor(href));
             }
 
             if (lastOption == OptionPort) {
-                href.Insert(0, CBORObject.FromObject(pathTypeAbsolutePath));
+                href.Insert(0, CBORObject.FromObject(PathTypeAbsolutePath));
                 href.Insert(0, CBORObject.FromObject(OptionPathType));
-                return new Ciri(ArrayToCbor(href));
+                return new Cori(ArrayToCbor(href));
             }
 
-            return new Ciri(ArrayToCbor(href));
+            return new Cori(ArrayToCbor(href));
         }
 
         private static CBORObject Array2ToCbor(List<object> result)
@@ -713,7 +726,11 @@ namespace Com.AugustCellars.CoAP.Util
         /// <inheritdoc />
         public override bool Equals(object obj)
         {
-            Ciri right = (Ciri) obj;
+            if (!(obj is Cori)) {
+                return false;
+            }
+
+            Cori right = (Cori) obj;
             if (this == right) {
                 return true;
             }

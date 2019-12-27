@@ -7,6 +7,7 @@ namespace Com.AugustCellars.CoAP.Coral
 {
     public class CoralLink : CoralItem
     {
+
         // link context - base URI for the link
         // link relation type - IRI text string or dictionary # - may not un-resolve on read
         // link target - relative URI or literal value of the relation
@@ -21,7 +22,7 @@ namespace Com.AugustCellars.CoAP.Coral
         /// <summary>
         /// Target of the link as a URI
         /// </summary>
-        public Ciri Target { get; }
+        public Cori Target { get; }
         public int? TargetInt { get; }
 
         /// <summary>
@@ -62,7 +63,7 @@ namespace Com.AugustCellars.CoAP.Coral
         /// <param name="relation">string containing the relation - IRI</param>
         /// <param name="uriTarget">Absolute or relative CIRI for the target</param>
         /// <param name="body">attributes about the target</param>
-        public CoralLink(string relation, Ciri uriTarget, CoralBody body = null)
+        public CoralLink(string relation, Cori uriTarget, CoralBody body = null)
         {
             if (!uriTarget.IsWellFormed()) throw new ArgumentException("must be well formed", nameof(uriTarget));
  
@@ -79,8 +80,9 @@ namespace Com.AugustCellars.CoAP.Coral
         /// Decode a CBOR encoded CoRAL link into the object for working with
         /// </summary>
         /// <param name="node">CBOR object to be decoded</param>
+        /// <param name="baseCori">a URI to make things relative to</param>
         /// <param name="dictionary">dictionary to use for decoding</param>
-        public CoralLink(CBORObject node, Ciri baseCiri, CoralDictionary dictionary)
+        public CoralLink(CBORObject node, Cori baseCori, CoralDictionary dictionary)
         {
             if (node[0].AsInt32() != 2) {
                 throw new ArgumentException("Not an encoded CoRAL link");
@@ -90,13 +92,13 @@ namespace Com.AugustCellars.CoAP.Coral
                 throw new ArgumentNullException(nameof(dictionary));
             }
 
-            CBORObject o = dictionary.Reverse(node[1]);
+            CBORObject o = (CBORObject) dictionary.Reverse(node[1], false);
             if (o == null) { 
                 RelationTypeInt = node[1].AsInt32();
             }
             else if (o.Type == CBORType.TextString) {
                 RelationType = o.AsString();
-                if (!node[1].IsTagged && node[1].Type == CBORType.Integer) {
+                if (node[1].Type == CBORType.Integer) {
                     RelationTypeInt = node[1].AsInt32();
                 }
             }
@@ -104,48 +106,61 @@ namespace Com.AugustCellars.CoAP.Coral
                 throw  new ArgumentException("Invalid relation in CoRAL link");
             }
 
-            CBORObject value = dictionary.Reverse(node[2]);
+            CBORObject value = (CBORObject) dictionary.Reverse(node[2], true);
 
             if (value == null) {
-                TargetInt = node[2].AsInt32();
+                if (!node[2].HasOneTag(CoralDictionary.DictionaryTag)) {
+                    throw new ArgumentException("Invalid tagging on value");
+                }
+                TargetInt = node[2].Untag().AsInt32();
             }
             else if (value.Type == CBORType.Array) {
-                Target = new Ciri(value).ResolveTo(baseCiri);
+                Target = new Cori(value).ResolveTo(baseCori);
                 if (node[2].Type == CBORType.Integer) {
                     TargetInt = node[2].AsInt32();
                 }
 
-                baseCiri = Target;
+                baseCori = Target;
             }
             else {
-                if (!node[2].IsTagged && node[2].Type == CBORType.Integer) {
-                    TargetInt = node[2].AsInt32();
+                if (node[2].IsTagged && node[2].Type == CBORType.Integer) {
+                    TargetInt = node[2].Untag().AsInt32();
                 }
                 Value = value;
             }
 
             if (node.Count == 4) {
-                Body = new CoralBody(node[3], baseCiri, dictionary);
+                Body = new CoralBody(node[3], baseCori, dictionary);
             }
         }
 
-        public override CBORObject EncodeToCBORObject(Ciri ciriBase, CoralDictionary dictionary)
+        // link = [2, relation-type, link-target, ?body]
+        // relation-type = text
+        // link-target = CoRI / literal
+        // CoRI = <Defined in Section X of RFC XXXX>
+        // literal = bool / int / float / time / bytes / text / null
+
+        public override CBORObject EncodeToCBORObject(Cori coriBase, CoralDictionary dictionary)
         {
             CBORObject node = CBORObject.NewArray();
 
             node.Add(2);
-            node.Add(dictionary.Lookup(RelationType));
-            if (TargetInt != null) {
-                node.Add(TargetInt);
+            if (RelationType != null) {
+                node.Add(dictionary.Lookup(RelationType, false));
             }
-            else if (Target != null) {
-                CBORObject o = dictionary.Lookup(Target.ToString());
+            else {
+                node.Add(RelationTypeInt);
+            }
+
+
+            if (Target != null) {
+                CBORObject o = dictionary.Lookup(Target, true);
                 if (o.Type == CBORType.Integer) {
                     node.Add(o);
                 }
                 else {
-                    if (ciriBase != null) {
-                        Ciri relative = Target.MakeRelative(ciriBase);
+                    if (coriBase != null) {
+                        Cori relative = Target.MakeRelative(coriBase);
                         node.Add(relative.Data);
                     }
                     else {
@@ -154,18 +169,22 @@ namespace Com.AugustCellars.CoAP.Coral
                 }
             }
             else if (Value != null) {
-                node.Add(dictionary.Lookup(Value));
+                node.Add(dictionary.Lookup(Value, true));
+            }
+            else if (TargetInt != null) {
+                node.Add(CBORObject.FromObjectAndTag(TargetInt, CoralDictionary.DictionaryTag));
             }
 
             if (Body != null) {
-                node.Add(Body.EncodeToCBORObject(ciriBase, dictionary));
+                node.Add(Body.EncodeToCBORObject(coriBase, dictionary));
             }
 
             return node;
         }
 
-        public override void BuildString(StringBuilder builder)
+        public override void BuildString(StringBuilder builder, string pad)
         {
+            builder.Append(pad);
             builder.Append(RelationType);
             if (Target != null) {
                 builder.Append($" <{Target}>");
@@ -179,7 +198,8 @@ namespace Com.AugustCellars.CoAP.Coral
 
             if (Body != null) {
                 builder.Append(" [\n");
-                Body.BuildString(builder);
+                Body.BuildString(builder, pad + "  ");
+                builder.Append(pad);
                 builder.Append("]");
             }
 

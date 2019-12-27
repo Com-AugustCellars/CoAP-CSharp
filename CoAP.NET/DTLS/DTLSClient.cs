@@ -63,7 +63,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             if (_tlsKeyPair != null) {
                 if (_tlsKeyPair.X509Certificate != null) {
-                i = new int[] {
+                    i = new int[] {
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8
                 };

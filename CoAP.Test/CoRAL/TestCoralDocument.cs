@@ -27,28 +27,28 @@ namespace CoAP.Test.Std10.CoRAL
             body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#content-type", CBORObject.FromObject(99599)));
             body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#security", "OSCORE"));
             body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#authority-type", "ACE"));
-            body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#authority", new Ciri("coap://ace.example.org/token")));
-            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-register", new Ciri("coap://jimsch.example.org/rd/endpoints"), body));
+            body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#authority", new Cori("coap://ace.example.org/token")));
+            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-register", new Cori("coap://jimsch.example.org/rd/endpoints"), body));
 
-            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-endpointSearch", new Ciri("coap://jimsch.example.org/rd/endpoints")));
-            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-resourceSearch", new Ciri("coap://jimsch.example.org/rd/resources")));
+            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-endpointSearch", new Cori("coap://jimsch.example.org/rd/endpoints")));
+            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-resourceSearch", new Cori("coap://jimsch.example.org/rd/resources")));
 
-            document.Add(new CoralBaseDirective(new Ciri("coaps://jimsch.example.org/rd")));
+            document.Add(new CoralBaseDirective(new Cori("coaps://jimsch.example.org/rd")));
 
             body = new CoralBody();
             body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#content-type", CBORObject.FromObject(99599)));
             body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#security", "OSCORE"));
             body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#authority-type", "ACE"));
-            body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#authority", new Ciri("coaps://ace.example.org/token")));
-            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-register", new Ciri("coaps://jimsch.example.org/rd/endpoints"), body));
+            body.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#authority", new Cori("coaps://ace.example.org/token")));
+            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-register", new Cori("coaps://jimsch.example.org/rd/endpoints"), body));
 
-            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-endpointSearch", new Ciri("coaps://jimsch.example.org/rd/endpoints")));
-            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-resourceSearch", new Ciri("coaps://jimsch.example.org/rd/resources")));
+            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-endpointSearch", new Cori("coaps://jimsch.example.org/rd/endpoints")));
+            document.Add(new CoralLink("coap://jimsch.example.com/coreapp/reef#rd-resourceSearch", new Cori("coaps://jimsch.example.org/rd/resources")));
 
-            CBORObject result = document.EncodeToCBORObject(new Ciri("coap://jimsch.example.org/rd"), _Dictionary);
-            Assert.AreEqual("[[2, 5, [5, 2, 6, \"endpoints\"], [[2, 1, 99999(99599)], [2, 2, \"OSCORE\"], [2, 3, \"ACE\"], [2, 4, [2, \"ace.example.org\", 6, \"token\"]]]], [2, 6, [5, 2, 6, \"endpoints\"]], [2, 7, [5, 2, 6, \"resources\"]], [1, [1, \"coaps\", 2, \"jimsch.example.org\", 6, \"rd\"]], [2, 5, [5, 2, 6, \"endpoints\"], [[2, 1, 99999(99599)], [2, 2, \"OSCORE\"], [2, 3, \"ACE\"], [2, 4, [2, \"ace.example.org\", 6, \"token\"]]]], [2, 6, [5, 2, 6, \"endpoints\"]], [2, 7, [5, 2, 6, \"resources\"]]]", result.ToString());
+            CBORObject result = document.EncodeToCBORObject(new Cori("coap://jimsch.example.org/rd"), _Dictionary);
+            Assert.AreEqual("[[2, 5, [5, 2, 6, \"endpoints\"], [[2, 1, 99599], [2, 2, \"OSCORE\"], [2, 3, \"ACE\"], [2, 4, [2, \"ace.example.org\", 4, 5683, 6, \"token\"]]]], [2, 6, [5, 2, 6, \"endpoints\"]], [2, 7, [5, 2, 6, \"resources\"]], [1, [1, \"coaps\", 2, \"jimsch.example.org\", 4, 5684, 6, \"rd\"]], [2, 5, [5, 2, 6, \"endpoints\"], [[2, 1, 99599], [2, 2, \"OSCORE\"], [2, 3, \"ACE\"], [2, 4, [2, \"ace.example.org\", 4, 5684, 6, \"token\"]]]], [2, 6, [5, 2, 6, \"endpoints\"]], [2, 7, [5, 2, 6, \"resources\"]]]", result.ToString());
 
-            CoralDocument document2 = CoralDocument.DecodeFromBytes(result.EncodeToBytes(), new Ciri("coap://jimsch.example.org/rd"), _Dictionary);
+            CoralDocument document2 = CoralDocument.DecodeFromBytes(result.EncodeToBytes(), new Cori("coap://jimsch.example.org/rd"), _Dictionary);
 
             //Assert.AreEqual(document, document2);
         }

@@ -17,14 +17,14 @@ namespace Com.AugustCellars.CoAP.Coral
         }
 
 
-        public CoralBody(CBORObject node, Ciri baseCiri, CoralDictionary dictionary)
+        public CoralBody(CBORObject node, Cori baseCori, CoralDictionary dictionary)
         {
             if (node.Type != CBORType.Array) {
                 throw new ArgumentException("Invalid node type");
             }
 
-            if (baseCiri == null || !baseCiri.IsAbsolute()) {
-                throw new ArgumentException("Must be resolved to an absolute URI", nameof(baseCiri));
+            if (baseCori == null || !baseCori.IsAbsolute()) {
+                throw new ArgumentException("Must be resolved to an absolute URI", nameof(baseCori));
             }
 
             foreach (CBORObject child in node.Values) {
@@ -34,13 +34,17 @@ namespace Com.AugustCellars.CoAP.Coral
 
                 switch (child[0].AsInt32()) {
                     case 1:
-                        CoralBaseDirective d1 = new CoralBaseDirective(child, baseCiri);
+                        CoralBaseDirective d1 = new CoralBaseDirective(child, baseCori);
                         _items.Add(d1);
-                        baseCiri = d1.BaseValue;
+                        baseCori = d1.BaseValue;
                         break;
 
                     case 2:
-                        _items.Add(new CoralLink(child, baseCiri, dictionary));
+                        _items.Add(new CoralLink(child, baseCori, dictionary));
+                        break;
+
+                    case 3:
+                        _items.Add(new CoralForm(child, baseCori, dictionary));
                         break;
 
                     default:
@@ -58,7 +62,7 @@ namespace Com.AugustCellars.CoAP.Coral
             return this;
         }
 
-        public CBORObject EncodeToCBORObject(Ciri ciriBase, CoralDictionary dictionary = null)
+        public CBORObject EncodeToCBORObject(Cori coriBase, CoralDictionary dictionary = null)
         {
             CBORObject root = CBORObject.NewArray();
             if (dictionary == null) {
@@ -66,9 +70,9 @@ namespace Com.AugustCellars.CoAP.Coral
             }
 
             foreach (CoralItem item in _items) {
-                root.Add(item.EncodeToCBORObject(ciriBase, dictionary));
+                root.Add(item.EncodeToCBORObject(coriBase, dictionary));
                 if (item is CoralBaseDirective d) {
-                    ciriBase = d.BaseValue.ResolveTo(ciriBase);
+                    coriBase = d.BaseValue.ResolveTo(coriBase);
                 }
             }
 
@@ -80,10 +84,10 @@ namespace Com.AugustCellars.CoAP.Coral
             return _items.GetEnumerator();
         }
 
-        public void BuildString(StringBuilder builder)
+        public void BuildString(StringBuilder builder, string pad)
         {
             foreach (CoralItem item in _items) {
-                item.BuildString(builder);
+                item.BuildString(builder, pad);
             }
         }
     }

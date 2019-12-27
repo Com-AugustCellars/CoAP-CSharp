@@ -101,12 +101,12 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Path elements to be added to the URI as Uri-Path options
         /// </summary>
-        public String UriPath { get; set; }
+        public string UriPath { get; set; }
 
         /// <summary>
         /// Query elements to be added tothe URI as Uri-Query options
         /// </summary>
-        public String UriQuery { get; set; }
+        public string UriQuery { get; set; }
 
         /// <summary>
         /// Gets or sets the endpoint this client is supposed to use.
@@ -118,7 +118,7 @@ namespace Com.AugustCellars.CoAP
         /// until they give up and return anyways. Time is in milliseconds.
         /// The default value is <see cref="System.Threading.Timeout.Infinite"/>.
         /// </summary>
-        public Int32 Timeout { get; set; } = System.Threading.Timeout.Infinite;
+        public int Timeout { get; set; } = System.Threading.Timeout.Infinite;
 
         /// <summary>
         /// Gets or sets the current blockwise size.
@@ -166,7 +166,7 @@ namespace Com.AugustCellars.CoAP
         /// (16, 32, 64, 128, 256, 512, or 1024). Other values will
         /// be matched to the closest logarithm dualis.
         /// </summary>
-        public CoapClient UseEarlyNegotiation(Int32 size)
+        public CoapClient UseEarlyNegotiation(int size)
         {
             Blockwise = size;
             return this;
@@ -195,7 +195,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="timeout">the time to wait for a pong in milliseconds</param>
         /// <returns>success of the ping</returns>
-        public Boolean Ping(Int32 timeout)
+        public Boolean Ping(int timeout)
         {
             try {
                 Request request = new Request(Code.Empty, true) {
@@ -221,7 +221,7 @@ namespace Com.AugustCellars.CoAP
         /// Discovers remote resources.
         /// </summary>
         /// <param name="mediaType">format to use - defaults to any</param>
-        /// <returns>the descoverd <see cref="WebLink"/> representing remote resources, or null if no response</returns>
+        /// <returns>the discovered <see cref="WebLink"/> representing remote resources, or null if no response</returns>
         public IEnumerable<WebLink> Discover(int mediaType = MediaType.Undefined)
         {
             return Discover(null, mediaType);
@@ -238,12 +238,12 @@ namespace Com.AugustCellars.CoAP
         /// <param name="uriPath">path to be queried</param>
         /// <param name="query">the query to filter resources</param>
         /// <param name="mediaType">format to use - defaults to any</param>
-        /// <returns>the descoverd <see cref="WebLink"/> representing remote resources, or null if no response</returns>
-        public IEnumerable<WebLink> Discover(string uriPath, String query, int mediaType = MediaType.Undefined)
+        /// <returns>the discovered <see cref="WebLink"/> representing remote resources, or null if no response</returns>
+        public IEnumerable<WebLink> Discover(string uriPath, string query, int mediaType = MediaType.Undefined)
         {
             Request discover = Prepare(Request.NewGet());
             discover.ClearUriPath().ClearUriQuery().UriPath = uriPath;
-            if (!String.IsNullOrEmpty(query)) {
+            if (!string.IsNullOrEmpty(query)) {
                 discover.UriQuery = query;
             }
             if (mediaType != MediaType.Undefined) {
@@ -288,13 +288,13 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="accept">the Accept option</param>
         /// <returns>the CoAP response</returns>
-        public Response Get(Int32 accept)
+        public Response Get(int accept)
         {
             return Send(Accept(Request.NewGet(), accept));
         }
 
         /// <summary>
-        /// Sends a GET request asynchronizely.
+        /// Sends a GET request asynchronously.
         /// </summary>
         /// <param name="done">the callback when a response arrives</param>
         /// <param name="fail">the callback when an error occurs</param>
@@ -309,7 +309,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="accept">the Accept option</param>
         /// <param name="done">the callback when a response arrives</param>
         /// <param name="fail">the callback when an error occurs</param>
-        public void GetAsync(Int32 accept, Action<Response> done = null, Action<FailReason> fail = null)
+        public void GetAsync(int accept, Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync(Accept(Request.NewGet(), accept), done, fail);
         }
@@ -320,7 +320,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="payload">Text based payload to send</param>
         /// <param name="format">Content format - defaults to plain text</param>
         /// <returns>the CoAP response</returns>
-        public Response Post(String payload, Int32 format = MediaType.TextPlain)
+        public Response Post(string payload, int format = MediaType.TextPlain)
         {
             return Send((Request)Request.NewPost().SetPayload(payload, format));
         }
@@ -332,7 +332,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="format">Content format - defaults to plain text</param>
         /// <param name="accept">what content format is to be returned</param>
         /// <returns>the CoAP response</returns>
-        public Response Post(String payload, Int32 format, Int32 accept)
+        public Response Post(string payload, int format, int accept)
         {
             return Send(Accept((Request)Request.NewPost().SetPayload(payload, format), accept));
         }
@@ -343,7 +343,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="payload">Binary payload to send</param>
         /// <param name="format">Content format</param>
         /// <returns>the CoAP response</returns>
-        public Response Post(Byte[] payload, Int32 format)
+        public Response Post(Byte[] payload, int format)
         {
             return Send((Request)Request.NewPost().SetPayload(payload, format));
         }
@@ -355,7 +355,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="format">Content format</param>
         /// <param name="accept">what content format is to be returned</param>
         /// <returns>the CoAP response</returns>
-        public Response Post(Byte[] payload, Int32 format, Int32 accept)
+        public Response Post(Byte[] payload, int format, int accept)
         {
             return Send(Accept((Request)Request.NewPost().SetPayload(payload, format), accept));
         }
@@ -366,7 +366,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="payload">Text payload to send</param>
         /// <param name="done">Action for a respone message</param>
         /// <param name="fail">Action internal errors</param>
-        public void PostAsync(String payload,
+        public void PostAsync(string payload,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             PostAsync(payload, MediaType.TextPlain, done, fail);
@@ -379,7 +379,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="format">Content Format for the payload</param>
         /// <param name="done">Action for a respone message</param>
         /// <param name="fail">Action internal errors</param>
-        public void PostAsync(String payload, Int32 format,
+        public void PostAsync(string payload, int format,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync((Request)Request.NewPost().SetPayload(payload, format), done, fail);
@@ -393,7 +393,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="accept">What return content format is acceptable</param>
         /// <param name="done">Action for a respone message</param>
         /// <param name="fail">Action internal errors</param>
-        public void PostAsync(String payload, Int32 format, Int32 accept,
+        public void PostAsync(string payload, int format, int accept,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync(Accept((Request)Request.NewPost().SetPayload(payload, format), accept), done, fail);
@@ -406,7 +406,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="format">Content Format for the payload</param>
         /// <param name="done">Action for a respone message</param>
         /// <param name="fail">Action internal errors</param>
-        public void PostAsync(Byte[] payload, Int32 format,
+        public void PostAsync(Byte[] payload, int format,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync((Request)Request.NewPost().SetPayload(payload, format), done, fail);
@@ -420,7 +420,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="accept">What return content format is acceptable</param>
         /// <param name="done">Action for a respone message</param>
         /// <param name="fail">Action internal errors</param>
-        public void PostAsync(Byte[] payload, Int32 format, Int32 accept,
+        public void PostAsync(Byte[] payload, int format, int accept,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync(Accept((Request)Request.NewPost().SetPayload(payload, format), accept), done, fail);
@@ -432,7 +432,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="payload">Text based payload to send</param>
         /// <param name="format">Content format - defaults to plain text</param>
         /// <returns>the CoAP response</returns>
-        public Response Put(String payload, Int32 format = MediaType.TextPlain)
+        public Response Put(string payload, int format = MediaType.TextPlain)
         {
             return Send((Request)Request.NewPut().SetPayload(payload, format));
         }
@@ -444,7 +444,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="format">Content format</param>
         /// <param name="accept">What return content format is acceptable</param>
         /// <returns>the CoAP response</returns>
-        public Response Put(Byte[] payload, Int32 format, Int32 accept)
+        public Response Put(Byte[] payload, int format, int accept)
         {
             return Send(Accept((Request)Request.NewPut().SetPayload(payload, format), accept));
         }
@@ -456,7 +456,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="format">Content format</param>
         /// <param name="etags">ETags to match before doing update</param>
         /// <returns>the CoAP response</returns>
-        public Response PutIfMatch(String payload, Int32 format, params Byte[][] etags)
+        public Response PutIfMatch(string payload, int format, params Byte[][] etags)
         {
             return Send(IfMatch((Request)Request.NewPut().SetPayload(payload, format), etags));
         }
@@ -468,7 +468,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="format">Content format</param>
         /// <param name="etags">ETags to match before doing update</param>
         /// <returns>the CoAP response</returns>
-        public Response PutIfMatch(Byte[] payload, Int32 format, params Byte[][] etags)
+        public Response PutIfMatch(Byte[] payload, int format, params Byte[][] etags)
         {
             return Send(IfMatch((Request)Request.NewPut().SetPayload(payload, format), etags));
         }
@@ -479,7 +479,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="payload">Text based payload to send</param>
         /// <param name="format">Content format</param>
         /// <returns>the CoAP response</returns>
-        public Response PutIfNoneMatch(String payload, Int32 format)
+        public Response PutIfNoneMatch(string payload, int format)
         {
             return Send(IfNoneMatch((Request)Request.NewPut().SetPayload(payload, format)));
         }
@@ -490,7 +490,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="payload">Binary payload to send</param>
         /// <param name="format">Content format</param>
         /// <returns>the CoAP response</returns>
-        public Response PutIfNoneMatch(Byte[] payload, Int32 format)
+        public Response PutIfNoneMatch(Byte[] payload, int format)
         {
             return Send(IfNoneMatch((Request)Request.NewPut().SetPayload(payload, format)));
         }
@@ -502,7 +502,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="done">Action for a respone message</param>
         /// <param name="fail">Action for internal errors</param>
         /// <returns>the CoAP response</returns>
-        public void PutAsync(String payload,
+        public void PutAsync(string payload,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             PutAsync(payload, MediaType.TextPlain, done, fail);
@@ -516,7 +516,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="done">Action for a respone message</param>
         /// <param name="fail">Action for internal errors</param>
         /// <returns>the CoAP response</returns>
-        public void PutAsync(String payload, Int32 format,
+        public void PutAsync(string payload, int format,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync((Request)Request.NewPut().SetPayload(payload, format), done, fail);
@@ -531,7 +531,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="done">Action for a respone message</param>
         /// <param name="fail">Action for internal errors</param>
         /// <returns>the CoAP response</returns>
-        public void PutAsync(Byte[] payload, Int32 format, Int32 accept,
+        public void PutAsync(Byte[] payload, int format, int accept,
             Action<Response> done = null, Action<FailReason> fail = null)
         {
             SendAsync(Accept((Request)Request.NewPut().SetPayload(payload, format), accept), done, fail);
@@ -585,7 +585,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="notify">Action to take for each notification</param>
         /// <param name="error">Action to take on internal error</param>
         /// <returns>New observe relation</returns>
-        public CoapObserveRelation Observe(Int32 accept, Action<Response> notify = null, Action<FailReason> error = null)
+        public CoapObserveRelation Observe(int accept, Action<Response> notify = null, Action<FailReason> error = null)
         {
             return Observe(Accept(Request.NewGet().MarkObserve(), accept), notify, error);
         }
@@ -608,7 +608,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="notify">Action to take for each notification</param>
         /// <param name="error">Action to take on internal error</param>
         /// <returns>New observe relation</returns>
-        public CoapObserveRelation ObserveAsync(Int32 accept, Action<Response> notify = null, Action<FailReason> error = null)
+        public CoapObserveRelation ObserveAsync(int accept, Action<Response> notify = null, Action<FailReason> error = null)
         {
             return ObserveAsync(Accept(Request.NewGet().MarkObserve(), accept), notify, error);
         }
@@ -755,7 +755,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        private static Request Accept(Request request, Int32 accept)
+        private static Request Accept(Request request, int accept)
         {
             request.Accept = accept;
             return request;

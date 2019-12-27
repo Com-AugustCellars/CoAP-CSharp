@@ -11,32 +11,32 @@ namespace Com.AugustCellars.CoAP.Coral
 
         }
 
-        public CoralDocument(CBORObject node,  Ciri baseCiri, CoralDictionary dictionary) : base(node, baseCiri, dictionary)
+        public CoralDocument(CBORObject node,  Cori baseCori, CoralDictionary dictionary) : base(node, baseCori, dictionary)
         {
         }
 
-        public static CoralDocument DecodeFromBytes(byte[] encoded, Ciri baseCiri, CoralDictionary dictionary = null)
+        public static CoralDocument DecodeFromBytes(byte[] encoded, Cori baseCori, CoralDictionary dictionary = null)
         {
             CBORObject obj = CBORObject.DecodeFromBytes(encoded);
-            return DecodeFromCbor(obj, baseCiri, dictionary);
+            return DecodeFromCbor(obj, baseCori, dictionary);
         }
 
-        public static CoralDocument DecodeFromCbor(CBORObject node, Ciri baseCiri, CoralDictionary dictionary = null)
+        public static CoralDocument DecodeFromCbor(CBORObject node, Cori baseCori, CoralDictionary dictionary = null)
         {
             if (dictionary == null)
             {
                 dictionary = CoralDictionary.Default;
             }
-            return new CoralDocument(node, baseCiri, dictionary);
+            return new CoralDocument(node, baseCori, dictionary);
         }
 
-        public byte[] EncodeToBytes(Ciri baseCiri, CoralDictionary dictionary = null)
+        public byte[] EncodeToBytes(Cori baseCori, CoralDictionary dictionary = null)
         {
             if (dictionary == null) {
                 dictionary = CoralDictionary.Default;
             }
 
-            return EncodeToCBORObject(baseCiri, dictionary).EncodeToBytes();
+            return EncodeToCBORObject(baseCori, dictionary).EncodeToBytes();
         }
 
         public override string ToString()
@@ -44,7 +44,7 @@ namespace Com.AugustCellars.CoAP.Coral
             StringBuilder builder = new StringBuilder();
 
 
-            BuildString(builder);
+            BuildString(builder, "");
 
 
             return builder.ToString();
