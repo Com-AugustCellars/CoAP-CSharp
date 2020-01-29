@@ -13,7 +13,6 @@ namespace Com.AugustCellars.CoAP.Examples
             server.Add(new HelloWorldResource("hello"));
             server.Add(new FibonacciResource("fibonacci"));
             server.Add(new StorageResource("storage"));
-            server.Add(new ImageResource("image"));
             server.Add(new MirrorResource("mirror"));
             server.Add(new LargeResource("large"));
             server.Add(new CarelessResource("careless"));

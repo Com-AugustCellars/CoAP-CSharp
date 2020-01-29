@@ -238,7 +238,9 @@ namespace Com.AugustCellars.CoAP.Channel
                                                                             SocketOptionName.AddMembership,
                                                                             mc);
                                     }
+#pragma warning disable 168
                                     catch (SocketException e) {
+#pragma warning restore 168
 #if LOG_UDP_CHANNEL
                                         _Log.Info(
                                             m => m(
@@ -252,7 +254,9 @@ namespace Com.AugustCellars.CoAP.Channel
                         }
                     }
                 }
+#pragma warning disable 168
                 catch (SocketException e) {
+#pragma warning restore 168
 #if LOG_UDP_CHANNEL
                     _Log.Info(
                         m => m($"Start Multicast:  Address {info._localEP.Address} had an exception ${e.ToString()}"));
@@ -285,7 +289,9 @@ namespace Com.AugustCellars.CoAP.Channel
                         }
                     }
                 }
+#pragma warning disable 168
                 catch (SocketException e) {
+#pragma warning restore 168
 #if LOG_UDP_CHANNEL
                     _Log.Info(m => m($"Start Multicast:  Address {info._localEP.Address} had an exception ${e.ToString()}"));
 #endif
