@@ -1,4 +1,5 @@
-﻿using Com.AugustCellars.CoAP.Coral;
+﻿using System;
+using Com.AugustCellars.CoAP.Coral;
 using Com.AugustCellars.CoAP.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PeterO.Cbor;
@@ -51,6 +52,14 @@ namespace CoAP.Test.Std10.CoRAL
             CoralDocument document2 = CoralDocument.DecodeFromBytes(result.EncodeToBytes(), new Cori("coap://jimsch.example.org/rd"), _Dictionary);
 
             //Assert.AreEqual(document, document2);
+
+            CoralUsing dict = new CoralUsing() {
+                {"reef", "coap://jimsch.example.com/coreapp/reef#"}
+            };
+
+            string resultOut =
+                "reef:rd-register <||2||endpoints> [\n  reef:content-type 99599\n  reef:security \"OSCORE\"\n  reef:authority-type \"ACE\"\n  reef:authority <//ace.example.org:5683/token>\n]\nreef:rd-endpointSearch <||2||endpoints>\nreef:rd-resourceSearch <||2||resources>\n#base <coaps://jimsch.example.org/rd>\nreef:rd-register <||2||endpoints> [\n  reef:content-type 99599\n  reef:security \"OSCORE\"\n  reef:authority-type \"ACE\"\n  reef:authority <//ace.example.org:5684/token>\n]\nreef:rd-endpointSearch <||2||endpoints>\nreef:rd-resourceSearch <||2||resources>\n";
+            Assert.AreEqual(resultOut, document.EncodeToString(new Cori("coap://jimsch.example.org/rd"), dict));
         }
 
         [TestMethod]

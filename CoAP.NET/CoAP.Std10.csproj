@@ -144,6 +144,7 @@ It is intented primarily for research and verification work.
     <Compile Include="Coral\CoralFormField.cs" />
     <Compile Include="Coral\CoralItem.cs" />
     <Compile Include="Coral\CoralLink.cs" />
+    <Compile Include="Coral\CoralUsing.cs" />
     <Compile Include="Deduplication\CropRotation.cs" />
     <Compile Include="Deduplication\DeduplicatorFactory.cs" />
     <Compile Include="Deduplication\IDeduplicator.cs" />

@@ -27,7 +27,7 @@ namespace Com.AugustCellars.CoAP.Coral
         }
 
         /// <inheritdoc />
-        public override void BuildString(StringBuilder builder, string pad)
+        public override void BuildString(StringBuilder builder, string pad, Cori contextCori, CoralUsing usingDictionary)
         {
             builder.Append(pad);
             builder.Append(Uri);

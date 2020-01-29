@@ -12,19 +12,29 @@ namespace Com.AugustCellars.CoAP.Coral
     {
         private readonly List<CoralItem> _items = new List<CoralItem>();
 
+        /// <summary>
+        /// Create a new coral body from scratch.
+        /// </summary>
         public CoralBody()
         {
         }
 
-
-        public CoralBody(CBORObject node, Cori baseCori, CoralDictionary dictionary)
+        /// <summary>
+        /// Decode a CBOR object into a coral body.
+        /// </summary>
+        /// <param name="node">CBOR node to be decoded</param>
+        /// <param name="contextCori">context to decode URIs</param>
+        /// <param name="dictionary">Dictionary used for decompression</param>
+        public CoralBody(CBORObject node, Cori contextCori, CoralDictionary dictionary)
         {
+            Cori baseCori = contextCori;
+
             if (node.Type != CBORType.Array) {
                 throw new ArgumentException("Invalid node type");
             }
 
-            if (baseCori == null || !baseCori.IsAbsolute()) {
-                throw new ArgumentException("Must be resolved to an absolute URI", nameof(baseCori));
+            if (contextCori == null || !contextCori.IsAbsolute()) {
+                throw new ArgumentException("Must be resolved to an absolute URI", nameof(contextCori));
             }
 
             foreach (CBORObject child in node.Values) {
@@ -34,7 +44,7 @@ namespace Com.AugustCellars.CoAP.Coral
 
                 switch (child[0].AsInt32()) {
                     case 1:
-                        CoralBaseDirective d1 = new CoralBaseDirective(child, baseCori);
+                        CoralBaseDirective d1 = new CoralBaseDirective(child, contextCori);
                         _items.Add(d1);
                         baseCori = d1.BaseValue;
                         break;
@@ -84,10 +94,17 @@ namespace Com.AugustCellars.CoAP.Coral
             return _items.GetEnumerator();
         }
 
-        public void BuildString(StringBuilder builder, string pad)
+        public void BuildString(StringBuilder builder, string pad, Cori contextCori, CoralUsing usingDictionary)
         {
+            Cori baseCori = contextCori;
             foreach (CoralItem item in _items) {
-                item.BuildString(builder, pad);
+                if (item is CoralBaseDirective) {
+                    baseCori = ((CoralBaseDirective) item).BaseValue;
+                    item.BuildString(builder, pad, contextCori, usingDictionary);
+                }
+                else {
+                    item.BuildString(builder, pad, baseCori, usingDictionary);
+                }
             }
         }
     }

@@ -62,10 +62,15 @@ namespace Com.AugustCellars.CoAP.Coral
         }
 
         /// <inheritdoc />
-        public override void BuildString(StringBuilder builder, string pad)
+        public override void BuildString(StringBuilder builder, string pad, Cori contextCori, CoralUsing usingDictionary)
         {
             builder.Append(pad);
-            builder.AppendFormat($"#base <{BaseValue.Data}>\n");
+            if (contextCori != null) {
+                builder.AppendFormat($"#base <{BaseValue.MakeRelative(contextCori)}>\n");
+            }
+            else {
+                builder.AppendFormat($"#base <{BaseValue.Data}>\n");
+            }
         }
     }
 }

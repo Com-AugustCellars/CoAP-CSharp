@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using Com.AugustCellars.CoAP.Util;
 using PeterO.Cbor;
@@ -182,12 +183,24 @@ namespace Com.AugustCellars.CoAP.Coral
             return node;
         }
 
-        public override void BuildString(StringBuilder builder, string pad)
+        public override void BuildString(StringBuilder builder, string pad, Cori contextCori, CoralUsing usingDictionary)
         {
             builder.Append(pad);
-            builder.Append(RelationType);
+            if (usingDictionary != null) {
+                string t = usingDictionary.Abbreviate(RelationType); 
+                builder.Append(t);
+            }
+            else {
+                builder.AppendFormat($"<{RelationType}>");
+            }
+
             if (Target != null) {
-                builder.Append($" <{Target}>");
+                if (contextCori == null) {
+                    builder.Append($" <{Target}>");
+                }
+                else {
+                    builder.Append($" <{Target.MakeRelative(contextCori)}>");
+                }
             }
             else if (Value != null) {
                 builder.Append($" {Value}");
@@ -198,7 +211,7 @@ namespace Com.AugustCellars.CoAP.Coral
 
             if (Body != null) {
                 builder.Append(" [\n");
-                Body.BuildString(builder, pad + "  ");
+                Body.BuildString(builder, pad + "  ", contextCori, usingDictionary);
                 builder.Append(pad);
                 builder.Append("]");
             }

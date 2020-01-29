@@ -31,7 +31,7 @@ namespace CoAP.Test.Std10.CoRAL
             CoralLink link = new CoralLink("http://coreapps.org/reef#rd-unit", "/sensors");
 
             StringBuilder sb = new StringBuilder();
-            link.BuildString(sb, "");
+            link.BuildString(sb, "", null, null);
 
             Assert.AreEqual("http://coreapps.org/reef#rd-unit \"/sensors\"\n", sb.ToString());
 

@@ -739,6 +739,10 @@ namespace Com.AugustCellars.CoAP.Util
                 return false;
             }
 
+            if (!IsAbsolute() || !right.IsAbsolute()) {
+                throw new ArgumentException("Can only compare absolute CoRI values");
+            }
+
             if (Data.Count != right.Data.Count) {
                 return false;
             }
