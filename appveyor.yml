@@ -16,7 +16,7 @@ environment:
 
 
 before_build:
-  - $asNuget restore
+  - dotnet restore
 
 build:
     project: CoAP.Std10.sln
