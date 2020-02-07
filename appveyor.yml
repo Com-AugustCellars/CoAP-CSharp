@@ -10,7 +10,7 @@ environment:
     - image: macos
       asNuget: dotnet
       BuildFrameWorks: netstandard2.0
-    - macos-mojave
+    - image: macos-mojave
       asNuget: dotnet
       BuildFrameWorks: netstandard2.0
 
