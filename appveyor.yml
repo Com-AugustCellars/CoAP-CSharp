@@ -1,19 +1,22 @@
 image:
-  - Visual Studio 2017
-  - Visual Studio 2019
-  - Ubuntu1604
-  - macos
-  - macos-mojave
 
 environment:
   matrix:
-    - BuildFrameWorks: netcoreapp2.0
-    - BuildFrameWorks: netcoreapp2.1
-    - BuildFrameWorks: netstandard2.0
-    - BuildFrameWorks: net462
+    - image: Visual Studio 2019
+      asNuget: nuget
+    - image: Ubuntu1604
+      asNuget: nuget
+      BuildFrameWorks: netstandard2.0
+    - image: macos
+      asNuget: dotnet
+      BuildFrameWorks: netstandard2.0
+    - macos-mojave
+      asNuget: dotnet
+      BuildFrameWorks: netstandard2.0
+
 
 before_build:
-  - nuget restore
+  - $(asNuget) restore
 
 build:
     project: CoAP.Std10.sln
