@@ -6,10 +6,11 @@ image:
   - macos-mojave
 
 environment:
- - BuildFrameWorks: netcoreapp2.0
- - BuildFrameWorks: netcoreapp2.1
- - BuildFrameWorks: netstandard2.0
- - BuildFrameWorks: net462
+  matrix:
+    - BuildFrameWorks: netcoreapp2.0
+    - BuildFrameWorks: netcoreapp2.1
+    - BuildFrameWorks: netstandard2.0
+    - BuildFrameWorks: net462
 
 build:
     project: CoAP.Std10.sln
