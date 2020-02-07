@@ -4,12 +4,13 @@ environment:
   matrix:
     - image: Visual Studio 2019
       asNuget: nuget
+      BuildFrameWorks: netcoreapp2.0;net462;netstandard2.0
     - image: Ubuntu1604
       asNuget: nuget
-      BuildFrameWorks: netstandard2.0
+      BuildFrameWorks: netcoreapp2.0
     - image: macos
       asNuget: dotnet
-      BuildFrameWorks: netstandard2.0
+      BuildFrameWorks: netcoreapp2.0
     - image: macos-mojave
       asNuget: dotnet
       BuildFrameWorks: netstandard2.0
