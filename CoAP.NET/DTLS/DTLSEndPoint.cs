@@ -48,7 +48,7 @@ namespace Com.AugustCellars.CoAP.DTLS
         /// <param name="config">Configuration interface</param>
         public DTLSEndPoint(DTLSChannel channel, ICoapConfig config) : base(channel, config)
         {
-            Stack.Remove(Stack.Get("Reliability"));
+            // Stack.Remove(Stack.Get("Reliability"));
             MessageEncoder = UdpCoapMesageEncoder;
             MessageDecoder = UdpCoapMessageDecoder;
             EndpointSchema = new []{"coaps", "coaps+udp"};
