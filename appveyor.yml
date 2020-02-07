@@ -1,7 +1,9 @@
-image: Visual Studio 2017
-
-install:
-    appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+image:
+  - Visual Studio 2017
+  - Visual Studio 2019
+  - Ubuntu1604
+  - macos
+  - macos-mojave
 
 before_build:
     nuget restore CoAP.Std10.sln
