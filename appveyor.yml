@@ -12,5 +12,8 @@ environment:
     - BuildFrameWorks: netstandard2.0
     - BuildFrameWorks: net462
 
+before_build:
+  - nuget restore
+
 build:
     project: CoAP.Std10.sln
