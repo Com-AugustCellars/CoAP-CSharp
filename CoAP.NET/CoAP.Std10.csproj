@@ -1,10 +1,11 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.0;net462;netstandard2.0</TargetFrameworks>
+    <BuildFrameworks Condition="'$(BuildFrameWorks)' == ''">netcoreapp2.0;net462;netstandard2.0</BuildFrameworks>
+    <TargetFrameworks>$(BuildFrameWorks)</TargetFrameworks>
     <PackageId>Com.AugustCellars.CoAP</PackageId>
     <Id>Com.AugustCellars.CoAP</Id>
     <PackageVersion>1.7.0.0</PackageVersion>

@@ -5,8 +5,11 @@ image:
   - macos
   - macos-mojave
 
-before_build:
-    nuget restore CoAP.Std10.sln
+environment:
+ - BuildFrameWorks: netcoreapp2.0
+ - BuildFrameWorks: netcoreapp2.1
+ - BuildFrameWorks: netstandard2.0
+ - BuildFrameWorks: net462
 
 build:
     project: CoAP.Std10.sln
