@@ -3,8 +3,11 @@
 
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup Condition=" '$(BuildFrameWorks)' == '' ">
+    <BuildFrameWorks>netcoreapp2.0;net462;netstandard2.0</BuildFrameWorks>
+  </PropertyGroup>
+
   <PropertyGroup>
-    <BuildFrameWorks Condition="'$(BuildFrameWorks)' == ''">netcoreapp2.0;net462;netstandard2.0</BuildFrameWorks>
     <TargetFrameworks>$(BuildFrameWorks)</TargetFrameworks>
     <PackageId>Com.AugustCellars.CoAP</PackageId>
     <Id>Com.AugustCellars.CoAP</Id>
