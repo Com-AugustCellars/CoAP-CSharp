@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -178,10 +180,8 @@ namespace Com.AugustCellars.CoAP
                 case OptionType.Block1:
                 case OptionType.Block2:
                     return new BlockOption(type);
-#if INCLUDE_OSCOAP                    
                 case OptionType.Oscoap:
                     return new OSCOAP.OscoapOption();
-#endif
                 default:
                     return new Option(type);
             }

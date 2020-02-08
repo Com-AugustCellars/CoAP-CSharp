@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -53,17 +55,21 @@ namespace Com.AugustCellars.CoAP.Codec
         /// <inheritdoc/>
         public Byte[] Encode(Message message)
         {
-            if (message.IsRequest)
+            if (message.IsRequest) {
                 return Encode((Request)message);
-            else if (message.IsResponse)
+            }
+            else if (message.IsResponse) {
                 return Encode((Response)message);
-            else if (message is EmptyMessage)
+            }
+            else if (message is EmptyMessage) {
                 return Encode((EmptyMessage)message);
+            }
             else if (message is SignalMessage) {
                 return Encode((SignalMessage)message);
             }
-            else
+            else {
                 return null;
+            }
         }
 
         /// <summary>
