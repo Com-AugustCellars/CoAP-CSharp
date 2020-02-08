@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2015, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -55,83 +57,82 @@ namespace Com.AugustCellars.CoAP
         private const string Default_Deduplicator = Deduplication.DeduplicatorFactory.MarkAndSweepDeduplicator;
         private const int Default_CropRotationPeriod = 2000; // ms
         private const int Default_ExchangeLifetime = 247 * 1000; // ms
-        private const Int64 Default_MarkAndSweepInterval = 10 * 1000; // ms
-        private const Int64 Default_NotificationMaxAge = 128 * 1000; // ms
-        private const Int64 Default_NotificationCheckIntervalTime = 24 * 60 * 60 * 1000; // ms
+        private const long Default_MarkAndSweepInterval = 10 * 1000; // ms
+        private const long Default_NotificationMaxAge = 128 * 1000; // ms
+        private const long Default_NotificationCheckIntervalTime = 24 * 60 * 60 * 1000; // ms
         private const int Default_NotificationCheckIntervalCount = 100;
         private const int Default_NotificationReregistrationBackoff = 2000; // ms
         private const int Default_ChannelReceivePacketSize = 2048;
-#if INCLUDE_OSCOAP
+
         private const int Default_Oscoap_MaxMessageSize = 1024;
         private const int Default_Oscoap_DefaultBlockSize = CoapConstants.DefaultBlockSize;
         private const int Default_Oscoap_BlockwiseStatusLifetime = 10 *60 * 1000; // ms
         private const bool Default_Oscoap_ReplayWindow = true;
-#endif
 
         /// <inheritdoc/>
-        public String Version
+        public string Version
         {
             get => Spec.Name;
         }
 
         /// <inheritdoc/>
-        public Int32 DefaultPort
+        public int DefaultPort
         {
             get => GetInt("DefaultPort", CoapConstants.DefaultPort);
             set => SetValue("DefaultPort", value);
         }
 
         /// <inheritdoc/>
-        public Int32 DefaultSecurePort
+        public int DefaultSecurePort
         {
             get => GetInt("DefaultSecurePort", CoapConstants.DefaultSecurePort);
             set => SetValue("DefaultSecurePort", value);
         }
 
         /// <inheritdoc/>
-        public Int32 HttpPort
+        public int HttpPort
         {
             get => GetInt("HttpPort", Default_HttpPort);
             set => SetValue("HttpPort", value);
         }
 
         /// <inheritdoc/>
-        public Int32 AckTimeout
+        public int AckTimeout
         {
             get => GetInt("AckTimeout", CoapConstants.AckTimeout);
             set => SetValue("AckTimeout", value);
         }
 
         /// <inheritdoc/>
-        public Double AckRandomFactor
+        public double AckRandomFactor
         {
             get => GetDouble("AckRandomFactor", CoapConstants.AckRandomFactor);
             set => SetValue("AckRandomFactor", value);
         }
 
         /// <inheritdoc/>
-        public Double AckTimeoutScale
+        public double AckTimeoutScale
         {
             get => GetDouble("AckTimeoutScale", Default_AckTimeoutScale);
             set => SetValue("AckTimeoutScale", value);
         }
 
         /// <inheritdoc/>
-        public Int32 MaxRetransmit
+        public int MaxRetransmit
         {
             get => GetInt("MaxRetransmit", CoapConstants.MaxRetransmit);
             set => SetValue("MaxRetransmit", value);
         }
 
         /// <inheritdoc/>
-        public Int32 MaxMessageSize
+        public int MaxMessageSize
         {
             get => GetInt("MaxMessageSize", Default_MaxMessageSize);
             set => SetValue("MaxMessageSize", value);
         }
 
         /// <inheritdoc/>
-        public Int32 DefaultBlockSize
+        public int DefaultBlockSize
         {
 
             get => GetInt("DefaultBlockSize", CoapConstants.DefaultBlockSize);
@@ -139,7 +140,7 @@ namespace Com.AugustCellars.CoAP
         }
 
         /// <inheritdoc/>
-        public Int32 BlockwiseStatusLifetime
+        public int BlockwiseStatusLifetime
         {
 
             get => GetInt("BlockwiseStatusLifetime", Default_BlockwiseStatusLifetime);
@@ -147,14 +148,14 @@ namespace Com.AugustCellars.CoAP
         }
 
         /// <inheritdoc/>
-        public Boolean UseRandomIDStart
+        public bool UseRandomIDStart
         {
             get => GetBool("UseRandomIDStart", Default_UseRandomIdStart);
             set => SetValue("UseRandomIDStart", value);
         }
 
         /// <inheritdoc/>
-        public Boolean UseRandomTokenStart
+        public bool UseRandomTokenStart
         {
             get => GetBool("UseRandomTokenStart", true);
             set => SetValue("UseRandomTokenStart", value);
@@ -172,83 +173,82 @@ namespace Com.AugustCellars.CoAP
         }
 
         /// <inheritdoc/>
-        public String Deduplicator
+        public string Deduplicator
         {
             get => GetString("Deduplicator", Default_Deduplicator);
             set => SetValue("Deduplicator", value);
         }
 
         /// <inheritdoc/>
-        public Int32 CropRotationPeriod
+        public int CropRotationPeriod
         {
             get => GetInt("CropRotationPeriod", Default_CropRotationPeriod);
             set => SetValue("CropRotationPeriod", value);
         }
 
         /// <inheritdoc/>
-        public Int32 ExchangeLifetime
+        public int ExchangeLifetime
         {
             get => GetInt("ExchangeLifetime", Default_ExchangeLifetime);
             set => SetValue("ExchangeLifetime", value);
         }
 
         /// <inheritdoc/>
-        public Int64 MarkAndSweepInterval
+        public long MarkAndSweepInterval
         {
             get => GetInt64("MarkAndSweepInterval", Default_MarkAndSweepInterval);
             set => SetValue("MarkAndSweepInterval", value);
         }
 
         /// <inheritdoc/>
-        public Int64 NotificationMaxAge
+        public long NotificationMaxAge
         {
             get => GetInt64("NotificationMaxAge", Default_NotificationMaxAge);
             set => SetValue("NotificationMaxAge", value);
         }
 
         /// <inheritdoc/>
-        public Int64 NotificationCheckIntervalTime
+        public long NotificationCheckIntervalTime
         {
             get => GetInt64("NotificationCheckIntervalTime", Default_NotificationCheckIntervalTime);
             set => SetValue("NotificationCheckIntervalTime", value);
         }
 
         /// <inheritdoc/>
-        public Int32 NotificationCheckIntervalCount
+        public int NotificationCheckIntervalCount
         {
             get => GetInt("NotificationCheckIntervalCount", Default_NotificationCheckIntervalCount);
             set => SetValue("NotificationCheckIntervalCount", value);
         }
 
         /// <inheritdoc/>
-        public Int32 NotificationReregistrationBackoff
+        public int NotificationReregistrationBackoff
         {
             get => GetInt("NotificationReregistrationBackoff", Default_NotificationReregistrationBackoff);
             set => SetValue("NotificationReregistrationBackoff", value);
         }
 
         /// <inheritdoc/>
-        public Int32 ChannelReceiveBufferSize
+        public int ChannelReceiveBufferSize
         {
             get => GetInt("ChannelReceiveBufferSize", 0);
             set => SetValue("ChannelReceiveBufferSize", value);
         }
 
         /// <inheritdoc/>
-        public Int32 ChannelSendBufferSize
+        public int ChannelSendBufferSize
         {
             get => GetInt("ChannelSendBufferSize", 0);
             set => SetValue("ChannelSendBufferSize", value);
         }
 
         /// <inheritdoc/>
-        public Int32 ChannelReceivePacketSize
+        public int ChannelReceivePacketSize
         {
             get => GetInt("ChannelReceivePacketSize", Default_ChannelReceivePacketSize);
             set => SetValue("ChannelReceivePacketSize", value);
         }
 
-#if INCLUDE_OSCOAP
         /// <inheritdoc/>
         public Int32 OSCOAP_MaxMessageSize
         {
@@ -275,7 +275,6 @@ namespace Com.AugustCellars.CoAP
             get => GetBool("OSCOAP_ReplayWindow", Default_Oscoap_ReplayWindow);
             set => SetValue("OSCOAP_ReplayWindow", value);
         }
-#endif
 
         /// <summary>
         /// Return the configuration value for a key
@@ -327,7 +326,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="valueName">key to use for the value</param>
         /// <param name="newValue">value to be saved</param>
-        public void SetValue(string valueName, Int64 newValue)
+        public void SetValue(string valueName, long newValue)
         {
             SetValue(valueName, newValue.ToString());
         }
@@ -355,18 +354,19 @@ namespace Com.AugustCellars.CoAP
         }
 
         /// <inheritdoc/>
-        public void Load(String configFile)
+        public void Load(string configFile)
         {
             string[] lines = File.ReadAllLines(configFile);
             foreach (string line in lines) {
                 string[] tmp = line.Split(new char[] { '=' }, 2);
-                if (tmp.Length == 2)
+                if (tmp.Length == 2) {
                     _values[tmp[0]] = tmp[1];
+                }
             }
         }
 
         /// <inheritdoc/>
-        public void Store(String configFile)
+        public void Store(string configFile)
         {
             using (StreamWriter w = new StreamWriter(new FileStream(configFile, FileMode.Create)))
             {
@@ -382,13 +382,13 @@ namespace Com.AugustCellars.CoAP
             return _values[key] ?? defaultValue;
         }
 
-        private static String GetString(NameValueCollection nvc, String key1, String key2, String defaultValue)
+        private static string GetString(NameValueCollection nvc, string key1, string key2, string defaultValue)
         {
             return nvc[key1] ?? nvc[key2] ?? defaultValue;
         }
 
         /// <inheritdoc/>
-        public int GetInt(String key, int defaultValue)
+        public int GetInt(string key, int defaultValue)
         {
             string value = GetString(key, null);
             int result;
@@ -396,11 +396,11 @@ namespace Com.AugustCellars.CoAP
         }
 
         /// <inheritdoc/>
-        public Int64 GetInt64(String key, long defaultValue)
+        public long GetInt64(string key, long defaultValue)
         {
             string value = _values[key];
-            Int64 result;
-            return !string.IsNullOrEmpty(value) && Int64.TryParse(value, out result) ? result : defaultValue;
+            long result;
+            return !string.IsNullOrEmpty(value) && long.TryParse(value, out result) ? result : defaultValue;
         }
 
         /// <inheritdoc/>
@@ -411,15 +411,15 @@ namespace Com.AugustCellars.CoAP
             return !string.IsNullOrEmpty(value) && double.TryParse(value, out result) ? result : defaultValue;
         }
 
-        private static Boolean GetBoolean(NameValueCollection nvc, String key1, String key2, Boolean defaultValue)
+        private static bool GetBoolean(NameValueCollection nvc, string key1, string key2, bool defaultValue)
         {
-            String value = GetString(nvc, key1, key2, null);
-            Boolean result;
-            return !String.IsNullOrEmpty(value) && Boolean.TryParse(value, out result) ? result : defaultValue;
+            string value = GetString(nvc, key1, key2, null);
+            bool result;
+            return !string.IsNullOrEmpty(value) && bool.TryParse(value, out result) ? result : defaultValue;
         }
 
         /// <inheritdoc/>
-        public bool GetBool(String key, bool defaultValue)
+        public bool GetBool(string key, bool defaultValue)
         {
             string value = GetString(key, null);
             bool result;
@@ -435,11 +435,12 @@ namespace Com.AugustCellars.CoAP
         /// <inheritdoc/>
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void NotifyPropertyChanged(String propertyName)
+        private void NotifyPropertyChanged(string propertyName)
         {
             PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null)
+            if (handler != null) {
                 handler(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
     }
 }

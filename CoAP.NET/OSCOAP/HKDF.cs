@@ -1,17 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿/*
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+using System;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Utilities;
-using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto;
 #pragma warning disable 1591
 
 namespace Com.AugustCellars.CoAP.OSCOAP
 {
-#if INCLUDE_OSCOAP
     /// <summary>
     /// HMAC-based Extract-and-Expand Key Derivation Function(HKDF) implemented
     /// according to IETF RFC 5869, May 2010 as specified by H.Krawczyk, IBM
@@ -263,5 +267,4 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             return Arrays.Clone(_info);
         }
     }
-#endif
 }

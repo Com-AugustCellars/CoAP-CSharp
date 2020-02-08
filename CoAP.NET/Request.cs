@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2015, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -14,9 +16,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Observe;
-#if INCLUDE_OSCOAP
 using Com.AugustCellars.CoAP.OSCOAP;
-#endif
 
 namespace Com.AugustCellars.CoAP
 {

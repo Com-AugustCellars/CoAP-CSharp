@@ -1,12 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿/*
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
 
-using Com.AugustCellars.CoAP;
+using System;
 
 namespace Com.AugustCellars.CoAP.OSCOAP
 {
-#if INCLUDE_OSCOAP
     public class OscoapOption : Option
     {
         public OscoapOption() : base(OptionType.Oscoap)
@@ -23,9 +28,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         public override string ToString()
         {
             if (this.RawValue == null) return "** InPayload";
-            return String.Format("** Length={0}", this.RawValue.Length);
+            return $"** Length={RawValue.Length}";
         }
     }
-
- #endif
 }
