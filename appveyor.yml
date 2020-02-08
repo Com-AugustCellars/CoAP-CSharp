@@ -1,5 +1,3 @@
-image:
-
 environment:
   matrix:
     - image: Visual Studio 2019
