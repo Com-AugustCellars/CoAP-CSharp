@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <BuildFrameworks Condition="'$(BuildFrameWorks)' == ''">netcoreapp2.0;net462</BuildFrameworks>
+    <BuildFrameWorks Condition="'$(BuildFrameWorks)' == ''">netcoreapp2.0;net462</BuildFrameWorks>
     <TargetFrameworks>$(BuildFrameWorks)</TargetFrameworks>
   </PropertyGroup>
 
