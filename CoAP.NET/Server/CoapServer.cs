@@ -258,7 +258,7 @@ namespace Com.AugustCellars.CoAP.Server
 
             foreach (string path in pathStrings) {
                 if (string.IsNullOrEmpty(path)) continue;
-                resource = _root.GetChild(path);
+                resource = resource.GetChild(path);
                 if (resource == null) return null;
             }
 
