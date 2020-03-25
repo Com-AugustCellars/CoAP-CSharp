@@ -21,7 +21,7 @@ namespace Com.AugustCellars.CoAP.Codec
     public abstract class MessageEncoder : IMessageEncoder
     {
         /// <inheritdoc/>
-        public Byte[] Encode(Request request)
+        public byte[] Encode(Request request)
         {
             DatagramWriter writer = new DatagramWriter();
             Serialize(writer, request, request.Code);
@@ -29,7 +29,7 @@ namespace Com.AugustCellars.CoAP.Codec
         }
 
         /// <inheritdoc/>
-        public Byte[] Encode(Response response)
+        public byte[] Encode(Response response)
         {
             DatagramWriter writer = new DatagramWriter();
             Serialize(writer, response, response.Code);
@@ -37,7 +37,7 @@ namespace Com.AugustCellars.CoAP.Codec
         }
 
         /// <inheritdoc/>
-        public Byte[] Encode(EmptyMessage message)
+        public byte[] Encode(EmptyMessage message)
         {
             DatagramWriter writer = new DatagramWriter();
             Serialize(writer, message, Code.Empty);
@@ -53,7 +53,7 @@ namespace Com.AugustCellars.CoAP.Codec
         }
 
         /// <inheritdoc/>
-        public Byte[] Encode(Message message)
+        public byte[] Encode(Message message)
         {
             if (message.IsRequest) {
                 return Encode((Request)message);
@@ -61,11 +61,11 @@ namespace Com.AugustCellars.CoAP.Codec
             else if (message.IsResponse) {
                 return Encode((Response)message);
             }
+            else if (message.IsSignal) {
+                return Encode((SignalMessage)message);
+            }
             else if (message is EmptyMessage) {
                 return Encode((EmptyMessage)message);
-            }
-            else if (message is SignalMessage) {
-                return Encode((SignalMessage)message);
             }
             else {
                 return null;
@@ -78,6 +78,6 @@ namespace Com.AugustCellars.CoAP.Codec
         /// <param name="writer">the writer</param>
         /// <param name="message">the message to write</param>
         /// <param name="code">the code</param>
-        protected abstract void Serialize(DatagramWriter writer, Message message, Int32 code);
+        protected abstract void Serialize(DatagramWriter writer, Message message, int code);
     }
 }
