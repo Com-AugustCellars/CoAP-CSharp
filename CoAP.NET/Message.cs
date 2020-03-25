@@ -31,16 +31,16 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Indicates that no ID has been set.
         /// </summary>
-        public const Int32 None = -1;
+        public const int None = -1;
 
-        private Byte[] _token;
-        private Byte[] _payload;
-        private String _payloadString;
+        private byte[] _token;
+        private byte[] _payload;
+        private string _payloadString;
         private readonly SortedDictionary<OptionType, LinkedList<Option>> _optionMap = new SortedDictionary<OptionType, LinkedList<Option>>();
-        private Boolean _acknowledged;
-        private Boolean _rejected;
-        private Boolean _cancelled;
-        private Boolean _timedOut;
+        private bool _acknowledged;
+        private bool _rejected;
+        private bool _cancelled;
+        private bool _timedOut;
 
         /// <summary>
         /// Occurs when this message is retransmitting.
@@ -88,7 +88,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="type">the message type</param>
         /// <param name="code">the message code</param>
-        public Message(MessageType type, Int32 code)
+        public Message(MessageType type, int code)
         {
             Type = type;
             Code = code;
@@ -103,47 +103,40 @@ namespace Com.AugustCellars.CoAP
         /// Gets or sets the ID of this CoAP message.
         /// </summary>
         // ReSharper disable once InconsistentNaming
-        public Int32 ID { get; set; } = None;
+        public int ID { get; set; } = None;
 
         /// <summary>
         /// Gets the code of this CoAP message.
         /// </summary>
-        public Int32 Code { get; set;  }
+        public int Code { get; set;  }
 
         /// <summary>
         /// Gets the code's string representation of this CoAP message.
         /// </summary>
-        public String CodeString
-        {
-            get => CoAP.Code.ToString(Code);
-        }
+        public string CodeString => CoAP.Code.ToString(Code);
 
         /// <summary>
         /// Gets a value that indicates whether this CoAP message is a request message.
         /// </summary>
-        public Boolean IsRequest
-        {
-            get => CoAP.Code.IsRequest(Code);
-        }
+        public bool IsRequest => CoAP.Code.IsRequest(Code);
 
         /// <summary>
         /// Gets a value that indicates whether this CoAP message is a response message.
         /// </summary>
-        public Boolean IsResponse
-        {
-            get => CoAP.Code.IsResponse(Code);
-        }
+        public bool IsResponse => CoAP.Code.IsResponse(Code);
+
+        public bool IsSignal => CoAP.Code.IsSignal(Code);
 
         /// <summary>
         /// Gets or sets the 0-8 byte token.
         /// </summary>
-        public Byte[] Token
+        public byte[] Token
         {
             get => _token;
             set
             {
                 if (value != null && value.Length > 8) {
-                    throw new ArgumentException("Token length must be between 0 and 8 inclusive.", "value");
+                    throw new ArgumentException("Token length must be between 0 and 8 inclusive.", nameof(value));
                 }
 
                 _token = value;
@@ -153,10 +146,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets the token represented as a string.
         /// </summary>
-        public String TokenString
-        {
-            get => _token == null ? null : ByteArrayUtils.ToHexString(_token);
-        }
+        public string TokenString => _token == null ? null : ByteArrayUtils.ToHexString(_token);
 
         /// <summary>
         /// Gets or sets the destination endpoint.
@@ -193,7 +183,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets a value indicating whether this message has been acknowledged.
         /// </summary>
-        public Boolean IsAcknowledged
+        public bool IsAcknowledged
         {
             get => _acknowledged;
             set
@@ -208,7 +198,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets a value indicating whether this message has been rejected.
         /// </summary>
-        public Boolean IsRejected
+        public bool IsRejected
         {
             get => _rejected;
             set
@@ -224,7 +214,7 @@ namespace Com.AugustCellars.CoAP
         /// Gets or sets a value that indicates whether this CoAP message has timed out.
         /// Confirmable messages in particular might timeout.
         /// </summary>
-        public Boolean IsTimedOut
+        public bool IsTimedOut
         {
             get => _timedOut;
             set
@@ -239,7 +229,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets a value that indicates whether this CoAP message is canceled.
         /// </summary>
-        public Boolean IsCancelled
+        public bool IsCancelled
         {
             get => _cancelled;
             set
@@ -254,12 +244,12 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets a value indicating whether this message is a duplicate.
         /// </summary>
-        public Boolean Duplicate { get; set; }
+        public bool Duplicate { get; set; }
 
         /// <summary>
         /// Gets or sets the serialized message as byte array, or null if not serialized yet.
         /// </summary>
-        public Byte[] Bytes { get; set; }
+        public byte[] Bytes { get; set; }
 
         /// <summary>
         /// Gets or sets the timestamp when this message has been received or sent,
@@ -270,30 +260,27 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets the max times this message should be retransmitted if no ACK received.
         /// A value of 0 means that the <see cref="ICoapConfig.MaxRetransmit"/>
-        /// shoud be taken into account, while a negative means NO retransmission.
+        /// should be taken into account, while a negative means NO retransmission.
         /// The default value is 0.
         /// </summary>
-        public Int32 MaxRetransmit { get; set; }
+        public int MaxRetransmit { get; set; }
 
         /// <summary>
         /// Gets or sets the amount of time in milliseconds after which this message will time out.
         /// A value of 0 indicates that the time should be decided automatically,
         /// while a negative that never time out. The default value is 0.
         /// </summary>
-        public Int32 AckTimeout { get; set; }
+        public int AckTimeout { get; set; }
 
         /// <summary>
         /// Gets the size of the payload of this CoAP message.
         /// </summary>
-        public Int32 PayloadSize
-        {
-            get => (null == _payload) ? 0 : _payload.Length;
-        }
+        public int PayloadSize => (null == _payload) ? 0 : _payload.Length;
 
         /// <summary>
         /// Gets or sets the payload of this CoAP message.
         /// </summary>
-        public Byte[] Payload
+        public byte[] Payload
         {
             get => _payload;
             set { _payload = value; _payloadString = null; }
@@ -302,7 +289,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets the payload of this CoAP message in string representation.
         /// </summary>
-        public String PayloadString
+        public string PayloadString
         {
             get
             {
@@ -322,10 +309,10 @@ namespace Com.AugustCellars.CoAP
         /// Sets the payload of this CoAP message.
         /// </summary>
         /// <param name="payload">The string representation of the payload</param>
-        public Message SetPayload(String payload)
+        public Message SetPayload(string payload)
         {
             if (payload == null) {
-                payload = String.Empty;
+                payload = string.Empty;
             }
 
             Payload = System.Text.Encoding.UTF8.GetBytes(payload);
@@ -338,10 +325,10 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="payload">The string representation of the payload</param>
         /// <param name="mediaType">The content-type of the payload</param>
-        public Message SetPayload(String payload, Int32 mediaType)
+        public Message SetPayload(string payload, int mediaType)
         {
             if (payload == null) {
-                payload = String.Empty;
+                payload = string.Empty;
             }
 
             Payload = System.Text.Encoding.UTF8.GetBytes(payload);
@@ -355,7 +342,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="payload">the payload bytes</param>
         /// <param name="mediaType">the content-type of the payload</param>
-        public Message SetPayload(Byte[] payload, Int32 mediaType)
+        public Message SetPayload(byte[] payload, int mediaType)
         {
             Payload = payload;
             ContentType = mediaType;
@@ -409,21 +396,22 @@ namespace Com.AugustCellars.CoAP
 
         private void Fire(EventHandler handler)
         {
-            if (handler != null)
+            if (handler != null) {
                 handler(this, EventArgs.Empty);
+            }
         }
 
         /// <summary>
         /// To string.
         /// </summary>
-        public override String ToString()
+        public override string ToString()
         {
-            String payload = PayloadString;
+            string payload = PayloadString;
             if (payload == null) {
                 payload = "[no payload]";
             }
             else {
-                Int32 len = payload.Length, nl = payload.IndexOf('\n');
+                int len = payload.Length, nl = payload.IndexOf('\n');
                 if (nl >= 0) {
                     payload = payload.Substring(0, nl);
                 }
@@ -444,10 +432,10 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Equals.
         /// </summary>
-        public override Boolean Equals(Object obj)
+        public override bool Equals(object obj)
         {
             if (obj == null) return false;
-            if (Object.ReferenceEquals(this, obj)) return true;
+            if (object.ReferenceEquals(this, obj)) return true;
             if (GetType() != obj.GetType()) return false;
 
             Message other = (Message)obj;
@@ -466,7 +454,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Get hash code.
         /// </summary>
-        public override Int32 GetHashCode()
+        public override int GetHashCode()
         {
             return base.GetHashCode();
         }
@@ -505,10 +493,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets If-Match options.
         /// </summary>
-        public IEnumerable<Byte[]> IfMatches
-        {
-            get => SelectOptions(OptionType.IfMatch, o => o.RawValue);
-        }
+        public IEnumerable<byte[]> IfMatches => SelectOptions(OptionType.IfMatch, o => o.RawValue);
 
         /// <summary>
         /// Checks if a value is matched by the IfMatch options.
@@ -516,7 +501,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="what">ETag value to check</param>
         /// <returns>what is in the IfMatch list</returns>
-        public Boolean IsIfMatch(Byte[] what)
+        public bool IsIfMatch(byte[] what)
         {
             IEnumerable<Option> ifmatches = GetOptions(OptionType.IfMatch);
             if (ifmatches == null) {
@@ -541,8 +526,8 @@ namespace Com.AugustCellars.CoAP
         /// Add an If-Match option with an ETag
         /// </summary>
         /// <param name="opaque">ETag to add</param>
-        /// <returns>Current mesage</returns>
-        public Message AddIfMatch(Byte[] opaque)
+        /// <returns>Current message</returns>
+        public Message AddIfMatch(byte[] opaque)
         {
             if (opaque == null) {
                 throw ThrowHelper.ArgumentNull("opaque");
@@ -560,7 +545,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="opaque">ETag value to remove</param>
         /// <returns>Current message</returns>
-        public Message RemoveIfMatch(Byte[] opaque)
+        public Message RemoveIfMatch(byte[] opaque)
         {
             LinkedList<Option> list = GetOptions(OptionType.IfMatch) as LinkedList<Option>;
             if (list != null) {
@@ -573,7 +558,7 @@ namespace Com.AugustCellars.CoAP
         }
 
         /// <summary>
-        /// Remvoe all If-Match options from the message
+        /// Remove all If-Match options from the message
         /// </summary>
         /// <returns>Current message</returns>
         public Message ClearIfMatches()
@@ -585,7 +570,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Return all ETags on the message
         /// </summary>
-        public IEnumerable<Byte[]> ETags
+        public IEnumerable<byte[]> ETags
         {
             get { return SelectOptions(OptionType.ETag, o => o.RawValue); }
         }
@@ -595,7 +580,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="what">EETag value to check for</param>
         /// <returns>true if present</returns>
-        public Boolean ContainsETag(Byte[] what)
+        public bool ContainsETag(byte[] what)
         {
             return Utils.Contains(GetOptions(OptionType.ETag), o => Utils.AreSequenceEqualTo(what, o.RawValue));
         }
@@ -605,7 +590,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="opaque">ETag to add</param>
         /// <returns>Current Message</returns>
-        public Message AddETag(Byte[] opaque)
+        public Message AddETag(byte[] opaque)
         {
             if (opaque == null) {
                 throw ThrowHelper.ArgumentNull("opaque");
@@ -619,7 +604,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="opaque">ETag to be removed</param>
         /// <returns>Current message</returns>
-        public Message RemoveETag(Byte[] opaque)
+        public Message RemoveETag(byte[] opaque)
         {
             LinkedList<Option> list = GetOptions(OptionType.ETag) as LinkedList<Option>;
             if (list != null) {
@@ -645,7 +630,7 @@ namespace Com.AugustCellars.CoAP
         /// Get - Does the message have an IfNoneMatch option?
         /// Set - Set or clear IfNoneMatch option to value
         /// </summary>
-        public Boolean IfNoneMatch
+        public bool IfNoneMatch
         {
             get => HasOption(OptionType.IfNoneMatch);
             set
@@ -662,7 +647,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Get/Set URI host option
         /// </summary>
-        public String UriHost
+        public string UriHost
         {
             get
             {
@@ -685,7 +670,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Get/Set the UriPath options
         /// </summary>
-        public String UriPath
+        public string UriPath
         {
             get { return "/" + Option.Join(GetOptions(OptionType.UriPath), "/"); }
             set { SetOptions(Option.Split(OptionType.UriPath, value, "/")); }
@@ -694,7 +679,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Get the UriPath as an enumeration
         /// </summary>
-        public IEnumerable<String> UriPaths
+        public IEnumerable<string> UriPaths
         {
             get
             {
@@ -712,7 +697,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="path">Path element</param>
         /// <returns>Current Message</returns>
-        public Message AddUriPath(String path)
+        public Message AddUriPath(string path)
         {
             if (path == null) {
                 throw ThrowHelper.ArgumentNull("path");
@@ -730,11 +715,11 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="path">Current message</param>
         /// <returns></returns>
-        public Message RemoveUriPath(String path)
+        public Message RemoveUriPath(string path)
         {
             LinkedList<Option> list = GetOptions(OptionType.UriPath) as LinkedList<Option>;
             if (list != null) {
-                Option opt = Utils.FirstOrDefault(list, o => String.Equals(path, o.StringValue));
+                Option opt = Utils.FirstOrDefault(list, o => string.Equals(path, o.StringValue));
                 if (opt != null) {
                     list.Remove(opt);
                 }
@@ -755,12 +740,12 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Get/Set UriQuery properties
         /// </summary>
-        public String UriQuery
+        public string UriQuery
         {
             get => Option.Join(GetOptions(OptionType.UriQuery), "&");
             set
             {
-                if (!String.IsNullOrEmpty(value) && value.StartsWith("?")) {
+                if (!string.IsNullOrEmpty(value) && value.StartsWith("?")) {
                     value = value.Substring(1);
                 }
 
@@ -771,7 +756,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Get enumeration of all UriQuery properties
         /// </summary>
-        public IEnumerable<String> UriQueries
+        public IEnumerable<string> UriQueries
         {
             get
             {
@@ -789,7 +774,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="query">query to add</param>
         /// <returns>Current Message</returns>
-        public Message AddUriQuery(String query)
+        public Message AddUriQuery(string query)
         {
             if (query == null) {
                 throw ThrowHelper.ArgumentNull("query");
@@ -807,11 +792,11 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="query">Query to remove</param>
         /// <returns>Current message</returns>
-        public Message RemoveUriQuery(String query)
+        public Message RemoveUriQuery(string query)
         {
             LinkedList<Option> list = GetOptions(OptionType.UriQuery) as LinkedList<Option>;
             if (list != null) {
-                Option opt = Utils.FirstOrDefault(list, o => String.Equals(query, o.StringValue));
+                Option opt = Utils.FirstOrDefault(list, o => string.Equals(query, o.StringValue));
                 if (opt != null) {
                     list.Remove(opt);
                 }
@@ -832,7 +817,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Get/Set the UriPort option
         /// </summary>
-        public Int32 UriPort
+        public int UriPort
         {
             get
             {
@@ -853,12 +838,12 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Return location path and query options
         /// </summary>
-        public String Location
+        public string Location
         {
             get
             {
-                String path = "/" + LocationPath, query = LocationQuery;
-                if (!String.IsNullOrEmpty(query)) {
+                string path = "/" + LocationPath, query = LocationQuery;
+                if (!string.IsNullOrEmpty(query)) {
                     path += "?" + query;
                 }
 
@@ -869,7 +854,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or set the location-path of this CoAP message.
         /// </summary>
-        public String LocationPath
+        public string LocationPath
         {
             get => Option.Join(GetOptions(OptionType.LocationPath), "/");
             set => SetOptions(Option.Split(OptionType.LocationPath, value, "/"));
@@ -878,7 +863,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Return enumeration of all Location Path options
         /// </summary>
-        public IEnumerable<String> LocationPaths
+        public IEnumerable<string> LocationPaths
         {
             get { return SelectOptions(OptionType.LocationPath, o => o.StringValue); }
         }
@@ -888,7 +873,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="path">option to add</param>
         /// <returns>Current message</returns>
-        public Message AddLocationPath(String path)
+        public Message AddLocationPath(string path)
         {
             if (path == null) {
                 throw ThrowHelper.ArgumentNull("path");
@@ -906,13 +891,14 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="path">Element to remove</param>
         /// <returns>Current message</returns>
-        public Message RemoveLocationPath(String path)
+        public Message RemoveLocationPath(string path)
         {
             LinkedList<Option> list = GetOptions(OptionType.LocationPath) as LinkedList<Option>;
             if (list != null) {
-                Option opt = Utils.FirstOrDefault(list, o => String.Equals(path, o.StringValue));
-                if (opt != null)
+                Option opt = Utils.FirstOrDefault(list, o => string.Equals(path, o.StringValue));
+                if (opt != null) {
                     list.Remove(opt);
+                }
             }
             return this;
         }
@@ -930,12 +916,12 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Return all Location-Query options
         /// </summary>
-        public String LocationQuery
+        public string LocationQuery
         {
             get => Option.Join(GetOptions(OptionType.LocationQuery), "&");
             set
             {
-                if (!String.IsNullOrEmpty(value) && value.StartsWith("?")) {
+                if (!string.IsNullOrEmpty(value) && value.StartsWith("?")) {
                     value = value.Substring(1);
                 }
 
@@ -946,7 +932,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Return enumerator of all Location-Query options
         /// </summary>
-        public IEnumerable<String> LocationQueries
+        public IEnumerable<string> LocationQueries
         {
             get => SelectOptions(OptionType.LocationQuery, o => o.StringValue);
         }
@@ -956,7 +942,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="query">query element to add</param>
         /// <returns>Current message</returns>
-        public Message AddLocationQuery(String query)
+        public Message AddLocationQuery(string query)
         {
             if (query == null) {
                 throw ThrowHelper.ArgumentNull("query");
@@ -974,11 +960,11 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="query">query to remove</param>
         /// <returns>Current message</returns>
-        public Message RemoveLocationQuery(String query)
+        public Message RemoveLocationQuery(string query)
         {
             LinkedList<Option> list = GetOptions(OptionType.LocationQuery) as LinkedList<Option>;
             if (list != null) {
-                Option opt = Utils.FirstOrDefault(list, o => String.Equals(query, o.StringValue));
+                Option opt = Utils.FirstOrDefault(list, o => string.Equals(query, o.StringValue));
                 if (opt != null) {
                     list.Remove(opt);
                 }
@@ -999,7 +985,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets the content-type of this CoAP message.
         /// </summary>
-        public Int32 ContentType
+        public int ContentType
         {
             get
             {
@@ -1021,7 +1007,7 @@ namespace Com.AugustCellars.CoAP
         /// Gets or sets the content-format of this CoAP message,
         /// same as ContentType, only another name.
         /// </summary>
-        public Int32 ContentFormat
+        public int ContentFormat
         {
             get => ContentType;
             set => ContentType = value;
@@ -1030,7 +1016,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets the max-age of this CoAP message.
         /// </summary>
-        public Int64 MaxAge
+        public long MaxAge
         {
             get
             {
@@ -1040,7 +1026,7 @@ namespace Com.AugustCellars.CoAP
             set
             {
                 if (value < 0 || value > uint.MaxValue) {
-                    throw ThrowHelper.Argument("value", "Max-Age option must be between 0 and " + UInt32.MaxValue + " (4 bytes) inclusive");
+                    throw ThrowHelper.Argument("value", "Max-Age option must be between 0 and " + uint.MaxValue + " (4 bytes) inclusive");
                 }
 
                 SetOption(Option.Create(OptionType.MaxAge, value));
@@ -1051,7 +1037,7 @@ namespace Com.AugustCellars.CoAP
         /// Get first Accept option
         /// Set - add additional options or remove all for MediaType.Undefined
         /// </summary>
-        public Int32 Accept
+        public int Accept
         {
             get
             {
@@ -1077,10 +1063,11 @@ namespace Com.AugustCellars.CoAP
             get
             {
                 Option opt = GetFirstOption(OptionType.ProxyUri);
-                if (opt == null)
+                if (opt == null) {
                     return null;
+                }
 
-                String proxyUriString = Uri.UnescapeDataString(opt.StringValue);
+                string proxyUriString = Uri.UnescapeDataString(opt.StringValue);
                 // All proxies that we support are going to require a "://" sequence as
                 // the schema and host are needed.  
                 int pos = proxyUriString.IndexOf("://", StringComparison.OrdinalIgnoreCase);
@@ -1104,7 +1091,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Get/Set the ProxySchema option on a message
         /// </summary>
-        public String ProxyScheme
+        public string ProxyScheme
         {
             get
             {
@@ -1125,7 +1112,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Get/Set the observe option value
         /// </summary>
-        public Int32? Observe
+        public int? Observe
         {
             get
             {
@@ -1154,12 +1141,12 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets the Size1 option. Be <code>null</code> if not set.
         /// </summary>
-        public Int32? Size1
+        public int? Size1
         {
             get
             {
                 Option opt = GetFirstOption(OptionType.Size1);
-                return opt == null ? default(Int32?) : opt.IntValue;
+                return opt == null ? default(int?) : opt.IntValue;
             }
             set
             {
@@ -1175,12 +1162,12 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets the Size2 option. Be <code>null</code> if not set.
         /// </summary>
-        public Int32? Size2
+        public int? Size2
         {
             get
             {
                 Option opt = GetFirstOption(OptionType.Size2);
-                return opt == null ? default(Int32?) : opt.IntValue;
+                return opt == null ? default(int?) : opt.IntValue;
             }
             set
             {
@@ -1216,7 +1203,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="szx">Size of blocks to use</param>
         /// <param name="m">more data?</param>
         /// <param name="num">block index</param>
-        public void SetBlock1(Int32 szx, Boolean m, Int32 num)
+        public void SetBlock1(int szx, bool m, int num)
         {
             SetOption(new BlockOption(OptionType.Block1, num, szx, m));
         }
@@ -1244,7 +1231,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="szx">Size of blocks to use</param>
         /// <param name="m">more data?</param>
         /// <param name="num">block index</param>
-        public void SetBlock2(Int32 szx, Boolean m, Int32 num)
+        public void SetBlock2(int szx, bool m, int num)
         {
             SetOption(new BlockOption(OptionType.Block2, num, szx, m));
         }
@@ -1313,7 +1300,7 @@ namespace Com.AugustCellars.CoAP
         /// Removes all options of the given type from this CoAP message.
         /// </summary>
         /// <param name="optionType">the type of option to remove</param>
-        public Boolean RemoveOptions(OptionType optionType)
+        public bool RemoveOptions(OptionType optionType)
         {
             return _optionMap.Remove(optionType);
         }
@@ -1363,7 +1350,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="type">the option type</param>
         /// <returns>rrue if options of the specified type exist</returns>
-        public Boolean HasOption(OptionType type)
+        public bool HasOption(OptionType type)
         {
             return GetFirstOption(type) != null;
         }

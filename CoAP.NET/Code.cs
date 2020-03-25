@@ -242,6 +242,11 @@ namespace Com.AugustCellars.CoAP
             return (code >= 64) && (code <= 191);
         }
 
+        public static bool IsSignal(int code)
+        {
+            return (code >= 225 && code <= 255);
+        }
+
         /// <summary>
         /// Checks whether a code represents a success code.
         /// </summary>

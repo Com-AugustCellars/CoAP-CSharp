@@ -144,6 +144,9 @@ namespace Com.AugustCellars.CoAP.Codec
             else if (IsEmpty) {
                 return DecodeEmptyMessage();
             }
+            else if (IsSignal) {
+                return DecodeSignal();
+            }
             else {
                 return null;
             }

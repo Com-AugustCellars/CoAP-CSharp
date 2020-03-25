@@ -168,7 +168,7 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        public sealed class MessageDecoder18 : MessageDecoder
+        public class MessageDecoder18 : MessageDecoder
         {
             public MessageDecoder18(byte[] data)
                 : base(data)

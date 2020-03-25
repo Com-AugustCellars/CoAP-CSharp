@@ -9,7 +9,6 @@
  * Please see README for more information.
  */
 
-using System;
 using System.IO;
 
 namespace Com.AugustCellars.CoAP.Codec

@@ -29,7 +29,7 @@ namespace Com.AugustCellars.CoAP.Stack
         {
             this.AddLast("Observe", new ObserveLayer(config));
             this.AddLast("SecureBlockwise", new OSCOAP.SecureBlockwiseLayer(config));
-            this.AddLast("OSCOAP", new OSCOAP.OscoapLayer(config));
+            this.AddLast("OSCORE", new OSCOAP.OscoapLayer(config));
             this.AddLast("Blockwise", new BlockwiseLayer(config));
             this.AddLast("Token", new TokenLayer(config));
             this.AddLast("Reliability", new ReliabilityLayer(config));
