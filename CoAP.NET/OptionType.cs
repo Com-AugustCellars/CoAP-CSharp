@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2013, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -143,14 +145,10 @@ namespace Com.AugustCellars.CoAP
         /// <remarks>RFC 7252</remarks>
         /// </summary>
         Reserved4 = 140,
-
-#if INCLUDE_OSCOAP
         /// <summary>
         /// <remarks>draft-ietf-core-oscoap</remarks>
         /// </summary>
         Oscoap = 9,
-#endif
-
         /// <summary>
         /// <remarks>RFC 7967</remarks>
         /// </summary>

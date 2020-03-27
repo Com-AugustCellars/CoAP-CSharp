@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -12,12 +14,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
-using Com.AugustCellars.CoAP.Log;
 
 namespace Com.AugustCellars.CoAP.Channel
 {
@@ -29,15 +28,12 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <summary>
         /// Default size of buffer for receiving packet.
         /// </summary>
-        public const Int32 DefaultReceivePacketSize = 4096;
+        public const int DefaultReceivePacketSize = 4096;
 
-        private readonly Int32 _port;
-//        private readonly System.Net.EndPoint _localEP;
-        private SocketSet _unicast = new SocketSet();
-//        private UDPSocket _socket;
-//        private UDPSocket _socketBackup;
-        private Int32 _running;
-        private Int32 _writing;
+        private readonly int _port;
+        private readonly SocketSet _unicast = new SocketSet();
+        private int _running;
+        private int _writing;
         private readonly ConcurrentQueue<RawData> _sendingQueue = new ConcurrentQueue<RawData>();
 
 #if LOG_UDP_CHANNEL
@@ -58,7 +54,7 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <summary>
         /// Initializes a UDP channel with the given port, both on IPv4 and IPv6.
         /// </summary>
-        public UDPChannel(Int32 port)
+        public UDPChannel(int port)
         {
             _port = port;
         }
@@ -85,18 +81,18 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <summary>
         /// Gets or sets the <see cref="Socket.ReceiveBufferSize"/>.
         /// </summary>
-        public Int32 ReceiveBufferSize { get; set; }
+        public int ReceiveBufferSize { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="Socket.SendBufferSize"/>.
         /// </summary>
-        public Int32 SendBufferSize { get; set; }
+        public int SendBufferSize { get; set; }
 
         /// <summary>
         /// Gets or sets the size of buffer for receiving packet.
         /// The default value is <see cref="DefaultReceivePacketSize"/>.
         /// </summary>
-        public Int32 ReceivePacketSize { get; set; } = DefaultReceivePacketSize;
+        public int ReceivePacketSize { get; set; } = DefaultReceivePacketSize;
 
         /// <summary>
         /// True means that it is supported, False means that it may be supported.
@@ -229,10 +225,10 @@ namespace Com.AugustCellars.CoAP.Channel
                         if (adapter.Supports(NetworkInterfaceComponent.IPv6)) {
                             IPInterfaceProperties properties = adapter.GetIPProperties();
 
-                            foreach (UnicastIPAddressInformation ip in adapter.GetIPProperties().UnicastAddresses) {
+                            foreach (UnicastIPAddressInformation ip in properties.UnicastAddresses) {
                                 if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) {
-                                    IPv6InterfaceProperties v6ip = adapter.GetIPProperties().GetIPv6Properties();
-                                    IPv6MulticastOption mc = new IPv6MulticastOption(info._localEP.Address, v6ip.Index);
+                                    IPv6InterfaceProperties v6Ip = adapter.GetIPProperties().GetIPv6Properties();
+                                    IPv6MulticastOption mc = new IPv6MulticastOption(info._localEP.Address, v6Ip.Index);
                                     try {
                                         info._socket.Socket.SetSocketOption(SocketOptionLevel.IPv6,
                                                                             SocketOptionName.AddMembership,
@@ -278,7 +274,7 @@ namespace Com.AugustCellars.CoAP.Channel
                         if (adapter.Supports(NetworkInterfaceComponent.IPv4)) {
                             IPInterfaceProperties properties = adapter.GetIPProperties();
 
-                            foreach (UnicastIPAddressInformation ip in adapter.GetIPProperties().UnicastAddresses) {
+                            foreach (UnicastIPAddressInformation ip in properties.UnicastAddresses) {
                                 if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
                                     MulticastOption mc = new MulticastOption(info._localEP.Address, ip.Address);
                                     info._socket.Socket.SetSocketOption(SocketOptionLevel.IP,
@@ -358,7 +354,7 @@ namespace Com.AugustCellars.CoAP.Channel
         }
 
         /// <inheritdoc/>
-        public void Send(Byte[] data, ISession sessionReceive, System.Net.EndPoint ep)
+        public void Send(byte[] data, ISession sessionReceive, System.Net.EndPoint ep)
         {
             RawData raw = new RawData() {
                 Data = data,
@@ -400,14 +396,14 @@ namespace Com.AugustCellars.CoAP.Channel
             }
         }
 
-        private void EndReceive(UDPSocket socket, Byte[] buffer, Int32 offset, Int32 count, System.Net.EndPoint ep)
+        private void EndReceive(UDPSocket socket, byte[] buffer, int offset, int count, System.Net.EndPoint ep)
         {
 #if LOG_UDP_CHANNEL
             _Log.Debug(m => m("EndReceive: length={0}", count));
 #endif
 
             if (count > 0) {
-                Byte[] bytes = new Byte[count];
+                byte[] bytes = new byte[count];
                 Buffer.BlockCopy(buffer, offset, bytes, 0, count);
 
                 if (ep.AddressFamily == AddressFamily.InterNetworkV6) {
@@ -442,7 +438,7 @@ namespace Com.AugustCellars.CoAP.Channel
             BeginReceive(socket);
         }
 
-        private void FireDataReceived(Byte[] data, System.Net.EndPoint ep, System.Net.EndPoint epLocal)
+        private void FireDataReceived(byte[] data, System.Net.EndPoint ep, System.Net.EndPoint epLocal)
         {
 #if LOG_UDP_CHANNEL
             _Log.Debug(m => m("FireDataReceived: data length={0}", data.Length));
@@ -481,7 +477,7 @@ namespace Com.AugustCellars.CoAP.Channel
             BeginSend(socket, raw.Data, remoteEP);
         }
 
-        private void EndSend(UDPSocket socket, Int32 bytesTransferred)
+        private void EndSend(UDPSocket socket, int bytesTransferred)
         {
             BeginSend();
         }
@@ -495,7 +491,7 @@ namespace Com.AugustCellars.CoAP.Channel
             BeginSend();
         }
 
-        private UDPSocket SetupUDPSocket(AddressFamily addressFamily, Int32 bufferSize)
+        private UDPSocket SetupUDPSocket(AddressFamily addressFamily, int bufferSize)
         {
             UDPSocket socket = NewUDPSocket(addressFamily, bufferSize);
 
@@ -506,7 +502,7 @@ namespace Com.AugustCellars.CoAP.Channel
                 Environment.OSVersion.Platform == PlatformID.WinCE) {
 #endif
                 // do not throw SocketError.ConnectionReset by ignoring ICMP Port Unreachable
-                const Int32 SIO_UDP_CONNRESET = -1744830452;
+                const int SIO_UDP_CONNRESET = -1744830452;
                 try {
                     // Set the SIO_UDP_CONNRESET ioctl to true for this UDP socket. If this UDP socket
                     //    ever sends a UDP packet to a remote destination that exists but there is
@@ -517,7 +513,7 @@ namespace Com.AugustCellars.CoAP.Channel
                     //    to wrap each UDP socket operation in a try/except, we'll disable this error
                     //    for the socket with this ioctl call.
 
-                    socket.Socket.IOControl(SIO_UDP_CONNRESET, new Byte[] {0}, null);
+                    socket.Socket.IOControl(SIO_UDP_CONNRESET, new byte[] {0}, null);
                 }
                 catch (Exception) {
                 }
@@ -532,7 +528,7 @@ namespace Com.AugustCellars.CoAP.Channel
 
         class RawData
         {
-            public Byte[] Data;
+            public byte[] Data;
             public System.Net.EndPoint EndPoint;
         }
 
@@ -543,8 +539,10 @@ namespace Com.AugustCellars.CoAP.Channel
             public UDPSocket _socketBackup;
         }
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<SessionEventArgs> SessionEvent;
+#pragma warning restore CS0067
 
         /// <inheritdoc/>
         public bool IsReliable

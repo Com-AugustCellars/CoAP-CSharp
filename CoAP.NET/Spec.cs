@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2013, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2015-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -12,41 +14,40 @@
 using System;
 using System.Collections.Generic;
 using Com.AugustCellars.CoAP.Codec;
-using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Util;
 
 namespace Com.AugustCellars.CoAP
 {
     public static class Spec
     {
-        const Int32 Version = 1;
-        const Int32 VersionBits = 2;
-        const Int32 TypeBits = 2;
-        const Int32 TokenLengthBits = 4;
-        const Int32 CodeBits = 8;
-        const Int32 IDBits = 16;
-        const Int32 OptionDeltaBits = 4;
-        const Int32 OptionLengthBits = 4;
-        const Byte PayloadMarker = 0xFF;
+        const int Version = 1;
+        const int VersionBits = 2;
+        const int TypeBits = 2;
+        const int TokenLengthBits = 4;
+        const int CodeBits = 8;
+        const int IDBits = 16;
+        const int OptionDeltaBits = 4;
+        const int OptionLengthBits = 4;
+        const byte PayloadMarker = 0xFF;
 
-        public static readonly String Name = "RFC 7252";
+        public static readonly string Name = "RFC 7252";
 
         public static IMessageEncoder NewMessageEncoder()
         {
             return new MessageEncoder18();
         }
 
-        public static IMessageDecoder NewMessageDecoder(Byte[] data)
+        public static IMessageDecoder NewMessageDecoder(byte[] data)
         {
             return new MessageDecoder18(data);
         }
 
-        public static Byte[] Encode(Message msg)
+        public static byte[] Encode(Message msg)
         {
             return NewMessageEncoder().Encode(msg);
         }
 
-        public static Message Decode(Byte[] bytes)
+        public static Message Decode(byte[] bytes)
         {
             return NewMessageDecoder(bytes).Decode();
         }
@@ -56,16 +57,20 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="optionValue">the option value (delta or length) to be encoded</param>
         /// <returns>the 4-bit option header value</returns>
-        private static Int32 GetOptionNibble(Int32 optionValue)
+        private static int GetOptionNibble(int optionValue)
         {
-            if (optionValue <= 12)
+            if (optionValue <= 12) {
                 return optionValue;
-            else if (optionValue <= 255 + 13)
+            }
+            else if (optionValue <= 255 + 13) {
                 return 13;
-            else if (optionValue <= 65535 + 269)
+            }
+            else if (optionValue <= 65535 + 269) {
                 return 14;
-            else
+            }
+            else {
                 throw ThrowHelper.Argument("optionValue", "Unsupported option delta " + optionValue);
+            }
         }
 
         /// <summary>
@@ -75,22 +80,32 @@ namespace Com.AugustCellars.CoAP
         /// <param name="nibble">the 4-bit option header value</param>
         /// <param name="datagram">the datagram</param>
         /// <returns>the value calculated from the nibble and the extended option value</returns>
-        private static Int32 GetValueFromOptionNibble(Int32 nibble, DatagramReader datagram)
+        private static int GetValueFromOptionNibble(int nibble, DatagramReader datagram)
         {
-            if (nibble < 13) return nibble;
-            else if (nibble == 13) return datagram.Read(8) + 13;
-            else if (nibble == 14) return datagram.Read(16) + 269;
-            else
+            if (nibble < 13) {
+                return nibble;
+            }
+            else if (nibble == 13) {
+                return datagram.Read(8) + 13;
+            }
+            else if (nibble == 14) {
+                return datagram.Read(16) + 269;
+            }
+            else {
                 throw ThrowHelper.Argument("nibble", "Unsupported option delta " + nibble);
+            }
         }
 
         public class MessageEncoder18 : MessageEncoder
         {
-            protected override void Serialize(DatagramWriter writer, Message msg, Int32 code)
+            protected override void Serialize(DatagramWriter writer, Message msg, int code)
             {
                 // write fixed-size CoAP headers
                 writer.Write(Version, VersionBits);
-                writer.Write((Int32)msg.Type, TypeBits);
+                if (msg.Type == MessageType.Unknown) {
+                    throw new CoAPException("Invalid parameter for message type");
+                }
+                writer.Write((int)msg.Type, TypeBits);
                 writer.Write(msg.Token == null ? 0 : msg.Token.Length, TokenLengthBits);
                 writer.Write(code, CodeBits);
                 writer.Write(msg.ID, IDBits);
@@ -98,20 +113,20 @@ namespace Com.AugustCellars.CoAP
                 // write token, which may be 0 to 8 bytes, given by token length field
                 writer.WriteBytes(msg.Token);
 
-                Int32 lastOptionNumber = 0;
+                int lastOptionNumber = 0;
                 IEnumerable<Option> options = msg.GetOptions();
 
                 foreach (Option opt in options)
                 {
                     // write 4-bit option delta
-                    Int32 optNum = (Int32)opt.Type;
-                    Int32 optionDelta = optNum - lastOptionNumber;
-                    Int32 optionDeltaNibble = GetOptionNibble(optionDelta);
+                    int optNum = (int)opt.Type;
+                    int optionDelta = optNum - lastOptionNumber;
+                    int optionDeltaNibble = GetOptionNibble(optionDelta);
                     writer.Write(optionDeltaNibble, OptionDeltaBits);
 
                     // write 4-bit option length
-                    Int32 optionLength = opt.Length;
-                    Int32 optionLengthNibble = GetOptionNibble(optionLength);
+                    int optionLength = opt.Length;
+                    int optionLengthNibble = GetOptionNibble(optionLength);
                     writer.Write(optionLengthNibble, OptionLengthBits);
 
                     // write extended option delta field (0 - 2 bytes)
@@ -141,7 +156,7 @@ namespace Com.AugustCellars.CoAP
                     lastOptionNumber = optNum;
                 }
 
-                Byte[] payload = msg.Payload;
+                byte[] payload = msg.Payload;
                 if (payload != null && payload.Length > 0)
                 {
                     // if payload is present and of non-zero length, it is prefixed by
@@ -153,18 +168,15 @@ namespace Com.AugustCellars.CoAP
             }
         }
 
-        public class MessageDecoder18 : MessageDecoder
+        public sealed class MessageDecoder18 : MessageDecoder
         {
-            public MessageDecoder18(Byte[] data)
+            public MessageDecoder18(byte[] data)
                 : base(data)
             {
                 ReadProtocol();
             }
 
-            public override Boolean IsWellFormed
-            {
-                get { return m_version == Version; }
-            }
+            public override bool IsWellFormed => m_version == Version;
 
             protected override void ReadProtocol()
             {
@@ -223,18 +235,18 @@ namespace Com.AugustCellars.CoAP
     {
         partial class EndPointManager
         {
-            private static IEndPoint _Default;
+            private static IEndPoint _default;
 
             private static IEndPoint GetDefaultEndPoint()
             {
-                if (_Default == null) {
+                if (_default == null) {
                     lock (typeof(EndPointManager)) {
-                        if (_Default == null) {
-                            _Default = CreateEndPoint();
+                        if (_default == null) {
+                            _default = CreateEndPoint();
                         }
                     }
                 }
-                return _Default;
+                return _default;
             }
 
             private static IEndPoint CreateEndPoint()

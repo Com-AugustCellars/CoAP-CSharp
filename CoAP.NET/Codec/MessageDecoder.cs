@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2017-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -25,7 +27,7 @@ namespace Com.AugustCellars.CoAP.Codec
         /// <summary>
         /// the version of the decoding message
         /// </summary>
-        protected Int32 m_version;
+        protected int m_version;
         /// <summary>
         /// the type of the decoding message
         /// </summary>
@@ -33,21 +35,21 @@ namespace Com.AugustCellars.CoAP.Codec
         /// <summary>
         /// the length of token
         /// </summary>
-        protected Int32 m_tokenLength;
+        protected int m_tokenLength;
         /// <summary>
         /// the code of the decoding message
         /// </summary>
-        protected Int32 m_code;
+        protected int m_code;
         /// <summary>
         /// the id of the decoding message
         /// </summary>
-        protected Int32 m_id;
+        protected int m_id;
 
         /// <summary>
         /// Instantiates.
         /// </summary>
         /// <param name="data">the bytes array to decode</param>
-        public MessageDecoder(Byte[] data)
+        public MessageDecoder(byte[] data)
         {
             m_reader = new DatagramReader(data);
         }
@@ -58,62 +60,32 @@ namespace Com.AugustCellars.CoAP.Codec
         protected abstract void ReadProtocol();
 
         /// <inheritdoc/>
-        public abstract Boolean IsWellFormed { get; }
+        public abstract bool IsWellFormed { get; }
 
         /// <inheritdoc/>
-        public Boolean IsReply
-        {
-            get { return m_type == MessageType.ACK || m_type == MessageType.RST; }
-        }
+        public bool IsReply => m_type == MessageType.ACK || m_type == MessageType.RST;
 
         /// <inheritdoc/>
-        public virtual Boolean IsRequest
-        {
-            get
-            {
-                return m_code >= CoapConstants.RequestCodeLowerBound &&
-                    m_code <= CoapConstants.RequestCodeUpperBound;
-            }
-        }
+        public virtual bool IsRequest =>
+            m_code >= CoapConstants.RequestCodeLowerBound &&
+            m_code <= CoapConstants.RequestCodeUpperBound;
 
         /// <inheritdoc/>
-        public virtual Boolean IsResponse
-        {
-            get 
-            {
-                return (m_code >= CoapConstants.ResponseCodeLowerBound &&
-                        m_code <= CoapConstants.ResponseCodeUpperBound) ||
-                       m_code == (int) SignalCode.Pong;
-            }
-        }
+        public virtual bool IsResponse => (m_code >= CoapConstants.ResponseCodeLowerBound && m_code <= CoapConstants.ResponseCodeUpperBound) ||
+            m_code == (int) SignalCode.Pong;
 
         /// <inheritdoc/>
-        public Boolean IsEmpty
-        {
-            get { return m_code == Code.Empty; }
-        }
+        public bool IsEmpty => m_code == Code.Empty;
 
         /// <inheritdoc/>
-        public Boolean IsSignal
-        {
-            get
-            {
-                return m_code >= CoapConstants.SignalCodeLowerBound &&
-                       m_code <= CoapConstants.SignalCodeUpperBound;
-            }
-        }
+        public bool IsSignal =>
+            m_code >= CoapConstants.SignalCodeLowerBound && m_code <= CoapConstants.SignalCodeUpperBound;
 
         /// <inheritdoc/>
-        public Int32 Version
-        {
-            get { return m_version; }
-        }
+        public int Version => m_version;
 
         /// <inheritdoc/>
-        public Int32 ID
-        {
-            get { return m_id; }
-        }
+        public int ID => m_id;
 
         /// <inheritdoc/>
         public Request DecodeRequest()
@@ -163,14 +135,18 @@ namespace Com.AugustCellars.CoAP.Codec
         /// <inheritdoc/>
         public Message Decode()
         {
-            if (IsRequest)
+            if (IsRequest) {
                 return DecodeRequest();
-            else if (IsResponse)
+            }
+            else if (IsResponse) {
                 return DecodeResponse();
-            else if (IsEmpty)
+            }
+            else if (IsEmpty) {
                 return DecodeEmptyMessage();
-            else
+            }
+            else {
                 return null;
+            }
         }
 
         /// <summary>

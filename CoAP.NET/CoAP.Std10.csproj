@@ -23,8 +23,12 @@
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
 It is intented primarily for research and verification work.
 
+1.8
+  - Internal cleanup work.
+
 1.7
   - Remove the media types that had been previously marked as obsolete.
+  - Restore the incorrect removal of reliability for DTLS on the server side.
   - Internal cleanup work.
 1.6
   - Use cache key fields for matching blockwise transfers.
@@ -98,7 +102,7 @@ It is intented primarily for research and verification work.
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>TRACE;INCLUDE_OSCOAP;OSCOAP_COMPRESS</DefineConstants>
+    <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Deploy'">

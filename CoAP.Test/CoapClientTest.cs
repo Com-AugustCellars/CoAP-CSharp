@@ -1,4 +1,17 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2011-2015, Longxiang He <helongxiang@smeshlink.com>,
+ * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -19,10 +32,12 @@ namespace Com.AugustCellars.CoAP
         static readonly string CONTENT_4 = "four";
         static readonly string QUERY_UPPER_CASE = "uppercase";
 
-        Int32 _serverPort;
+        int _serverPort;
         CoapServer _server;
         Resource _resource;
-        Boolean _failed;
+        string _expected;
+        int _notifications;
+        bool _failed;
 
         [TestInitialize]
         public void SetupServer()
@@ -62,25 +77,17 @@ namespace Com.AugustCellars.CoAP
             Thread.Sleep(100);
 
             // Observe the resource
-            string expected = CONTENT_2;
-            int notifyTest = 0;
-            int actualTest = 0;
-            int doubleObserve = 0;
-            int lastObserver = -1;
+            _expected = CONTENT_2;
+
+            object blockLock = new object();
             CoapObserveRelation obs1 = client.Observe(response =>
                 {
-                    Interlocked.Increment(ref notifications);
-                    string payload = response.ResponseText;
-
-                    actualTest += (payload == expected) ? 0 : 1;
-                    notifyTest += (response.HasOption(OptionType.Observe) ? 0 : 1);
-                    if (response.Observe != null) {
-                        doubleObserve += (response.Observe == lastObserver ? 1 : 0);
-
-                        lastObserver = (int) response.Observe;
+                    lock (blockLock) { // Make sure only one at a time is in here.
+                        Interlocked.Increment(ref _notifications);
+                        string payload = response.ResponseText;
+                        Assert.AreEqual(_expected, payload);
+                        Assert.IsTrue(response.HasOption(OptionType.Observe));
                     }
-
-                    syncEvent.Reset();
                 }, Fail);
             Assert.IsFalse(obs1.Canceled);
 
@@ -112,7 +119,7 @@ namespace Com.AugustCellars.CoAP
             Assert.AreEqual(4, notifications);
 
             Thread.Sleep(100);
-            expected = CONTENT_3;
+            _expected = CONTENT_3;
             string resp5 = client.Post(CONTENT_3).ResponseText;
             Assert.AreEqual(CONTENT_2, resp5);
             syncEvent.WaitOne(100);
@@ -132,7 +139,7 @@ namespace Com.AugustCellars.CoAP
             obs1.ReactiveCancel();
             Thread.Sleep(100);
             _resource.Changed();
-            Assert.AreEqual(5, notifications);
+            Assert.AreEqual(5, _notifications);
 
             // Make another post
             Thread.Sleep(100);
@@ -182,10 +189,10 @@ namespace Com.AugustCellars.CoAP
             int notifyTest = 0;
             CoapObserveRelation obs1 = client.ObserveAsync(response =>
                 {
-                    Interlocked.Increment(ref notifications);
+                    Interlocked.Increment(ref _notifications);
                     string payload = response.ResponseText;
-                    actualTest += (payload == expected) ? 0 : 1;
-                    notifyTest += (response.HasOption(OptionType.Observe) ? 0 : 1);
+                    Assert.AreEqual(_expected, payload);
+                    Assert.IsTrue(response.HasOption(OptionType.Observe));
                 }
             );
 

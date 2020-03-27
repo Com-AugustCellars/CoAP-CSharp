@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2015, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -31,30 +33,28 @@ namespace Com.AugustCellars.CoAP.Util
         /// <param name="comparison">the delegate for comparing</param>
         public static void InsertionSort<T>(IList<T> list, Comparison<T> comparison)
         {
-            for (Int32 i = 1; i < list.Count; i++)
-            {
-                Int32 j;
+            for (int i = 1; i < list.Count; i++) {
+                int j;
                 T temp = list[i];
-                for (j = i; j > 0; j--)
-                {
-                    if (comparison(list[j - 1], temp) > 0)
-                    {
+                for (j = i; j > 0; j--) {
+                    if (comparison(list[j - 1], temp) > 0) {
                         list[j] = list[j - 1];
                     }
-                    else
-                    {
+                    else {
                         break;
                     }
                 }
-                if (i != j)
+
+                if (i != j) {
                     list[j] = temp;
+                }
             }
         }
 
         /// <summary>
         /// Checks if all items in both of the two enumerables are equal.
         /// </summary>
-        public static Boolean AreSequenceEqualTo<T>(IEnumerable<T> first, IEnumerable<T> second)
+        public static bool AreSequenceEqualTo<T>(IEnumerable<T> first, IEnumerable<T> second)
         {
             return AreSequenceEqualTo<T>(first, second, null);
         }
@@ -62,9 +62,9 @@ namespace Com.AugustCellars.CoAP.Util
         /// <summary>
         /// Checks if all items in both of the two enumerables are equal.
         /// </summary>
-        public static Boolean AreSequenceEqualTo<T>(IEnumerable<T> first, IEnumerable<T> second, IEqualityComparer<T> comparer)
+        public static bool AreSequenceEqualTo<T>(IEnumerable<T> first, IEnumerable<T> second, IEqualityComparer<T> comparer)
         {
-            if (first == second) return true;   //  If the objects are the same - 
+            if (first == second) return true; //  If the objects are the same - 
             if (first == null && second == null) {
                 return true;
             }
@@ -80,6 +80,7 @@ namespace Com.AugustCellars.CoAP.Util
                                 return false;
                             }
                         }
+
                         if (it1.MoveNext() || it2.MoveNext()) {
                             return false;
                         }
@@ -102,14 +103,14 @@ namespace Com.AugustCellars.CoAP.Util
         /// <returns>the item found, or null if none is matched</returns>
         public static T FirstOrDefault<T>(IEnumerable<T> source, Predicate<T> condition)
         {
-            if (source != null)
-            {
-                foreach (var item in source)
-                {
-                    if (condition(item))
+            if (source != null) {
+                foreach (var item in source) {
+                    if (condition(item)) {
                         return item;
+                    }
                 }
             }
+
             return default(T);
         }
 
@@ -120,33 +121,31 @@ namespace Com.AugustCellars.CoAP.Util
         /// <param name="source">the source to search</param>
         /// <param name="condition">the condition delegate</param>
         /// <returns>true if exists any matched item, otherwise false</returns>
-        public static Boolean Contains<T>(IEnumerable<T> source, Predicate<T> condition)
+        public static bool Contains<T>(IEnumerable<T> source, Predicate<T> condition)
         {
-            if (source != null)
-            {
-                foreach (var item in source)
-                {
-                    if (condition(item))
+            if (source != null) {
+                foreach (var item in source) {
+                    if (condition(item)) {
                         return true;
+                    }
                 }
             }
+
             return false;
         }
 
         /// <summary>
         /// Stringify a message.
         /// </summary>
-        public static String ToString(Message msg)
+        public static string ToString(Message msg)
         {
             StringBuilder sb = new StringBuilder();
-            String kind = "Message", code = "Code";
-            if (msg.IsRequest)
-            {
+            string kind = "Message", code = "Code";
+            if (msg.IsRequest) {
                 kind = "Request";
                 code = "Method";
             }
-            else if (msg.IsResponse)
-            {
+            else if (msg.IsResponse) {
                 kind = "Response";
                 code = "Status";
             }
@@ -155,13 +154,16 @@ namespace Com.AugustCellars.CoAP.Util
                 .AppendFormat("ID     : {0}\n", msg.ID)
                 .AppendFormat("Type   : {0}\n", msg.Type)
                 .AppendFormat("Token  : {0}\n", msg.TokenString)
-                .AppendFormat("{1}: {0}\n", CoAP.Code.ToString(msg.Code), code.PadRight(7));
-            
-            if (msg.Source != null)
+                .AppendFormat("{1}: {0}\n", Code.ToString(msg.Code), code.PadRight(7));
+
+            if (msg.Source != null) {
                 sb.AppendFormat("Source : {0}\n", msg.Source);
-            if (msg.Destination != null)
+            }
+
+            if (msg.Destination != null) {
                 sb.AppendFormat("Dest   : {0}\n", msg.Destination);
-            
+            }
+
             sb.AppendFormat("Options: {0}\n", OptionsToString(msg))
                 .AppendFormat("Payload: {0} Bytes\n", msg.PayloadSize);
 
@@ -189,61 +191,84 @@ namespace Com.AugustCellars.CoAP.Util
         /// <summary>
         /// Stringify options in a message.
         /// </summary>
-        public static String OptionsToString(Message msg)
+        public static string OptionsToString(Message msg)
         {
-            Boolean first = true;
-            Action<StringBuilder, String, String> appendIfNotNullOrEmpty =
-                delegate(StringBuilder builder, String header, String value)
-                {
-                    if (String.IsNullOrEmpty(value))
+            bool first = true;
+            Action<StringBuilder, string, string> appendIfNotNullOrEmpty =
+                delegate(StringBuilder builder, string header, string value) {
+                    if (string.IsNullOrEmpty(value)) {
                         return;
+                    }
 
-                    if (first)
+                    if (first) {
                         first = false;
-                    else
+                    }
+                    else {
                         builder.Append(", ");
+                    }
+
                     builder.Append(header).Append("=").Append(value);
                 };
 
             StringBuilder sb = new StringBuilder();
             appendIfNotNullOrEmpty(sb, "If-Match", ToString(msg.IfMatches, bs => ByteArrayUtils.ToHexString(bs)));
-            if (msg.HasOption(OptionType.UriHost))
+            if (msg.HasOption(OptionType.UriHost)) {
                 appendIfNotNullOrEmpty(sb, "URI-Host", msg.UriHost);
+            }
+
             appendIfNotNullOrEmpty(sb, "ETag", ToString(msg.ETags, bs => ByteArrayUtils.ToHexString(bs)));
-            if (msg.IfNoneMatch)
+            if (msg.IfNoneMatch) {
                 appendIfNotNullOrEmpty(sb, "If-None-Match", msg.IfNoneMatch.ToString());
-            if (msg.UriPort > 0)
-            appendIfNotNullOrEmpty(sb, "URI-Port", msg.UriPort.ToString());
+            }
+
+            if (msg.UriPort > 0) {
+                appendIfNotNullOrEmpty(sb, "URI-Port", msg.UriPort.ToString());
+            }
+
             appendIfNotNullOrEmpty(sb, "Location-Path", ToString(msg.LocationPaths));
             appendIfNotNullOrEmpty(sb, "URI-Path", ToString(msg.UriPaths));
-            if (msg.ContentType != MediaType.Undefined)
+            if (msg.ContentType != MediaType.Undefined) {
                 appendIfNotNullOrEmpty(sb, "Content-Type", MediaType.ToString(msg.ContentType));
-            if (msg.HasOption(OptionType.MaxAge))
+            }
+
+            if (msg.HasOption(OptionType.MaxAge)) {
                 appendIfNotNullOrEmpty(sb, "Max-Age", msg.MaxAge.ToString());
+            }
+
             appendIfNotNullOrEmpty(sb, "URI-Query", ToString(msg.UriQueries));
-            if (msg.Accept != MediaType.Undefined)
+            if (msg.Accept != MediaType.Undefined) {
                 appendIfNotNullOrEmpty(sb, "Accept", MediaType.ToString(msg.Accept));
+            }
+
             appendIfNotNullOrEmpty(sb, "Location-Query", ToString(msg.LocationQueries));
-            if (msg.HasOption(OptionType.ProxyUri))
+            if (msg.HasOption(OptionType.ProxyUri)) {
                 appendIfNotNullOrEmpty(sb, "Proxy-URI", msg.ProxyUri.ToString());
+            }
+
             appendIfNotNullOrEmpty(sb, "Proxy-Scheme", msg.ProxyScheme);
-            if (msg.Block1 != null)
+            if (msg.Block1 != null) {
                 appendIfNotNullOrEmpty(sb, "Block1", msg.Block1.ToString());
-            if (msg.Block2 != null)
+            }
+
+            if (msg.Block2 != null) {
                 appendIfNotNullOrEmpty(sb, "Block2", msg.Block2.ToString());
-            if (msg.Observe.HasValue)
+            }
+
+            if (msg.Observe.HasValue) {
                 appendIfNotNullOrEmpty(sb, "Observe", msg.Observe.ToString());
-#if INCLUDE_OSCOAP                
-            if (msg.Oscoap != null)
+            }
+
+            if (msg.Oscoap != null) {
                 appendIfNotNullOrEmpty(sb, "OSCOAP", msg.Oscoap.ToString());
-#endif
+            }
+
             return sb.ToString();
         }
 
         /// <summary>
         /// Stringify an enumerable.
         /// </summary>
-        public static String ToString<T>(IEnumerable<T> source)
+        public static string ToString<T>(IEnumerable<T> source)
         {
             return ToString(source, o => o.ToString());
         }
@@ -251,22 +276,25 @@ namespace Com.AugustCellars.CoAP.Util
         /// <summary>
         /// Stringify an enumerable.
         /// </summary>
-        public static String ToString<T>(IEnumerable<T> source, Func<T, String> toString)
+        public static string ToString<T>(IEnumerable<T> source, Func<T, string> toString)
         {
-            if (source == null)
-                return String.Empty;
+            if (source == null) {
+                return string.Empty;
+            }
+
             StringBuilder sb = new StringBuilder();
-            using (IEnumerator<T> it = source.GetEnumerator())
-            {
-                if (!it.MoveNext())
-                    return String.Empty;
+            using (IEnumerator<T> it = source.GetEnumerator()) {
+                if (!it.MoveNext()) {
+                    return string.Empty;
+                }
+
                 sb.Append(toString(it.Current));
-                while (it.MoveNext())
-                {
+                while (it.MoveNext()) {
                     sb.Append(", ");
                     sb.Append(toString(it.Current));
                 }
             }
+
             return sb.ToString();
         }
 
@@ -277,8 +305,7 @@ namespace Com.AugustCellars.CoAP.Util
         internal static TValue Put<TKey, TValue>(ConcurrentDictionary<TKey, TValue> dic, TKey key, TValue value)
         {
             TValue old = default(TValue);
-            dic.AddOrUpdate(key, value, (k, v) =>
-            {
+            dic.AddOrUpdate(key, value, (k, v) => {
                 old = v;
                 return value;
             });

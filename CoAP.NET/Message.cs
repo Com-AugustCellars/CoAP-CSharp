@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2015, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -1247,7 +1249,6 @@ namespace Com.AugustCellars.CoAP
             SetOption(new BlockOption(OptionType.Block2, num, szx, m));
         }
 
-#if INCLUDE_OSCOAP
         /// <summary>
         /// Get/Set the OSCOAP option value
         /// </summary>
@@ -1256,11 +1257,14 @@ namespace Com.AugustCellars.CoAP
             get => GetFirstOption(OptionType.Oscoap) as OSCOAP.OscoapOption;
             set
             {
-                if (value == null) RemoveOptions(OptionType.Oscoap);
-                else SetOption(value);
+                if (value == null) {
+                    RemoveOptions(OptionType.Oscoap);
+                }
+                else {
+                    SetOption(value);
+                }
             }
         }
-#endif
 
         private IEnumerable<T> SelectOptions<T>(OptionType optionType, Func<Option, T> func)
         {

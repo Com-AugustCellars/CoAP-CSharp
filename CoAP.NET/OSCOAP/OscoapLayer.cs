@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Text;
@@ -44,7 +54,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
 
         /// <summary>
-        /// Constructs a new OSCAP layer.
+        /// Constructs a new OSCORE layer.
         /// </summary>
         public OscoapLayer(ICoapConfig config)
         {
@@ -495,7 +505,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
 
                 Codec.IMessageEncoder me = Spec.NewMessageEncoder();
-                Response encryptedResponse = new Response((StatusCode) response.Code);
+                Response encryptedResponse = new Response((StatusCode) response.Code) {
+                    Type = MessageType.CON // It does not matter what this is as it will get ignored later.
+                };
 
                 if (response.Payload != null) {
                     encryptedResponse.Payload = response.Payload;

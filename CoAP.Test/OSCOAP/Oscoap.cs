@@ -1,4 +1,13 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+using System;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Com.AugustCellars.CoAP.Net;
@@ -38,6 +47,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 OscoreContext = SecurityContext.DeriveContext(secret, null, clientId, serverId)
             };
             Response r = client.Get();
+            Assert.IsNotNull(r);
             Assert.AreEqual("/abc", r.PayloadString);
         }
 

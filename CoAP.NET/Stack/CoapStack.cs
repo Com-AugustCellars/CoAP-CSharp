@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -26,10 +28,8 @@ namespace Com.AugustCellars.CoAP.Stack
         public CoapStack(ICoapConfig config)
         {
             this.AddLast("Observe", new ObserveLayer(config));
-#if INCLUDE_OSCOAP
             this.AddLast("SecureBlockwise", new OSCOAP.SecureBlockwiseLayer(config));
             this.AddLast("OSCOAP", new OSCOAP.OscoapLayer(config));
-#endif
             this.AddLast("Blockwise", new BlockwiseLayer(config));
             this.AddLast("Token", new TokenLayer(config));
             this.AddLast("Reliability", new ReliabilityLayer(config));
