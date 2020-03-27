@@ -20,7 +20,8 @@ namespace Com.AugustCellars.CoAP.Coral
         //  form-fields = [*(form-field-type, form-field-value)]
 
 
-        public string OperationType { get; }
+        public string OperationTypeText => OperationType?.ToString();
+        public Cori OperationType { get; }
         public int? OperationTypeInt { get; }
         public Cori Target { get; }
         public int? TargetInt { get; }
@@ -30,11 +31,17 @@ namespace Com.AugustCellars.CoAP.Coral
         /// </summary>
         public List<CoralFormField> FormFields { get; } = new List<CoralFormField>();
 
-        public CoralForm(string formRef, Cori target)
+
+        public CoralForm(Cori formRef, Cori target)
         {
+            if (!formRef.IsAbsolute()) {
+                throw new ArgumentException("operation must be absolute URI", nameof(formRef));
+            }
             OperationType = formRef;
             Target = target;
         }
+
+        public CoralForm(string formRef, Cori Target) : this(new Cori(formRef), Target ) { }
 
         public CoralForm(CBORObject form, Cori baseCori, CoralDictionary dictionary)
         {
@@ -54,11 +61,14 @@ namespace Com.AugustCellars.CoAP.Coral
             if (o == null) {
                 OperationTypeInt = form[1].Untag().AsInt32();
             }
-            else {
-                OperationType = o.AsString();
+            else if (o.Type == CBORType.Array) {
+                OperationType = new Cori(o);
                 if (form[1].Type == CBORType.Integer) {
                     OperationTypeInt = form[1].Untag().AsInt32();
                 }
+            }
+            else {
+                throw new ArgumentException("Invalid operation in CoRAL form");
             }
 
             o = (CBORObject) dictionary.Reverse(form[2], true);

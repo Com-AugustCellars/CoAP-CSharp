@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using Com.AugustCellars.CoAP.Util;
 using PeterO.Cbor;
 
@@ -11,17 +12,17 @@ namespace Com.AugustCellars.CoAP.Coral
         public const int DictionaryTag = 99999;
 
         public static CoralDictionary Default { get; } = new CoralDictionary() {
-            {0, "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"},
-            {1, "http://www.iana.org/assignments/relation/item>"},
-            {2, "http://www.iana.org/assignments/relation/collection"},
-            {3, "http://coreapps.org/collections#create"},
-            {4, "http://coreapps.org/base#update"},
-            {5, "http://coreapps.org/collections#delete"},
-            {6, "http://coreapps.org/base#search"},
-            {7, "http://coreapps.org/coap#accept"},
-            {8, "http://coreapps.org/coap#type"},
-            {9, "http://coreapps.org/base#lang"},
-            {10, "http://coreapps.org/coap#method"}
+            {0, new Cori("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")},
+            {1, new Cori("http://www.iana.org/assignments/relation/item>")},
+            {2, new Cori("http://www.iana.org/assignments/relation/collection")},
+            {3, new Cori("http://coreapps.org/collections#create")},
+            {4, new Cori("http://coreapps.org/base#update")},
+            {5, new Cori("http://coreapps.org/collections#delete")},
+            {6, new Cori("http://coreapps.org/base#search")},
+            {7, new Cori("http://coreapps.org/coap#accept")},
+            {8, new Cori("http://coreapps.org/coap#type")},
+            {9, new Cori("http://coreapps.org/base#lang")},
+            {10, new Cori("http://coreapps.org/coap#method")}
         };
 
         private readonly Dictionary<int, object> _dictionary = new Dictionary<int, object>();
@@ -107,6 +108,10 @@ namespace Com.AugustCellars.CoAP.Coral
 
         public CBORObject Lookup(Cori value, bool isIntLegal)
         {
+            if (!value.IsAbsolute()) {
+                return value.Data;
+            }
+
             foreach (KeyValuePair<int, object> o in _dictionary) {
                 if (value.Equals(o.Value)) {
                     if (isIntLegal) {
@@ -154,11 +159,18 @@ namespace Com.AugustCellars.CoAP.Coral
                 return null;
             }
 
-
-            CBORObject result = CBORObject.FromObject(_dictionary[value.AsInt32()]);
-
-            if (result.Type == CBORType.Integer) {
-                return value;
+            
+            object o =  _dictionary[value.AsInt32()];
+            CBORObject result;
+            if (o is Cori) {
+                Cori cori = (Cori) o;
+                result = cori.Data;
+            }
+            else if (o is CBORObject) {
+                result = (CBORObject) o;
+            }
+            else {
+                result = CBORObject.FromObject(o);
             }
 
             return result;

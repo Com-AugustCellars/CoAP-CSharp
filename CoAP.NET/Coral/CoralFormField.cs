@@ -2,19 +2,22 @@
 using System.Collections.Generic;
 using System.Text;
 using Com.AugustCellars.CoAP.Util;
+using Org.BouncyCastle.Operators;
 using PeterO.Cbor;
 
 namespace Com.AugustCellars.CoAP.Coral
 {
     public class CoralFormField
     {
-        public string FieldType { get; }
+        public string FieldTypeText => FieldType?.ToString();
+        public Cori FieldType { get; }
         public int? FieldTypeInt { get; }
         public Cori Url { get; }
         public CBORObject Literal { get; }
         public int? LiteralInt { get; }
 
-        public CoralFormField(string fieldType, Cori value)
+
+        public CoralFormField(Cori fieldType, Cori value)
         {
             FieldType = fieldType;
             if (!value.IsAbsolute()) {
@@ -24,11 +27,15 @@ namespace Com.AugustCellars.CoAP.Coral
             Url = value;
         }
 
-        public CoralFormField(string fieldType, CBORObject value)
+        public CoralFormField(string fieldType, Cori value) : this(new Cori(fieldType), value) { }
+
+        public CoralFormField(Cori fieldType, CBORObject value)
         {
             FieldType = fieldType;
             Literal = value;
         }
+
+        public CoralFormField(string fieldType, CBORObject value) : this(new Cori(fieldType), value) { }
 
         public CoralFormField(CBORObject type, CBORObject value, Cori baseCori, CoralDictionary dictionary)
         {
@@ -37,11 +44,14 @@ namespace Com.AugustCellars.CoAP.Coral
             if (o == null) {
                 FieldTypeInt = type.AsInt32();
             }
-            else {
-                FieldType = o.AsString();
+            else if (o.Type == CBORType.Array) {
+                FieldType = new Cori(o);
                 if (type.Type == CBORType.Integer) {
                     FieldTypeInt = type.AsInt32();
                 }
+            }
+            else {
+                throw new ArgumentException("Not a valid form field type");
             }
             
             o = (CBORObject) dictionary.Reverse(value, true);
@@ -53,6 +63,10 @@ namespace Com.AugustCellars.CoAP.Coral
                 Url = new Cori(o);
                 if (baseCori != null) {
                     Url = Url.ResolveTo(baseCori);
+                }
+
+                if (value.Type == CBORType.Integer) {
+                    LiteralInt = value.Untag().AsInt32();
                 }
             }
             else {

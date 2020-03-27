@@ -17,7 +17,8 @@ namespace Com.AugustCellars.CoAP.Coral
         /// <summary>
         /// Link relation Type - a text string conforming to IRI syntax
         /// </summary>
-        public string RelationType { get; }
+        public string RelationTypeText => RelationType?.ToString(); 
+        public Cori RelationType { get; }
         public int? RelationTypeInt { get; }
 
         /// <summary>
@@ -41,16 +42,21 @@ namespace Com.AugustCellars.CoAP.Coral
         /// </summary>
         public CoralBody Body { get; }
 
+
         /// <summary>
         /// Create a CoRAL link from the parameters
         /// </summary>
-        /// <param name="relation">string containing the relation - IRI</param>
+        /// <param name="relation">Cori version of the relation - IRI</param>
         /// <param name="target">Value of the target - Not a URI!!!</param>
         /// <param name="body">attributes about the target</param>
-        public CoralLink(string relation, CBORObject target, CoralBody body = null)
+        public CoralLink(Cori relation, CBORObject target, CoralBody body = null)
         {
             if (!IsLiteral(target)) {
                 throw new ArgumentException("Value must be a literal value", nameof(target));
+            }
+
+            if (!relation.IsAbsolute()) {
+                throw new ArgumentException("Relation must be an absolute IRI", nameof(relation));
             }
 
             RelationType = relation;
@@ -62,16 +68,34 @@ namespace Com.AugustCellars.CoAP.Coral
         /// Create a CoRAL link from the parameters
         /// </summary>
         /// <param name="relation">string containing the relation - IRI</param>
+        /// <param name="target">Value of the target - Not a URI!!!</param>
+        /// <param name="body">attributes about the target</param>
+        public CoralLink(string relation, CBORObject target, CoralBody body = null) : this(new Cori(relation), target, body) { }
+
+        /// <summary>
+        /// Create a CoRAL link from the parameters
+        /// </summary>
+        /// <param name="relation">Cori value containing the relation - IRI</param>
         /// <param name="uriTarget">Absolute or relative CIRI for the target</param>
         /// <param name="body">attributes about the target</param>
-        public CoralLink(string relation, Cori uriTarget, CoralBody body = null)
+        public CoralLink(Cori relation, Cori uriTarget, CoralBody body = null)
         {
-            if (!uriTarget.IsWellFormed()) throw new ArgumentException("must be well formed", nameof(uriTarget));
+            if (!relation.IsAbsolute()) {
+                throw new ArgumentException("Relation must be an absolute IRI", nameof(relation));
+            }
  
             RelationType = relation;
             Target = uriTarget;
             Body = body;
         }
+
+        /// <summary>
+        /// Create a CoRAL link from the parameters
+        /// </summary>
+        /// <param name="relation">string containing the relation - IRI</param>
+        /// <param name="uriTarget">Absolute or relative CIRI for the target</param>
+        /// <param name="body">attributes about the target</param>
+        public CoralLink(string relation, Cori uriTarget, CoralBody body = null) : this(new Cori(relation), uriTarget, body) { }
 
         public CoralLink(string relation, string target, CoralBody body = null) : this(relation, CBORObject.FromObject(target), body)
         {
@@ -97,8 +121,8 @@ namespace Com.AugustCellars.CoAP.Coral
             if (o == null) { 
                 RelationTypeInt = node[1].AsInt32();
             }
-            else if (o.Type == CBORType.TextString) {
-                RelationType = o.AsString();
+            else if (o.Type == CBORType.Array) {
+                RelationType = new Cori(o);
                 if (node[1].Type == CBORType.Integer) {
                     RelationTypeInt = node[1].AsInt32();
                 }
@@ -118,7 +142,7 @@ namespace Com.AugustCellars.CoAP.Coral
             else if (value.Type == CBORType.Array) {
                 Target = new Cori(value).ResolveTo(baseCori);
                 if (node[2].Type == CBORType.Integer) {
-                    TargetInt = node[2].AsInt32();
+                    TargetInt = node[2].Untag().AsInt32();
                 }
 
                 baseCori = Target;
@@ -187,7 +211,7 @@ namespace Com.AugustCellars.CoAP.Coral
         {
             builder.Append(pad);
             if (usingDictionary != null) {
-                string t = usingDictionary.Abbreviate(RelationType); 
+                string t = usingDictionary.Abbreviate(RelationType.ToString()); 
                 builder.Append(t);
             }
             else {

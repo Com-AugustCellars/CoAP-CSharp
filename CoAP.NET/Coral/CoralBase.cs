@@ -8,6 +8,7 @@ using Com.AugustCellars.CoAP.Util;
 
 namespace Com.AugustCellars.CoAP.Coral
 {
+#if false
     public class CoralBase : CoralItem
     {
         public  Uri Uri { get; }
@@ -34,4 +35,5 @@ namespace Com.AugustCellars.CoAP.Coral
             builder.Append("\n");
         }
     }
+#endif
 }

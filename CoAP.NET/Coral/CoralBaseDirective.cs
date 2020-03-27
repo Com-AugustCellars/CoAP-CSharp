@@ -15,6 +15,10 @@ namespace Com.AugustCellars.CoAP.Coral
             if (!value.IsWellFormed()) {
                 throw new ArgumentException("URI is not well formed", nameof(value));
             }
+
+            if (!value.IsAbsolute()) {
+                throw new ArgumentException("URI is not absolute", nameof(value));
+            }
             BaseValue = value;
         }
 
@@ -69,7 +73,7 @@ namespace Com.AugustCellars.CoAP.Coral
                 builder.AppendFormat($"#base <{BaseValue.MakeRelative(contextCori)}>\n");
             }
             else {
-                builder.AppendFormat($"#base <{BaseValue.Data}>\n");
+                builder.AppendFormat($"#base <{BaseValue}>\n");
             }
         }
     }

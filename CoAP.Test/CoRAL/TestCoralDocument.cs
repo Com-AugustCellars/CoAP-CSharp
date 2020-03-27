@@ -10,13 +10,13 @@ namespace CoAP.Test.Std10.CoRAL
     public class TestCoralDocument
     {
         public static CoralDictionary _Dictionary = new CoralDictionary() {
-            {1, "coap://jimsch.example.com/coreapp/reef#content-type"},
-            {2, "coap://jimsch.example.com/coreapp/reef#security"},
-            {3, "coap://jimsch.example.com/coreapp/reef#authority-type"},
-            {4, "coap://jimsch.example.com/coreapp/reef#authority"},
-            {5, "coap://jimsch.example.com/coreapp/reef#rd-register"},
-            {6, "coap://jimsch.example.com/coreapp/reef#rd-endpointSearch"},
-            {7, "coap://jimsch.example.com/coreapp/reef#rd-resourceSearch"},
+            {1, new Cori("coap://jimsch.example.com/coreapp/reef#content-type")},
+            {2, new Cori("coap://jimsch.example.com/coreapp/reef#security")},
+            {3, new Cori("coap://jimsch.example.com/coreapp/reef#authority-type")},
+            {4, new Cori("coap://jimsch.example.com/coreapp/reef#authority")},
+            {5, new Cori("coap://jimsch.example.com/coreapp/reef#rd-register")},
+            {6, new Cori("coap://jimsch.example.com/coreapp/reef#rd-endpointSearch")},
+            {7, new Cori("coap://jimsch.example.com/coreapp/reef#rd-resourceSearch")},
         };
 
         [TestMethod]
@@ -49,7 +49,7 @@ namespace CoAP.Test.Std10.CoRAL
             CBORObject result = document.EncodeToCBORObject(new Cori("coap://jimsch.example.org/rd"), _Dictionary);
             Assert.AreEqual("[[2, 5, [5, 2, 6, \"endpoints\"], [[2, 1, 99599], [2, 2, \"OSCORE\"], [2, 3, \"ACE\"], [2, 4, [2, \"ace.example.org\", 4, 5683, 6, \"token\"]]]], [2, 6, [5, 2, 6, \"endpoints\"]], [2, 7, [5, 2, 6, \"resources\"]], [1, [1, \"coaps\", 2, \"jimsch.example.org\", 4, 5684, 6, \"rd\"]], [2, 5, [5, 2, 6, \"endpoints\"], [[2, 1, 99599], [2, 2, \"OSCORE\"], [2, 3, \"ACE\"], [2, 4, [2, \"ace.example.org\", 4, 5684, 6, \"token\"]]]], [2, 6, [5, 2, 6, \"endpoints\"]], [2, 7, [5, 2, 6, \"resources\"]]]", result.ToString());
 
-            CoralDocument document2 = CoralDocument.DecodeFromBytes(result.EncodeToBytes(), new Cori("coap://jimsch.example.org/rd"), _Dictionary);
+            CoralDocument document2 = CoralDocument.DecodeFromBytes(document.EncodeToBytes(new Cori("coap://jimsch.example.org/rd"), _Dictionary), new Cori("coap://jimsch.example.org/rd"), _Dictionary);
 
             //Assert.AreEqual(document, document2);
 
@@ -60,6 +60,9 @@ namespace CoAP.Test.Std10.CoRAL
             string resultOut =
                 "reef:rd-register <||2||endpoints> [\n  reef:content-type 99599\n  reef:security \"OSCORE\"\n  reef:authority-type \"ACE\"\n  reef:authority <//ace.example.org:5683/token>\n]\nreef:rd-endpointSearch <||2||endpoints>\nreef:rd-resourceSearch <||2||resources>\n#base <coaps://jimsch.example.org/rd>\nreef:rd-register <||2||endpoints> [\n  reef:content-type 99599\n  reef:security \"OSCORE\"\n  reef:authority-type \"ACE\"\n  reef:authority <//ace.example.org:5684/token>\n]\nreef:rd-endpointSearch <||2||endpoints>\nreef:rd-resourceSearch <||2||resources>\n";
             Assert.AreEqual(resultOut, document.EncodeToString(new Cori("coap://jimsch.example.org/rd"), dict));
+
+            resultOut = "<coap://jimsch.example.com/coreapp/reef#rd-register> <coap://jimsch.example.org/rd/endpoints> [\n  <coap://jimsch.example.com/coreapp/reef#content-type> 99599\n  <coap://jimsch.example.com/coreapp/reef#security> \"OSCORE\"\n  <coap://jimsch.example.com/coreapp/reef#authority-type> \"ACE\"\n  <coap://jimsch.example.com/coreapp/reef#authority> <coap://ace.example.org/token>\n]\n<coap://jimsch.example.com/coreapp/reef#rd-endpointSearch> <coap://jimsch.example.org/rd/endpoints>\n<coap://jimsch.example.com/coreapp/reef#rd-resourceSearch> <coap://jimsch.example.org/rd/resources>\n#base <coaps://jimsch.example.org/rd>\n<coap://jimsch.example.com/coreapp/reef#rd-register> <||2||endpoints> [\n  <coap://jimsch.example.com/coreapp/reef#content-type> 99599\n  <coap://jimsch.example.com/coreapp/reef#security> \"OSCORE\"\n  <coap://jimsch.example.com/coreapp/reef#authority-type> \"ACE\"\n  <coap://jimsch.example.com/coreapp/reef#authority> <//ace.example.org:5684/token>\n]\n<coap://jimsch.example.com/coreapp/reef#rd-endpointSearch> <||2||endpoints>\n<coap://jimsch.example.com/coreapp/reef#rd-resourceSearch> <||2||resources>\n";
+            Assert.AreEqual(resultOut, document.ToString());
         }
 
         [TestMethod]

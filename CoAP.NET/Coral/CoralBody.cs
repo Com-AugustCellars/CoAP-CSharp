@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Text;
 using Com.AugustCellars.CoAP.Util;
 using PeterO.Cbor;
