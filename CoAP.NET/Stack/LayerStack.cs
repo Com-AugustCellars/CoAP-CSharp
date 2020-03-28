@@ -159,9 +159,10 @@ namespace Com.AugustCellars.CoAP.Stack
                 exchange.Outbox.SendResponse(exchange, response);
             }
 
-            public override void SendEmptyMessage(INextLayer nextLayer, Exchange exchange, EmptyMessage message)
+            public override bool SendEmptyMessage(INextLayer nextLayer, Exchange exchange, EmptyMessage message)
             {
                 exchange.Outbox.SendEmptyMessage(exchange, message);
+                return true;
             }
         }
 
@@ -184,9 +185,9 @@ namespace Com.AugustCellars.CoAP.Stack
                 _entry.NextEntry.Filter.SendResponse(_entry.NextEntry.NextFilter, exchange, response);
             }
 
-            public void SendEmptyMessage(Exchange exchange, EmptyMessage message)
+            public bool SendEmptyMessage(Exchange exchange, EmptyMessage message)
             {
-                _entry.NextEntry.Filter.SendEmptyMessage(_entry.NextEntry.NextFilter, exchange, message);
+                return _entry.NextEntry.Filter.SendEmptyMessage(_entry.NextEntry.NextFilter, exchange, message);
             }
 
             public void ReceiveRequest(Exchange exchange, Request request)

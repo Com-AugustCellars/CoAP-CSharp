@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Com.AugustCellars.CoAP.Util;
 
 namespace Com.AugustCellars.CoAP.Observe
@@ -23,7 +24,6 @@ namespace Com.AugustCellars.CoAP.Observe
     /// </summary>
     public class ObservingEndpoint
     {
-        private readonly System.Net.EndPoint _endpoint;
         private readonly ICollection<ObserveRelation> _relations = new SynchronizedCollection<ObserveRelation>();
 
         /// <summary>
@@ -31,16 +31,13 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         public ObservingEndpoint(System.Net.EndPoint ep)
         {
-            _endpoint = ep;
+            EndPoint = ep;
         }
 
         /// <summary>
         /// Gets the <see cref="System.Net.EndPoint"/> of this endpoint.
         /// </summary>
-        public System.Net.EndPoint EndPoint
-        {
-            get => _endpoint;
-        }
+        public System.Net.EndPoint EndPoint { get; }
 
         /// <summary>
         /// Adds the specified observe relation.
@@ -77,7 +74,7 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         public void CancelAll()
         {
-            foreach (ObserveRelation relation in _relations) {
+            foreach (ObserveRelation relation in _relations.ToArray()) {
                 relation.Cancel();
             }
         }
