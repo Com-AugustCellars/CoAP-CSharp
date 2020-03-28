@@ -2,6 +2,8 @@
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
  * 
+ * Copyright (c) 2018-20, Jim Schaad <ietf@augustcellars.com>
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
  * 

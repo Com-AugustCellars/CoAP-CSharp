@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2018-20, Jim Schaad <ietf@augustcellars.com>
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+ 
+using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
