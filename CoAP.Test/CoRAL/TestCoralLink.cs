@@ -38,7 +38,7 @@ namespace CoAP.Test.Std10.CoRAL
             CoralDictionary dictionary = new CoralDictionary();
             
             CBORObject obj = link.EncodeToCBORObject(null, dictionary);
-            Assert.AreEqual("[2, [1, \"http\", 2, \"coreapps.org\", 4, 80, 6, \"reef\", 8, \"rd-unit\"], \"/sensors\"]", obj.ToString());
+            Assert.AreEqual("[2, [0, \"http\", 1, \"coreapps.org\", 5, \"reef\", 7, \"rd-unit\"], \"/sensors\"]", obj.ToString());
 
             dictionary.Add(99, new Cori("http://coreapps.org/reef#rd-unit"));
             obj = link.EncodeToCBORObject(null, dictionary);
@@ -55,7 +55,7 @@ namespace CoAP.Test.Std10.CoRAL
             Cori cori = new Cori("coap://host:99");
 
             // [2, "relation", "value"]
-            CoralLink link = new CoralLink(CBORObject.DecodeFromBytes(Hex.Decode("83028A016468747470026C636F7265617070732E6F7267041850066472656566086772642D756E69746576616C7565")), cori, testDictionary);
+            CoralLink link = new CoralLink(CBORObject.DecodeFromBytes(Hex.Decode("830288006468747470016C636F7265617070732E6F7267056472656566076772642D756E69746576616C7565")), cori, testDictionary);
             Assert.AreEqual("http://coreapps.org/reef#rd-unit", link.RelationTypeText);
             Assert.AreEqual(null, link.RelationTypeInt);
             Assert.AreEqual("value", link.Value.AsString());
@@ -101,18 +101,18 @@ namespace CoAP.Test.Std10.CoRAL
             Assert.AreEqual(5, link.Value.AsInt32());
 
             // [ 2, 2, [5, 0]]
-            link = new CoralLink(CBORObject.DecodeFromBytes(Hex.Decode("830202820500")), cori, testDictionary);
+            link = new CoralLink(CBORObject.DecodeFromBytes(Hex.Decode("830202820400")), cori, testDictionary);
             Assert.IsNotNull(link.Target);
             Assert.AreEqual(cori.Data.ToString(), link.Target.Data.ToString());
 
             // [ 2, 2, [5, 0, 6, "path2"], [[ 2, 2, [5, 0, 6, "path3"], [5, 2, 6, "path4"]]]]
-            link = new CoralLink(CBORObject.DecodeFromBytes(Hex.Decode("84020284050006657061746832828302028405000665706174683383020284050206657061746834")), cori, testDictionary);
+            link = new CoralLink(CBORObject.DecodeFromBytes(Hex.Decode("84020284040005657061746832828302028404000565706174683383020284040105657061746834")), cori, testDictionary);
             Assert.IsNotNull(link.Target);
-            Assert.AreEqual("[1, \"coap\", 2, \"host\", 4, 99, 6, \"path2\"]", link.Target.Data.ToString());
+            Assert.AreEqual("[0, \"coap\", 1, \"host\", 3, 99, 5, \"path2\"]", link.Target.Data.ToString());
             CoralLink l2 = (CoralLink) link.Body[0];
-            Assert.AreEqual("[1, \"coap\", 2, \"host\", 4, 99, 6, \"path3\"]", l2.Target.Data.ToString());
+            Assert.AreEqual("[0, \"coap\", 1, \"host\", 3, 99, 5, \"path3\"]", l2.Target.Data.ToString());
             l2 = (CoralLink) link.Body[1];
-            Assert.AreEqual("[1, \"coap\", 2, \"host\", 4, 99, 6, \"path2\", 6, \"path4\"]", l2.Target.Data.ToString());
+            Assert.AreEqual("[0, \"coap\", 1, \"host\", 3, 99, 5, \"path2\", 5, \"path4\"]", l2.Target.Data.ToString());
         }
 
         [TestMethod]
@@ -153,7 +153,7 @@ namespace CoAP.Test.Std10.CoRAL
             Assert.AreEqual(2, cbor[0].AsInt32());
             Assert.AreEqual(CBORType.Array, cbor[1].Type);
             Assert.AreEqual(CBORType.TextString, cbor[2].Type);
-            Assert.AreEqual("[2, [1, \"http\", 2, \"test.augustcellars.com\", 4, 80, 6, \"relation\"], \"value\"]", cbor.ToString());
+            Assert.AreEqual("[2, [0, \"http\", 1, \"test.augustcellars.com\", 5, \"relation\"], \"value\"]", cbor.ToString());
 
             link = new CoralLink("http://www.w3.org/1999/02/22-rdf-syntax-ns#type", new Cori("http://www.iana.org/assignments/relation/collection"));
             cbor = link.EncodeToCBORObject(null, testDictionary);
@@ -174,7 +174,7 @@ namespace CoAP.Test.Std10.CoRAL
             Assert.AreEqual(3, cbor.Values.Count);
             Assert.IsFalse(cbor[2].IsTagged);
             Assert.AreEqual(15, cbor[2].AsInt32());
-            Assert.AreEqual("[2, [1, \"http\", 2, \"test.augustcellars.com\", 4, 80, 6, \"relation\"], 15]", cbor.ToString());
+            Assert.AreEqual("[2, [0, \"http\", 1, \"test.augustcellars.com\", 5, \"relation\"], 15]", cbor.ToString());
 
             link = new CoralLink("http://www.w3.org/1999/02/22-rdf-syntax-ns#type", new Cori(CBORObject.DecodeFromBytes(Hex.Decode("820501"))));
             cbor = link.EncodeToCBORObject(null, testDictionary);
@@ -183,7 +183,7 @@ namespace CoAP.Test.Std10.CoRAL
             link = new CoralLink("http://test.augustcellars.com/relation", CBORObject.False);
             cbor = link.EncodeToCBORObject(null, testDictionary);
             Assert.IsTrue(cbor[2].IsFalse);
-            Assert.AreEqual("[2, [1, \"http\", 2, \"test.augustcellars.com\", 4, 80, 6, \"relation\"], false]", cbor.ToString());
+            Assert.AreEqual("[2, [0, \"http\", 1, \"test.augustcellars.com\", 5, \"relation\"], false]", cbor.ToString());
         }
     }
 }

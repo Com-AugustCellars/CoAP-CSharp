@@ -36,18 +36,18 @@ namespace CoAP.Test.Std10.CoRAL
             Assert.IsNull(form.TargetInt);
             Assert.AreEqual(0, form.FormFields.Count);
 
-            form = new CoralForm(CBORObject.DecodeFromBytes(Hex.Decode("8303880164687474700276617070732E61756775737463656C6C6172732E636F6D0418500667666F726D5265668405000664666F726D")), new Cori("coap://host:99/form2"), testDictionary);
+            form = new CoralForm(CBORObject.DecodeFromBytes(Hex.Decode("8303860064687474700176617070732E61756775737463656C6C6172732E636F6D0567666F726D5265668404000564666F726D")), new Cori("coap://host:99/form2"), testDictionary);
             Assert.AreEqual("http://apps.augustcellars.com/formRef", form.OperationTypeText);
             Assert.IsNull(form.OperationTypeInt);
-            Assert.AreEqual("[1, \"coap\", 2, \"host\", 4, 99, 6, \"form\"]", form.Target.Data.ToString());
+            Assert.AreEqual("[0, \"coap\", 1, \"host\", 3, 99, 5, \"form\"]", form.Target.Data.ToString());
             Assert.IsNull(form.TargetInt);
             Assert.AreEqual(0, form.FormFields.Count);
 
-            form = new CoralForm(CBORObject.DecodeFromBytes(Hex.Decode("8403068405000664666F726D88880164687474700276617070732E61756775737463656C6C6172732E636F6D04185006666669656C6431F5880164687474700276617070732E61756775737463656C6C6172732E636F6D04185006666669656C64328405000665666F726D33880164687474700276617070732E61756775737463656C6C6172732E636F6D04185006666669656C64330502DA0001869F04")),
+            form = new CoralForm(CBORObject.DecodeFromBytes(Hex.Decode("8403068404000564666F726D88860064687474700176617070732E61756775737463656C6C6172732E636F6D05666669656C6431F5860064687474700176617070732E61756775737463656C6C6172732E636F6D05666669656C64328404000565666F726D33860064687474700176617070732E61756775737463656C6C6172732E636F6D05666669656C64330502DA0001869F04")),
                 new Cori("coap://host:99/form2"), testDictionary);
             Assert.AreEqual("http://coreapps.org/base#search", form.OperationTypeText);
             Assert.AreEqual(6, form.OperationTypeInt);
-            Assert.AreEqual("[1, \"coap\", 2, \"host\", 4, 99, 6, \"form\"]", form.Target.Data.ToString());
+            Assert.AreEqual("[0, \"coap\", 1, \"host\", 3, 99, 5, \"form\"]", form.Target.Data.ToString());
             Assert.IsNull(form.TargetInt);
             Assert.AreEqual(4, form.FormFields.Count);
 
@@ -60,7 +60,7 @@ namespace CoAP.Test.Std10.CoRAL
             Assert.AreEqual("http://apps.augustcellars.com/field2", form.FormFields[1].FieldTypeText);
             Assert.IsNull(form.FormFields[1].FieldTypeInt);
             Assert.IsNotNull(form.FormFields[1].Url);
-            Assert.AreEqual("[1, \"coap\", 2, \"host\", 4, 99, 6, \"form3\"]", form.FormFields[1].Url.Data.ToString());
+            Assert.AreEqual("[0, \"coap\", 1, \"host\", 3, 99, 5, \"form3\"]", form.FormFields[1].Url.Data.ToString());
             Assert.IsNull(form.FormFields[1].LiteralInt);
 
             Assert.AreEqual("http://apps.augustcellars.com/field3", form.FormFields[2].FieldTypeText);
@@ -86,11 +86,11 @@ namespace CoAP.Test.Std10.CoRAL
             CBORObject cbor = form.EncodeToCBORObject(ciri2, testDictionary);
             Assert.AreEqual(3, cbor[0].AsInt32());
             Assert.AreEqual(CBORType.Array, cbor[1].Type);
-            Assert.AreEqual("[3, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"formRef\"], [1, \"coap\", 2, \"host\", 4, 5683, 6, \"form1\"]]", cbor.ToString());
+            Assert.AreEqual("[3, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"formRef\"], [0, \"coap\", 1, \"host\", 5, \"form1\"]]", cbor.ToString());
 
             form = new CoralForm("http://coreapps.org/base#lang", new Cori("coap://host/form1"));
             cbor = form.EncodeToCBORObject(ciri1, testDictionary);
-            Assert.AreEqual("[3, 9, [6, \"form1\"]]", cbor.ToString());
+            Assert.AreEqual("[3, 9, [5, \"form1\"]]", cbor.ToString());
 
             form = new CoralForm("http://coreapps.org/base#lang", new Cori("coap://host/form3"));
             cbor = form.EncodeToCBORObject(ciri1, testDictionary);
@@ -104,7 +104,7 @@ namespace CoAP.Test.Std10.CoRAL
             form.FormFields.Add(new CoralFormField("http://coreapps.org/coap#type", new Cori("coap://host/form3")));
 
             cbor = form.EncodeToCBORObject(ciri1, testDictionary);
-            Assert.AreEqual("[3, 9, 11, [[1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"field1\"], true, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"field2\"], 39, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"field3\"], 99999(4), [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"field4\"], [2, \"host3\", 4, 5683, 6, \"form9\"], [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"field6\"], [6, \"form6\"], 8, 99999(11)]]", cbor.ToString());
+            Assert.AreEqual("[3, 9, 11, [[0, \"http\", 1, \"apps.augustcellars.com\", 5, \"field1\"], true, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"field2\"], 39, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"field3\"], 99999(4), [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"field4\"], [1, \"host3\", 5, \"form9\"], [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"field6\"], [5, \"form6\"], 8, 99999(11)]]", cbor.ToString());
         }
 
     }

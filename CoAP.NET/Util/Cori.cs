@@ -89,17 +89,14 @@ namespace Com.AugustCellars.CoAP.Util
                         i += 1;
                     }
 
-                    data.Add(OptionPort);
-                    data.Add(int.Parse(uri.Substring(iStart, i - iStart)));
+                    int port = int.Parse(uri.Substring(iStart, i - iStart));
+                    if (scheme == null || !UriInformation.UriDefaults.ContainsKey(scheme) || port != UriInformation.UriDefaults[scheme].DefaultPort) {
+                        data.Add(OptionPort);
+                        data.Add(port);
+                    }
 
                     i += 1;
                     iStart = i;
-                }
-                else {
-                    if (scheme != null && UriInformation.UriDefaults.ContainsKey(scheme)) {
-                        data.Add(OptionPort);
-                        data.Add(UriInformation.UriDefaults[scheme].DefaultPort);
-                    }
                 }
 
                 if (i < len && characters[i] == '/') {
@@ -399,6 +396,10 @@ namespace Com.AugustCellars.CoAP.Util
             if (t == -2) {
                 t = href[1].AsInt32() - 1;
                 e = (t < 0) ? 5 : 6;
+
+                if (t == -1) {
+                    t = 99;
+                }
             }
 
             for (int i = 0; i < baseRef.Count; i += 2) {

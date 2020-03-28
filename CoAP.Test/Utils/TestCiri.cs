@@ -14,11 +14,12 @@ namespace CoAP.Test.Std10.Utils
     {
         [TestMethod]
         [DataRow("coap:", "[0, \"coap\"]")]
-        [DataRow("coap://hostName", "[0, \"coap\", 1, \"hostName\", 3, 5683]")]
+        [DataRow("coap://hostName", "[0, \"coap\", 1, \"hostName\"]")]
         [DataRow("coap://server:99", "[0, \"coap\", 1, \"server\", 3, 99]")]
-        [DataRow("coap://1.2.3.4", "[0, \"coap\", 2, h'01020304', 3, 5683]")]
-        [DataRow("coap://[1::4]", "[0, \"coap\", 2, h'00010000000000000000000000000004', 3, 5683]")]
+        [DataRow("coap://1.2.3.4", "[0, \"coap\", 2, h'01020304']")]
+        [DataRow("coap://[1::4]", "[0, \"coap\", 2, h'00010000000000000000000000000004']")]
         [DataRow("coap://[1::2]:99", "[0, \"coap\", 2, h'00010000000000000000000000000002', 3, 99]")]
+        // [DataRow("coap://hostname:5683", "[0, \"coap\", 1, \"hostname\"]", "coap://hostname")]
         [DataRow("//server", "[1, \"server\"]")]
         [DataRow("coap:/path", "[0, \"coap\", 4, 0, 5, \"path\"]")]
         [DataRow("coap:path", "[0, \"coap\", 5, \"path\"]")]
@@ -40,33 +41,34 @@ namespace CoAP.Test.Std10.Utils
             Cori o = new Cori(url);
             Assert.AreEqual(cbor, o.Data.ToString());
             string rebuild = o.ToString();
+
             Assert.AreEqual(url, rebuild);
         }
 
 
         [TestMethod]
         [DataRow("http://a/b/c/d?p&q", "g:h", "[0, \"g\", 5, \"h\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"g\"]")]
-        [DataRow("http://a/b/c/d?p&q", "./g", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"g\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g/", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"g\", 5, \"\"]")]
-        [DataRow("http://a/b/c/d?p&q", "/g", "[0, \"http\", 1, \"a\", 3, 80, 5, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", "./g", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g/", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"g\", 5, \"\"]")]
+        [DataRow("http://a/b/c/d?p&q", "/g", "[0, \"http\", 1, \"a\", 5, \"g\"]")]
         [DataRow("http://a/b/c/d?p&q", "//g", "[0, \"http\", 1, \"g\"]")]
-        [DataRow("http://a/b/c/d?p&q", "?y", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"d\", 6, \"y\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g?y", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"g\", 6, \"y\"]")]
-        [DataRow("http://a/b/c/d?p&q", "#s", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"d\", 6, \"p\", 6, \"q\", 7, \"s\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g#s", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"g\", 7, \"s\"]")]
-        [DataRow("http://a/b/c/d?p&q", "g?y#s", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"g\", 6, \"y\", 7, \"s\"]")]
-        [DataRow("http://a/b/c/d?p&q", "", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"d\", 6, \"p\", 6, \"q\"]")]
+        [DataRow("http://a/b/c/d?p&q", "?y", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"d\", 6, \"y\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g?y", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"g\", 6, \"y\"]")]
+        [DataRow("http://a/b/c/d?p&q", "#s", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"d\", 6, \"p\", 6, \"q\", 7, \"s\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g#s", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"g\", 7, \"s\"]")]
+        [DataRow("http://a/b/c/d?p&q", "g?y#s", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"g\", 6, \"y\", 7, \"s\"]")]
+        [DataRow("http://a/b/c/d?p&q", "", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"d\", 6, \"p\", 6, \"q\"]")]
         // M00DONTFIX - There is a difference between URL resolve and CIRI resolve where a trailing empty directory is not always added
         //       This is per Klaus.   Personally I find it objectionable
-        [DataRow("http://a/b/c/d?p&q", ".", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\"]")]
-        [DataRow("http://a/b/c/d?p&q", "./", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"c\", 5, \"\"]")]
-        [DataRow("http://a/b/c/d?p&q", "..", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\"]")]
-        [DataRow("http://a/b/c/d?p&q", "../", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"\"]")]
-        [DataRow("http://a/b/c/d?p&q", "../g", "[0, \"http\", 1, \"a\", 3, 80, 5, \"b\", 5, \"g\"]")]
-        [DataRow("http://a/b/c/d?p&q", "../..", "[0, \"http\", 1, \"a\", 3, 80]")]
-        [DataRow("http://a/b/c/d?p&q", "../../", "[0, \"http\", 1, \"a\", 3, 80, 5, \"\"]")]
-        [DataRow("http://a/b/c/d?p&q", "../../g", "[0, \"http\", 1, \"a\", 3, 80, 5, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", ".", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\"]")]
+        [DataRow("http://a/b/c/d?p&q", "./", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"c\", 5, \"\"]")]
+        [DataRow("http://a/b/c/d?p&q", "..", "[0, \"http\", 1, \"a\", 5, \"b\"]")]
+        [DataRow("http://a/b/c/d?p&q", "../", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"\"]")]
+        [DataRow("http://a/b/c/d?p&q", "../g", "[0, \"http\", 1, \"a\", 5, \"b\", 5, \"g\"]")]
+        [DataRow("http://a/b/c/d?p&q", "../..", "[0, \"http\", 1, \"a\"]")]
+        [DataRow("http://a/b/c/d?p&q", "../../", "[0, \"http\", 1, \"a\", 5, \"\"]")]
+        [DataRow("http://a/b/c/d?p&q", "../../g", "[0, \"http\", 1, \"a\", 5, \"g\"]")]
         public void Resolve(string baseUri, string href, string cbor)
         {
             Cori baseCori = new Cori(baseUri);

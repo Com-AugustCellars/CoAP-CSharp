@@ -42,20 +42,17 @@ namespace CoAP.Test.Std10.CoRAL
             Assert.AreEqual(2, body.Length);
             Assert.AreEqual("http://www.iana.org/assignments/relation/collection", ((CoralLink)body[0]).RelationTypeText);
             Assert.AreEqual("http://www.w3.org/1999/02/22-rdf-syntax-ns#type", ((CoralLink)body[1]).RelationTypeText);
-
-
+            
             // [
-            //   [2, "rel1", [6, "target1"], [
-            //     [2, "rel2", [5, 2, 6, "target2"]],
-            //     [1, [1, "coap", 2, "host3", 4, 5683, 6, "link1"]],
-            //     [2, "rel2", [5, 2, 6, "target2"]]
-            //   ]],
-            //   [2, "rel3", [6, "target2"]],
-            //   [1, [1, "http", 2, "host", 4, 80, 6, "link2", 6, "link3"]],
-            //   [2, "rel4", [5, 2, 6, "target2"]],
-            //   [3, "op-type", [5, 2, 6, "form"]]
-            // ]
-            body = new CoralBody(CBORObject.DecodeFromBytes(Hex.Decode("858402880164687474700276617070732E61756775737463656C6C6172732E636F6D041850066472656C3182066774617267657431838302880164687474700276617070732E61756775737463656C6C6172732E636F6D041850066472656C328405020667746172676574328201880164636F61700265686F7374330419163306656C696E6B318302880164687474700276617070732E61756775737463656C6C6172732E636F6D041850066472656C328405020667746172676574328302880164687474700276617070732E61756775737463656C6C6172732E636F6D041850066472656C338206677461726765743282018A0164687474700264686F737404185006656C696E6B3206656C696E6B338302880164687474700276617070732E61756775737463656C6C6172732E636F6D041850066472656C348405020667746172676574328303880164687474700276617070732E61756775737463656C6C6172732E636F6D04185006676F702D747970658405020664666F726D")), cori, _testDictionary);
+            // [2
+            // [0, "http", 1, "apps.augustcellars.com", 5, "rel1"], 
+            // [5, "target1"], 
+            // [
+            // [2,
+            // [0, "http", 1, "apps.augustcellars.com", 5, "rel2"],
+            // [4, 1, 5, "target2"]], [1, [0, "coap", 1, "host3", 5, "link1"]], [2, [0, "http", 1, "apps.augustcellars.com", 5, "rel2"], [4, 1, 5, "target2"]]]], [2, [0, "http", 1, "apps.augustcellars.com", 5, "rel3"], [5, "target2"]], [1, [0, "http", 1, "host", 5, "link2", 5, "link3"]], [2, [0, "http", 1, "apps.augustcellars.com", 5, "rel4"], [4, 1, 5, "target2"]], [3, [0, "http", 1, "apps.augustcellars.com", 5, "op-type"], [4, 1, 5, "form"]]]
+
+            body = new CoralBody(CBORObject.DecodeFromBytes(Hex.Decode("858402860064687474700176617070732E61756775737463656C6C6172732E636F6D056472656C3182056774617267657431838302860064687474700176617070732E61756775737463656C6C6172732E636F6D056472656C328404010567746172676574328201860064636F61700165686F73743305656C696E6B318302860064687474700176617070732E61756775737463656C6C6172732E636F6D056472656C328404010567746172676574328302860064687474700176617070732E61756775737463656C6C6172732E636F6D056472656C33820567746172676574328201880064687474700164686F737405656C696E6B3205656C696E6B338302860064687474700176617070732E61756775737463656C6C6172732E636F6D056472656C348404010567746172676574328303860064687474700176617070732E61756775737463656C6C6172732E636F6D05676F702D747970658404010564666F726D")), cori, _testDictionary);
             Assert.AreEqual(5, body.Length);
 
             Assert.IsTrue(body[0] is CoralLink);
@@ -117,7 +114,7 @@ namespace CoAP.Test.Std10.CoRAL
             };
 
             obj = body.EncodeToCBORObject(new Cori("coap://host"), _testDictionary);
-            Assert.AreEqual("[[2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link1\"], [6, \"path\"], [[2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link1\"], [6, \"path1\", 6, \"path2\", 6, \"path3\"]], [1, [1, \"coaps\", 2, \"host\", 4, 5684, 6, \"path1\"]], [2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link1\"], [1, \"coap\", 2, \"host\", 4, 5683, 6, \"path1\", 6, \"path2\", 6, \"path3\"]], [2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link2\"], [5, 2, 6, \"path2\", 6, \"path3\"]]]], [1, [1, \"http\", 2, \"host\", 4, 80]], [2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link1\"], [1, \"coap\", 2, \"host\", 4, 5683, 6, \"path\"], [[2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link1\"], [1, \"coap\", 2, \"host\", 4, 5683, 6, \"path1\", 6, \"path2\", 6, \"path3\"]], [1, [1, \"coaps\", 2, \"host\", 4, 5684, 6, \"path1\"]], [2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link1\"], [1, \"coap\", 2, \"host\", 4, 5683, 6, \"path1\", 6, \"path2\", 6, \"path3\"]], [2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link2\"], [5, 2, 6, \"path2\", 6, \"path3\"]]]], [2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link2\"], [6, \"path1\"], [[2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link1\"], [1, \"coap\", 2, \"host\", 4, 5683, 6, \"path1\", 6, \"path2\", 6, \"path3\"]], [1, [1, \"coaps\", 2, \"host\", 4, 5684, 6, \"path1\"]], [2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link1\"], [1, \"coap\", 2, \"host\", 4, 5683, 6, \"path1\", 6, \"path2\", 6, \"path3\"]], [2, [1, \"http\", 2, \"apps.augustcellars.com\", 4, 80, 6, \"link2\"], [5, 2, 6, \"path2\", 6, \"path3\"]]]]]", obj.ToString());
+            Assert.AreEqual("[[2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link1\"], [5, \"path\"], [[2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link1\"], [5, \"path1\", 5, \"path2\", 5, \"path3\"]], [1, [0, \"coaps\", 1, \"host\", 5, \"path1\"]], [2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link1\"], [0, \"coap\", 1, \"host\", 5, \"path1\", 5, \"path2\", 5, \"path3\"]], [2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link2\"], [4, 2, 5, \"path2\", 5, \"path3\"]]]], [1, [0, \"http\", 1, \"host\"]], [2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link1\"], [0, \"coap\", 1, \"host\", 5, \"path\"], [[2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link1\"], [0, \"coap\", 1, \"host\", 5, \"path1\", 5, \"path2\", 5, \"path3\"]], [1, [0, \"coaps\", 1, \"host\", 5, \"path1\"]], [2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link1\"], [0, \"coap\", 1, \"host\", 5, \"path1\", 5, \"path2\", 5, \"path3\"]], [2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link2\"], [4, 2, 5, \"path2\", 5, \"path3\"]]]], [2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link2\"], [5, \"path1\"], [[2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link1\"], [0, \"coap\", 1, \"host\", 5, \"path1\", 5, \"path2\", 5, \"path3\"]], [1, [0, \"coaps\", 1, \"host\", 5, \"path1\"]], [2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link1\"], [0, \"coap\", 1, \"host\", 5, \"path1\", 5, \"path2\", 5, \"path3\"]], [2, [0, \"http\", 1, \"apps.augustcellars.com\", 5, \"link2\"], [4, 2, 5, \"path2\", 5, \"path3\"]]]]]", obj.ToString());
 
         }
     }

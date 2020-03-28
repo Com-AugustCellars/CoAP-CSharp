@@ -17,10 +17,10 @@ namespace CoAP.Test.Std10.CoRAL
             CoralBaseDirective directive = new CoralBaseDirective(new Cori("coap://host.example/random"));
 
             CBORObject o = directive.EncodeToCBORObject(null, null);
-            Assert.AreEqual("[1, [1, \"coap\", 2, \"host.example\", 4, 5683, 6, \"random\"]]", o.ToString());
+            Assert.AreEqual("[1, [0, \"coap\", 1, \"host.example\", 5, \"random\"]]", o.ToString());
 
             o = directive.EncodeToCBORObject(new Cori("coap://host.example"), null);
-            Assert.AreEqual("[1, [6, \"random\"]]", o.ToString());
+            Assert.AreEqual("[1, [5, \"random\"]]", o.ToString());
 
             StringBuilder s = new StringBuilder();
             directive.BuildString(s, "", null, null);
