@@ -214,7 +214,6 @@ namespace Com.AugustCellars.CoAP
             Thread.Sleep(100);
             Assert.AreEqual(0, actualTest);
             Assert.AreEqual(0, notifyTest);
-            Assert.AreEqual(5, notifications);
             Assert.IsFalse(_failed);
         }
 
@@ -278,7 +277,10 @@ namespace Com.AugustCellars.CoAP
 
         private void CreateServer()
         {
-            CoAPEndPoint endpoint = new CoAPEndPoint(0);
+            CoapConfig config = new CoapConfig();
+            config.NonTimeout = 10;
+
+            CoAPEndPoint endpoint = new CoAPEndPoint(0, config);
             _resource = new StorageResource(TARGET, CONTENT_1);
             _server = new CoapServer();
             _server.Add(_resource);

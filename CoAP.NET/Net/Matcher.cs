@@ -34,16 +34,19 @@ namespace Com.AugustCellars.CoAP.Net
         /// </summary>
         readonly IDictionary<Exchange.KeyID, Exchange> _exchangesByID
             = new ConcurrentDictionary<Exchange.KeyID, Exchange>();
+
         /// <summary>
         /// for outgoing
         /// </summary>
         readonly IDictionary<Exchange.KeyToken, Exchange> _exchangesByToken
             = new ConcurrentDictionary<Exchange.KeyToken, Exchange>();
+
         /// <summary>
         /// for blockwise
         /// </summary>
         readonly ConcurrentDictionary<Exchange.KeyUri, Exchange> _ongoingExchanges
             = new ConcurrentDictionary<Exchange.KeyUri, Exchange>();
+
         private Int32 _running;
         private Int32 _currentID;
         private IDeduplicator _deduplicator;
@@ -56,6 +59,7 @@ namespace Com.AugustCellars.CoAP.Net
             if (config.UseRandomIDStart) {
                 _currentID = new Random().Next(1 << 16);
             }
+
             _tokenLength = config.TokenLength;
 
             config.PropertyChanged += PropertyChanged;
@@ -133,6 +137,7 @@ namespace Com.AugustCellars.CoAP.Net
                     _random.NextBytes(token);
                     keyToken = new Exchange.KeyToken(token);
                 } while (_exchangesByToken.ContainsKey(keyToken));
+
                 request.Token = token;
             }
             else {
@@ -141,7 +146,7 @@ namespace Com.AugustCellars.CoAP.Net
 
             exchange.Completed += OnExchangeCompleted;
 
-            
+
             _Log.Debug(m => m("Stored open request by {0}, {1}", keyID, keyToken));
 
             _exchangesByID[keyID] = exchange;
@@ -164,40 +169,25 @@ namespace Com.AugustCellars.CoAP.Net
              * exchange and the ReliabilityLayer resends this response.
              */
 
-            // If this is a CON notification we now can forget all previous NON notifications
-            if (response.Type == MessageType.CON || response.Type == MessageType.ACK)
-            {
-                ObserveRelation relation = exchange.Relation;
-                if (relation != null)
-                {
-                    RemoveNotificatoinsOf(relation);
-                }
-            }
-
             // Blockwise transfers are identified by URI and remote endpoint
-            if (response.HasOption(OptionType.Block2))
-            {
+            if (response.HasOption(OptionType.Block2)) {
                 Request request = exchange.CurrentRequest;
 
                 Exchange.KeyUri keyUri = new Exchange.KeyUri(request, response.Destination);
 
                 // Observe notifications only send the first block, hence do not store them as ongoing
-                if (exchange.ResponseBlockStatus != null && !response.HasOption(OptionType.Observe))
-                {
+                if (exchange.ResponseBlockStatus != null && !response.HasOption(OptionType.Observe)) {
                     // Remember ongoing blockwise GET requests
-                    if (Utils.Put(_ongoingExchanges, keyUri, exchange) == null)
-                    {
+                    if (Utils.Put(_ongoingExchanges, keyUri, exchange) == null) {
                         if (_Log.IsDebugEnabled)
                             _Log.Debug("Ongoing Block2 started late, storing " + keyUri + " for " + request);
                     }
-                    else
-                    {
+                    else {
                         if (_Log.IsDebugEnabled)
                             _Log.Debug("Ongoing Block2 continued, storing " + keyUri + " for " + request);
                     }
                 }
-                else
-                {
+                else {
                     if (_Log.IsDebugEnabled)
                         _Log.Debug("Ongoing Block2 completed, cleaning up " + keyUri + " for " + request);
                     Exchange exc;
@@ -207,15 +197,13 @@ namespace Com.AugustCellars.CoAP.Net
 
             // Insert CON and NON to match ACKs and RSTs to the exchange
             // Do not insert ACKs and RSTs.
-            if (response.Type == MessageType.CON || response.Type == MessageType.NON)
-            {
+            if (response.Type == MessageType.CON || response.Type == MessageType.NON) {
                 Exchange.KeyID keyID = new Exchange.KeyID(response.ID, null, response.Session);
                 _exchangesByID[keyID] = exchange;
             }
 
             // Only CONs and Observe keep the exchange active
-            if (response.Type != MessageType.CON && response.Last)
-            {
+            if (response.Type != MessageType.CON && response.Last) {
                 exchange.Complete = true;
             }
         }
@@ -223,8 +211,7 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public void SendEmptyMessage(Exchange exchange, EmptyMessage message)
         {
-            if (message.Type == MessageType.RST && exchange != null)
-            {
+            if (message.Type == MessageType.RST && exchange != null) {
                 // We have rejected the request or response
                 exchange.Complete = true;
             }
@@ -264,6 +251,7 @@ namespace Com.AugustCellars.CoAP.Net
                     if (_Log.IsInfoEnabled) {
                         _Log.Info("Duplicate request: " + request);
                     }
+
                     request.Duplicate = true;
                     return previous;
                 }
@@ -282,6 +270,7 @@ namespace Com.AugustCellars.CoAP.Net
                         if (_Log.IsInfoEnabled) {
                             _Log.Info("Duplicate ongoing request: " + request);
                         }
+
                         request.Duplicate = true;
                     }
                     else {
@@ -291,9 +280,11 @@ namespace Com.AugustCellars.CoAP.Net
                             if (_Log.IsDebugEnabled) {
                                 _Log.Debug("Ongoing exchange got new request, cleaning up " + keyId);
                             }
+
                             _exchangesByID.Remove(keyId);
                         }
                     }
+
                     return ongoing;
                 }
                 else {
@@ -312,6 +303,7 @@ namespace Com.AugustCellars.CoAP.Net
                         if (_Log.IsDebugEnabled) {
                             _Log.Debug("New ongoing request, storing " + keyUri + " for " + request);
                         }
+
                         exchange.Completed += OnExchangeCompleted;
                         _ongoingExchanges[keyUri] = exchange;
                         return exchange;
@@ -320,6 +312,7 @@ namespace Com.AugustCellars.CoAP.Net
                         if (_Log.IsInfoEnabled) {
                             _Log.Info("Duplicate initial request: " + request);
                         }
+
                         request.Duplicate = true;
                         return previous;
                     }
@@ -374,7 +367,7 @@ namespace Com.AugustCellars.CoAP.Net
 
                 if (response.Type == MessageType.ACK && exchange.CurrentRequest.ID != response.ID) {
                     // The token matches but not the MID. This is a response for an older exchange
-                    _Log.Warn( m => m($"Possible MID reuse before lifetime end: {response.TokenString} expected MID {exchange.CurrentRequest.ID} but received {response.ID}"));
+                    _Log.Warn(m => m($"Possible MID reuse before lifetime end: {response.TokenString} expected MID {exchange.CurrentRequest.ID} but received {response.ID}"));
                 }
 
                 return exchange;
@@ -405,15 +398,13 @@ namespace Com.AugustCellars.CoAP.Net
             // local namespace
             Exchange.KeyID keyID = new Exchange.KeyID(message.ID, null, null);
             Exchange exchange;
-            if (_exchangesByID.TryGetValue(keyID, out exchange))
-            {
+            if (_exchangesByID.TryGetValue(keyID, out exchange)) {
                 if (_Log.IsDebugEnabled)
                     _Log.Debug("Exchange got reply: Cleaning up " + keyID);
                 _exchangesByID.Remove(keyID);
                 return exchange;
             }
-            else
-            {
+            else {
                 if (_Log.IsInfoEnabled)
                     _Log.Info("Ignoring unmatchable empty message from " + message.Source + ": " + message);
                 return null;
@@ -426,19 +417,6 @@ namespace Com.AugustCellars.CoAP.Net
             IDisposable d = _deduplicator as IDisposable;
             if (d != null)
                 d.Dispose();
-        }
-
-        private void RemoveNotificatoinsOf(ObserveRelation relation)
-        {
-            if (_Log.IsDebugEnabled)
-                _Log.Debug("Remove all remaining NON-notifications of observe relation");
-
-            foreach (Response previous in relation.ClearNotifications())
-            {
-                // notifications are local MID namespace
-                Exchange.KeyID keyId = new Exchange.KeyID(previous.ID, null, null);
-                _exchangesByID.Remove(keyId);
-            }
         }
 
         private void OnExchangeCompleted(Object sender, EventArgs e)
@@ -484,12 +462,6 @@ namespace Com.AugustCellars.CoAP.Net
 
                     Exchange exc;
                     _ongoingExchanges.TryRemove(uriKey, out exc);
-                }
-
-                // Remove all remaining NON-notifications if this exchange is an observe relation
-                ObserveRelation relation = exchange.Relation;
-                if (relation != null) {
-                    RemoveNotificatoinsOf(relation);
                 }
             }
         }

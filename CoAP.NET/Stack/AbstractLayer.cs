@@ -35,9 +35,9 @@ namespace Com.AugustCellars.CoAP.Stack
         }
 
         /// <inheritdoc/>
-        public virtual void SendEmptyMessage(INextLayer nextLayer, Exchange exchange, EmptyMessage message)
+        public virtual bool SendEmptyMessage(INextLayer nextLayer, Exchange exchange, EmptyMessage message)
         {
-            nextLayer.SendEmptyMessage(exchange, message);
+            return nextLayer.SendEmptyMessage(exchange, message);
         }
 
         /// <inheritdoc/>

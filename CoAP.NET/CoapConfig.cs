@@ -16,6 +16,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
+// ReSharper disable InconsistentNaming
 
 namespace Com.AugustCellars.CoAP
 {
@@ -49,7 +50,9 @@ namespace Com.AugustCellars.CoAP
         }
 
         private const int Default_HttpPort = 8080;
+
         private const double Default_AckTimeoutScale = 2D;
+
         private const int Default_MaxMessageSize = 1024;
         private const int Default_BlockwiseStatusLifetime = 10 * 60 * 1000; // ms
         private const bool Default_UseRandomIdStart = true;
@@ -122,6 +125,12 @@ namespace Com.AugustCellars.CoAP
         {
             get => GetInt("MaxRetransmit", CoapConstants.MaxRetransmit);
             set => SetValue("MaxRetransmit", value);
+        }
+
+        public int NonTimeout
+        {
+            get => GetInt("NonTimeout", CoapConstants.AckTimeout);
+            set => SetValue("NonTimeout", value);
         }
 
         /// <inheritdoc/>

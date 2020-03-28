@@ -42,17 +42,17 @@ namespace Com.AugustCellars.CoAP
         int HttpPort { get; }
 
         /// <summary>
-        /// Input to computing the resend intervolt
+        /// Input to computing the resend interval
         /// </summary>
         int AckTimeout { get; }
 
         /// <summary>
-        /// Input to computing the resend intervolt
+        /// Input to computing the resend interval
         /// </summary>
         double AckRandomFactor { get; }
 
         /// <summary>
-        /// Input to cmputing the resend intervolt
+        /// Input to computing the resend interval
         /// </summary>
         double AckTimeoutScale { get; }
 
@@ -60,6 +60,11 @@ namespace Com.AugustCellars.CoAP
         /// Maximum number of times that a message is resent
         /// </summary>
         int MaxRetransmit { get; }
+
+        /// <summary>
+        /// Input to compute timeout interval for NON messages
+        /// </summary>
+        int NonTimeout { get; }
 
         /// <summary>
         /// Size of message to start blocking at

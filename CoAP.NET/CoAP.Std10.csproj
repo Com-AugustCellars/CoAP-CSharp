@@ -25,7 +25,8 @@ It is intented primarily for research and verification work.
 
 1.8
   - Internal cleanup work.
-
+  - Add congestion control for observe notifications
+  - Restore DTLS reliability checking
 1.7
   - Remove the media types that had been previously marked as obsolete.
   - Restore the incorrect removal of reliability for DTLS on the server side.
