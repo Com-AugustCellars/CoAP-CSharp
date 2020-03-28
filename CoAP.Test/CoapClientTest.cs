@@ -55,7 +55,8 @@ namespace Com.AugustCellars.CoAP
         [TestMethod]
         public void TestSynchronousCall()
         {
-            _notifications = 0;
+            int notifications = 0;
+            AutoResetEvent syncEvent = new AutoResetEvent(false);
 
             Uri uri = new Uri("coap://localhost:" + _serverPort + "/" + TARGET);
             CoapClient client = new CoapClient(uri);
@@ -73,45 +74,52 @@ namespace Com.AugustCellars.CoAP
 
             string resp4 = client.Get().ResponseText;
             Assert.AreEqual(CONTENT_2, resp4);
+            Thread.Sleep(100);
 
             // Observe the resource
             _expected = CONTENT_2;
 
             object blockLock = new object();
-            CoapObserveRelation obs1 = client.Observe(response =>
-                {
-                    lock (blockLock) { // Make sure only one at a time is in here.
-                        Interlocked.Increment(ref _notifications);
-                        string payload = response.ResponseText;
-                        Assert.AreEqual(_expected, payload);
-                        Assert.IsTrue(response.HasOption(OptionType.Observe));
-                    }
+            AutoResetEvent trigger = new AutoResetEvent(false);
+            Response lastResponse = null;
+
+            CoapObserveRelation obs1 = client.Observe(response => {
+                lastResponse = response;
+                trigger.Set();
                 }, Fail);
             Assert.IsFalse(obs1.Canceled);
 
-            Thread.Sleep(100);
-            _resource.Changed();
-            Thread.Sleep(100);
-            _resource.Changed();
-            Thread.Sleep(100);
-            _resource.Changed();
+            Assert.IsTrue(trigger.WaitOne(100));
+            Assert.AreEqual(_expected, lastResponse.ResponseText);
+            Assert.IsTrue(lastResponse.HasOption(OptionType.Observe));
 
-            Thread.Sleep(100);
+            for (int i = 0; i < 5; i++) {
+                _resource.Changed();
+                Assert.IsTrue(trigger.WaitOne(100));
+                Assert.AreEqual(_expected, lastResponse.ResponseText);
+                Assert.IsTrue(lastResponse.HasOption(OptionType.Observe));
+            }
+
             _expected = CONTENT_3;
             string resp5 = client.Post(CONTENT_3).ResponseText;
             Assert.AreEqual(CONTENT_2, resp5);
 
+            Assert.IsTrue(trigger.WaitOne(100));
+            Assert.AreEqual(_expected, lastResponse.ResponseText);
+            Assert.IsTrue(lastResponse.HasOption(OptionType.Observe));
+
             // Try a put and receive a METHOD_NOT_ALLOWED
             StatusCode code6 = client.Put(CONTENT_4).StatusCode;
             Assert.AreEqual(StatusCode.MethodNotAllowed, code6);
+            Assert.IsFalse(trigger.WaitOne(100));
 
             // Cancel observe relation of obs1 and check that it does no longer receive notifications
-            Thread.Sleep(100);
-            _expected = null; // The next notification would now cause a failure
+
             obs1.ReactiveCancel();
             Thread.Sleep(100);
+
             _resource.Changed();
-            Assert.AreEqual(5, _notifications);
+            Assert.IsFalse(trigger.WaitOne(100));
 
             // Make another post
             Thread.Sleep(100);
@@ -128,14 +136,13 @@ namespace Com.AugustCellars.CoAP
             // Check that we indeed received 5 notifications
             // 1 from origin GET request, 3 x from changed(), 1 from post()
             Thread.Sleep(100);
-            Assert.AreEqual(5, _notifications);
             Assert.IsFalse(_failed);
         }
 
         [TestMethod]
         public void TestAsynchronousCall()
         {
-            _notifications = 0;
+            int notifications = 0;
 
             Uri uri = new Uri("coap://localhost:" + _serverPort + "/" + TARGET);
             CoapClient client = new CoapClient(uri);
@@ -156,7 +163,9 @@ namespace Com.AugustCellars.CoAP
             Thread.Sleep(100);
 
             // Observe the resource
-            _expected = CONTENT_2;
+            string expected = CONTENT_2;
+            int actualTest = 0;
+            int notifyTest = 0;
             CoapObserveRelation obs1 = client.ObserveAsync(response =>
                 {
                     Interlocked.Increment(ref _notifications);
@@ -174,7 +183,7 @@ namespace Com.AugustCellars.CoAP
             _resource.Changed();
 
             Thread.Sleep(100);
-            _expected = CONTENT_3;
+            expected = CONTENT_3;
             client.PostAsync(CONTENT_3, response => Assert.AreEqual(CONTENT_2, response.ResponseText));
             Thread.Sleep(100);
 
@@ -183,7 +192,7 @@ namespace Com.AugustCellars.CoAP
 
             // Cancel observe relation of obs1 and check that it does no longer receive notifications
             Thread.Sleep(100);
-            _expected = null; // The next notification would now cause a failure
+            expected = null; // The next notification would now cause a failure
             obs1.ReactiveCancel();
             Thread.Sleep(100);
             _resource.Changed();
@@ -193,8 +202,9 @@ namespace Com.AugustCellars.CoAP
             client.PostAsync(CONTENT_4, response => Assert.AreEqual(CONTENT_3, response.ResponseText));
             Thread.Sleep(100);
 
-            UriBuilder ub = new UriBuilder("coap", "localhost", _serverPort, TARGET);
-            ub.Query = QUERY_UPPER_CASE;
+            UriBuilder ub = new UriBuilder("coap", "localhost", _serverPort, TARGET) {
+                Query = QUERY_UPPER_CASE
+            };
 
             // Try to use the builder and add a query
             new CoapClient(ub.Uri).GetAsync(response => Assert.AreEqual(CONTENT_4.ToUpper(), response.ResponseText));
@@ -202,7 +212,9 @@ namespace Com.AugustCellars.CoAP
             // Check that we indeed received 5 notifications
             // 1 from origin GET request, 3 x from changed(), 1 from post()
             Thread.Sleep(100);
-            Assert.AreEqual(5, _notifications);
+            Assert.AreEqual(0, actualTest);
+            Assert.AreEqual(0, notifyTest);
+            Assert.AreEqual(5, notifications);
             Assert.IsFalse(_failed);
         }
 
@@ -334,7 +346,6 @@ namespace Com.AugustCellars.CoAP
                 exchange.Respond(c);
             }
         }
-
 
     }
 }

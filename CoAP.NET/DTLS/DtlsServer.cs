@@ -119,7 +119,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                     Cwt cwtServer = Cwt.Decode(cwtPub.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
 
-                    AsymmetricKeyParameter pubKey = cwtServer.Cnf.Key.AsPublicKey();
+                    AsymmetricKeyParameter pubKey = cwtServer.Cnf.CoseKey.AsPublicKey();
 
                     SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKey);
                     cwtPub.SetSubjectPublicKeyInfo(spi);
@@ -197,7 +197,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                             k.HasAlgorithm(AlgorithmValues.ECDSA_256)) {
 
                             CwtPublicKey cwtKey = new CwtPublicKey(kp.PublicCwt.EncodeToBytes());
-                            AsymmetricKeyParameter pubKey = kp.PublicCwt.Cnf.Key.AsPublicKey();
+                            AsymmetricKeyParameter pubKey = kp.PublicCwt.Cnf.CoseKey.AsPublicKey();
                             cwtKey.SetSubjectPublicKeyInfo(SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKey));
 
                             return new DefaultTlsSignerCredentials(
@@ -525,7 +525,7 @@ namespace Com.AugustCellars.CoAP.DTLS
                 try {
                     cwt = Cwt.Decode(rpk.EncodedCwt(), CwtTrustRoots, CwtTrustRoots);
 
-                    AuthenticationKey = cwt.Cnf.Key;
+                    AuthenticationKey = cwt.Cnf.CoseKey;
                 }
                 catch (Exception e)
                 {

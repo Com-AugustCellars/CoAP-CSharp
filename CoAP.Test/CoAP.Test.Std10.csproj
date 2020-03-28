@@ -10,13 +10,19 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.3.2" />
     <PackageReference Include="MSTest.TestFramework" Version="1.3.2" />
-    <PackageReference Include="PeterO.Cbor" Version="4.0.0" />
+    <PackageReference Include="PeterO.Cbor" Version="4.0.1" />
     <PackageReference Include="Portable.BouncyCastle" Version="1.8.5" />
     <PackageReference Include="Com.AugustCellars.COSE" Version="1.6.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CoAP.NET\CoAP.Std10.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="CoRAL\Klaus.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
