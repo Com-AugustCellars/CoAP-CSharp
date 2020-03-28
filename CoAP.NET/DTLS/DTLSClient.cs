@@ -63,7 +63,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
             if (_tlsKeyPair != null) {
                 if (_tlsKeyPair.X509Certificate != null) {
-                i = new int[] {
+                    i = new int[] {
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8,
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8
                 };
@@ -118,7 +118,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
                     Cwt cwtServer = Cwt.Decode(cwtPub.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
 
-                    AsymmetricKeyParameter pubKey = cwtServer.Cnf.Key.AsPublicKey();
+                    AsymmetricKeyParameter pubKey = cwtServer.Cnf.CoseKey.AsPublicKey();
 
                     SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pubKey);
                     cwtPub.SetSubjectPublicKeyInfo(spi);
@@ -283,7 +283,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 
 #if SUPPORT_TLS_CWT
             if (_tlsKeyPair != null && _tlsKeyPair.CertType == CertificateType.CwtPublicKey) {
-                OneKey k = _tlsKeyPair.PublicCwt.Cnf.Key;
+                OneKey k = _tlsKeyPair.PublicCwt.Cnf.CoseKey;
                 if (k.HasKeyType((int)GeneralValuesInt.KeyType_EC2) &&
                     k.HasAlgorithm(AlgorithmValues.ECDSA_256)) {
 
@@ -445,11 +445,11 @@ namespace Com.AugustCellars.CoAP.DTLS
                 try {
                     Cwt cwt = Cwt.Decode(rpk.EncodedCwt(), CwtTrustKeySet, CwtTrustKeySet);
 
-                    AsymmetricKeyParameter pub = cwt.Cnf.Key.AsPublicKey();
+                    AsymmetricKeyParameter pub = cwt.Cnf.CoseKey.AsPublicKey();
                     SubjectPublicKeyInfo spi = SubjectPublicKeyInfoFactory.CreateSubjectPublicKeyInfo(pub);
                     rpk.SetSubjectPublicKeyInfo(spi);
 
-                    AuthenticationKey = cwt.Cnf.Key;
+                    AuthenticationKey = cwt.Cnf.CoseKey;
                     return;
                 }
                 catch {
@@ -550,7 +550,7 @@ namespace Com.AugustCellars.CoAP.DTLS
 #if SUPPORT_TLS_CWT
 
                     else if (TlsKey.CertType == CertificateType.CwtPublicKey) {
-                    OneKey k = TlsKey.PublicCwt.Cnf.Key;
+                        OneKey k = TlsKey.PublicCwt.Cnf.CoseKey;
                         if (k.HasKeyType((int) GeneralValuesInt.KeyType_EC2) &&
                             k.HasAlgorithm(AlgorithmValues.ECDSA_256)) {
 

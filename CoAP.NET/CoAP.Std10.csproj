@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 
 <Project Sdk="Microsoft.NET.Sdk">
@@ -17,6 +17,7 @@
     <RepositoryUrl>https://github.com/Com-AugustCellars/CoAP-CSharp</RepositoryUrl>
     <PackageTags>COSE CBOR</PackageTags>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+    <ProjectURL>https://github.com/Com-Augustcellars/CoAP-CSharp</ProjectURL>
     
     <PackageReleaseNotes>
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
@@ -114,7 +115,6 @@ It is intented primarily for research and verification work.
     <SignAssembly>true</SignAssembly>
     <IntermediateOutputPath>obj\std10\Deploy</IntermediateOutputPath>
     <OutputPath>bin\std10\Deploy\</OutputPath>
-    <DefineConstants>DEBUG</DefineConstants>
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -145,9 +145,13 @@ It is intented primarily for research and verification work.
     <Compile Include="Coral\CoralBase.cs" />
     <Compile Include="Coral\CoralBody.cs" />
     <Compile Include="Coral\CoralDictionary.cs" />
+    <Compile Include="Coral\CoralBaseDirective.cs" />
+    <Compile Include="Coral\CoralDocument.cs" />
     <Compile Include="Coral\CoralForm.cs" />
+    <Compile Include="Coral\CoralFormField.cs" />
     <Compile Include="Coral\CoralItem.cs" />
     <Compile Include="Coral\CoralLink.cs" />
+    <Compile Include="Coral\CoralUsing.cs" />
     <Compile Include="Deduplication\CropRotation.cs" />
     <Compile Include="Deduplication\DeduplicatorFactory.cs" />
     <Compile Include="Deduplication\IDeduplicator.cs" />
@@ -239,7 +243,7 @@ It is intented primarily for research and verification work.
     <Compile Include="Threading\TaskExecutor.cs" />
     <Compile Include="Util\ArrayEqualityComparer.cs" />
     <Compile Include="Util\ByteArrayUtils.cs" />
-    <Compile Include="Util\Ciri.cs" />
+    <Compile Include="Util\Cori.cs" />
     <Compile Include="Util\Scanner.cs" />
     <Compile Include="Util\System.Collections.Generic\SynchronizedCollection.cs" />
     <Compile Include="Util\ThrowHelper.cs" />

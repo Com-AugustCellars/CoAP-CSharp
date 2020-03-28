@@ -234,7 +234,7 @@ namespace Com.AugustCellars.CoAP
 #endif
         public static byte[] SerializeCoral(IResource root, IEnumerable<string> queries)
         {
-            CoralBody nodeRoot = new CoralBody();
+            CoralDocument nodeRoot = new CoralDocument();
             
 
             List<string> queryList = null;
@@ -244,7 +244,7 @@ namespace Com.AugustCellars.CoAP
                 SerializeTreeInCoral(child, queryList, nodeRoot, CborAttributeKeys);
             }
 
-            return nodeRoot.EncodeToBytes(ReefDictionary);
+            return nodeRoot.EncodeToBytes(null, ReefDictionary);
         }
 
         public static IEnumerable<WebLink> Parse(string linkFormat)
@@ -468,10 +468,10 @@ namespace Com.AugustCellars.CoAP
             CBORObject obj = CBORObject.NewArray();
             CBORObject href;
             if (uriRelative == null) {
-                href =Ciri.ToCbor(resource.Path + resource.Name);
+                href =Cori.ToCbor(resource.Path + resource.Name);
             }
             else {
-                href = Ciri.ToCbor(new Uri(uriRelative, resource.Path + resource.Name));
+                href = Cori.ToCbor(new Uri(uriRelative, resource.Path + resource.Name));
             }
 
             CoralBody body = new CoralBody();
@@ -485,7 +485,7 @@ namespace Com.AugustCellars.CoAP
                 body = null;
             }
 
-            CoralItem item = new CoralLink(isEndPoint ? "http://coreapps.org/ref#rd-unit" : "http://coreapps.org/reef#rd-item", href, body);
+            CoralItem item = new CoralLink(isEndPoint ? "http://coreapps.org/ref#rd-unit" : "http://coreapps.org/reef#rd-item", href.AsString(), body);
             coral.Add(item);
         }
 
@@ -970,7 +970,7 @@ namespace Com.AugustCellars.CoAP
                                 string actual = value;
                                 // get prefix length according to "*"
                                 int prefixLength = expected.IndexOf('*');
-                                if (prefixLength >= 0 && prefixLength < actual.Length) {
+                                if (prefixLength >= 0 && prefixLength <= actual.Length) {
                                     // reduce to prefixes
                                     expected = expected.Substring(0, prefixLength);
                                     actual = actual.Substring(0, prefixLength);
