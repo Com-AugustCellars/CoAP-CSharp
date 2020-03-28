@@ -7,13 +7,13 @@
     <TargetFrameworks>netcoreapp2.0;net462;netstandard2.0</TargetFrameworks>
     <PackageId>Com.AugustCellars.CoAP</PackageId>
     <Id>Com.AugustCellars.CoAP</Id>
-    <PackageVersion>1.7.0.0</PackageVersion>
-    <Version>1.7.0.0</Version>
+    <PackageVersion>1.8.0.0</PackageVersion>
+    <Version>1.8.0.0</Version>
     <Authors>Jim Schaad</Authors>
     <Title>C# Implementation of CoAP</Title>
     <Description>An implementation of various CoAP standards.  Both client and server sides are included.</Description>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright @2016-9 Jim Schaad</Copyright>
+    <Copyright>Copyright @2016-20 Jim Schaad</Copyright>
     <RepositoryUrl>https://github.com/Com-AugustCellars/CoAP-CSharp</RepositoryUrl>
     <PackageTags>COSE CBOR</PackageTags>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
