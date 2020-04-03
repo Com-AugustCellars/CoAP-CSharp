@@ -146,9 +146,9 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         Reserved4 = 140,
         /// <summary>
-        /// <remarks>draft-ietf-core-oscoap</remarks>
+        /// <remarks>RFC 8613</remarks>
         /// </summary>
-        Oscoap = 9,
+        Oscore = 9,
         /// <summary>
         /// <remarks>RFC 7967</remarks>
         /// </summary>
@@ -233,7 +233,7 @@ namespace Com.AugustCellars.CoAP
             {CoAP.OptionType.MaxAge, new OptionData(CoAP.OptionType.MaxAge, "Max-Age", OptionFormat.Integer, null) },
             {CoAP.OptionType.NoResponse, new OptionData(CoAP.OptionType.NoResponse, "No-Response", OptionFormat.Unknown, null)  },
             {CoAP.OptionType.Observe, new OptionData(CoAP.OptionType.Observe, "Observe", OptionFormat.Integer, null)},
-            {CoAP.OptionType.Oscoap, new OptionData(CoAP.OptionType.Oscoap, "OSCORE", OptionFormat.Opaque, typeof(OscoapOption))},
+            {CoAP.OptionType.Oscore, new OptionData(CoAP.OptionType.Oscore, "OSCORE", OptionFormat.Opaque, typeof(OscoapOption))},
             {CoAP.OptionType.ProxyScheme, new OptionData(CoAP.OptionType.ProxyScheme, "ProxyScheme", OptionFormat.String, null) },
             {CoAP.OptionType.ProxyUri, new OptionData(CoAP.OptionType.ProxyUri, "Proxy-Uri", OptionFormat.String, null) },
             {CoAP.OptionType.Size1, new OptionData(CoAP.OptionType.Size1, "Size1", OptionFormat.Integer, null) },

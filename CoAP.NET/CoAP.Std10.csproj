@@ -7,8 +7,8 @@
     <TargetFrameworks>netcoreapp2.0;net462;netstandard2.0</TargetFrameworks>
     <PackageId>Com.AugustCellars.CoAP</PackageId>
     <Id>Com.AugustCellars.CoAP</Id>
-    <PackageVersion>1.8.0.0</PackageVersion>
-    <Version>1.8.0.0</Version>
+    <PackageVersion>1.9.0.0</PackageVersion>
+    <Version>1.9.0.0</Version>
     <Authors>Jim Schaad</Authors>
     <Title>C# Implementation of CoAP</Title>
     <Description>An implementation of various CoAP standards.  Both client and server sides are included.</Description>
@@ -23,6 +23,10 @@
 This project is built on the CoAP.NET project of smeshlink which in turn is based on Californium.  As this project did not seem to be maintained any more and I wanted a version in order to test the newer items that are coming out of the IETF CORE working group, I have captured it and started exanding it.
 It is intented primarily for research and verification work.
 
+1.9
+  - Fix some errors in OSCORE processing with a large number of messages
+  - Rename OSCOAP option to OSCORE - this should not affect anybody as it should only be used internally
+  - Correct secure blockwise code to have the original request options as part of the key and the next block message
 1.8
   - Internal cleanup work.
   - Add congestion control for observe notifications

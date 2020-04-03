@@ -1241,11 +1241,11 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         public OSCOAP.OscoapOption Oscoap
         {
-            get => GetFirstOption(OptionType.Oscoap) as OSCOAP.OscoapOption;
+            get => GetFirstOption(OptionType.Oscore) as OSCOAP.OscoapOption;
             set
             {
                 if (value == null) {
-                    RemoveOptions(OptionType.Oscoap);
+                    RemoveOptions(OptionType.Oscore);
                 }
                 else {
                     SetOption(value);

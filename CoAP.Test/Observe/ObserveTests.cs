@@ -231,7 +231,7 @@ namespace CoAP.Test.Std10.Observe
             _config.NotificationCheckIntervalCount = 100;
             int conCount = 0;
 
-            for (int i = 1; i < 2100; i++) {
+            for (int i = 1; i < 210; i++) {
                 _expected = $"Content for {i}";
                 _resource.UpdateContent(_expected);
                 Assert.IsTrue(trigger.WaitOne(timeout));

@@ -45,9 +45,10 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             /// <returns>true if should treat as replay</returns>
             public bool HitTest(long index)
             {
+
                 index -= BaseValue;
                 if (index < 0) return true;
-                if (index > _hits.Length) return false;
+                if (index >= _hits.Length) return false;
                 return _hits.Get((int)index);
             }
 
@@ -61,7 +62,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 bool returnValue = false;
                 index -= BaseValue;
                 if (index < 0) return false;
-                if (index > _hits.Length) {
+                if (index >= _hits.Length) {
                     returnValue = true;
                     if (index < _hits.Length * 3 / 2) {
                         int v = _hits.Length / 2;
@@ -139,7 +140,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             /// <summary>
             /// What is the current sequence number (IV) for the context?
             /// </summary>
-            public int SequenceNumber { get; set; }
+            public long SequenceNumber { get; set; }
 
             /// <summary>
             /// At what frequency should the IV update event be sent?
@@ -222,11 +223,11 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             /// <returns>true if exhausted</returns>
             public bool SequenceNumberExhausted => SequenceNumber >= MaxSequenceNumber;
 
-            private int _maxSequenceNumber = 0x1f;
+            private long _maxSequenceNumber = 0xffffffffff;
             /// <summary>
             /// Set/get the maximum sequence number.  Limited to five bits.
             /// </summary>
-            public int MaxSequenceNumber
+            public long MaxSequenceNumber
             {
                 get => _maxSequenceNumber;
                 set {
