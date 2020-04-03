@@ -47,8 +47,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <inheritdoc/>
         public virtual void Init(IDerivationParameters parameters)
         {
-            if (!(parameters is HkdfParameters))
-                throw new ArgumentException("HKDF parameters required for HkdfBytesGenerator", "parameters");
+            if (!(parameters is HkdfParameters)) {
+                throw new ArgumentException("HKDF parameters required for HkdfBytesGenerator", nameof(parameters));
+            }
 
             HkdfParameters hkdfParameters = (HkdfParameters)parameters;
             if (hkdfParameters.SkipExtract) {
@@ -116,9 +117,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <summary>
         /// Get the digest function
         /// </summary>
-        public virtual IDigest Digest {
-            get { return _hMacHash.GetUnderlyingDigest(); }
-        }
+        public virtual IDigest Digest => _hMacHash.GetUnderlyingDigest();
 
         /// <summary>
         /// Generate bytes
@@ -168,17 +167,17 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         : IDerivationParameters
     {
         private readonly byte[] _ikm;
-        private readonly bool _skipExpand;
         private readonly byte[] _salt;
         private readonly byte[] _info;
 
         private HkdfParameters(byte[] ikm, bool skip, byte[] salt, byte[] info)
         {
-            if (ikm == null)
-                throw new ArgumentNullException("ikm");
+            if (ikm == null) {
+                throw new ArgumentNullException(nameof(ikm));
+            }
 
             this._ikm = Arrays.Clone(ikm);
-            this._skipExpand = skip;
+            this.SkipExtract = skip;
 
             if (salt == null || salt.Length == 0) {
                 this._salt = null;
@@ -242,9 +241,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
          *
          * @return true for skipping, false for no skipping of step 1
          */
-        public virtual bool SkipExtract {
-            get { return _skipExpand; }
-        }
+        public virtual bool SkipExtract { get; }
 
         /**
          * Returns the salt, or null if the salt should be generated as a byte array

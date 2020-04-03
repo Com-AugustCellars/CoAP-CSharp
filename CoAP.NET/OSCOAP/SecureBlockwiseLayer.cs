@@ -9,11 +9,9 @@
  */
 
 using System;
-#if NETSTANDARD1_3
-using System.Threading;
-#else
+using System.Collections.Generic;
+using System.Linq;
 using System.Timers;
-#endif
 
 using Com.AugustCellars.CoAP.Stack;
 using Com.AugustCellars.CoAP.Log;
@@ -59,6 +57,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <inheritdoc/>
         public override void SendRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
+            //  This assumes we don't change individual options - if this is not true then we need to do a deep copy.
+            exchange.PreSecurityOptions = request.GetOptions().ToList();
+
             if ((request.Oscoap == null) && (exchange.OscoreContext == null)) {
                 base.SendRequest(nextLayer, exchange, request);
             }
@@ -68,7 +69,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 // Note: We do not regard it as random access when the block num is
                 // 0. This is because the user might just want to do early block
                 // size negotiation but actually wants to receive all blocks.
-                    log.Debug("Request carries explicit defined block2 option: create random access blockwise status");
+                log.Debug("Request carries explicit defined block2 option: create random access blockwise status");
 
                 BlockwiseStatus status = new BlockwiseStatus(request.ContentFormat);
                 BlockOption block2 = request.Block2;
@@ -80,14 +81,14 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
             else if (RequiresBlockwise(request)) {
                 // This must be a large POST or PUT request
-                if (log.IsDebugEnabled) {
-                    log.Debug("Request payload " + request.PayloadSize + "/" + _maxMessageSize + " requires Blockwise.");
-                }
+                log.Debug(m => m($"Request payload {request.PayloadSize}/{_maxMessageSize} requires Blockwise."));
 
                 BlockwiseStatus status = FindRequestBlockStatus(exchange, request);
-                Request block = GetNextRequestBlock(request, status);
+                Request block = GetNextRequestBlock(request, exchange.PreSecurityOptions, status);
                 exchange.OscoreRequestBlockStatus = status;
                 exchange.CurrentRequest = block;
+
+                log.Debug($"Block message to send: {block}");
                 base.SendRequest(nextLayer, exchange, block);
             }
             else {
@@ -309,9 +310,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             BlockOption block1 = response.Block1;
             if (block1 != null) {
                 // TODO: What if request has not been sent blockwise (server error)
-                if (log.IsDebugEnabled) {
-                    log.Debug("Response acknowledges block " + block1);
-                }
+                log.Debug(m => m("Response acknowledges block {block1}"));
 
                 BlockwiseStatus status = exchange.OscoreRequestBlockStatus;
                 if (!status.Complete) {
@@ -319,18 +318,18 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     // Send next block
                     int currentSize = 1 << (4 + status.CurrentSZX);
                     int nextNum = status.CurrentNUM + currentSize / block1.Size;
-                    if (log.IsDebugEnabled) {
-                        log.Debug("Send next block num = " + nextNum);
-                    }
-
+                    
+                    log.Debug(m => m($"Send next block num = {nextNum}"));
+    
                     status.CurrentNUM = nextNum;
                     status.CurrentSZX = block1.SZX;
-                    Request nextBlock = GetNextRequestBlock(exchange.Request, status);
+                    Request nextBlock = GetNextRequestBlock(exchange.Request, exchange.PreSecurityOptions, status);
                     if (nextBlock.Token == null) {
                         nextBlock.Token = response.Token; // reuse same token
                     }
 
                     exchange.CurrentRequest = nextBlock;
+                    log.Debug(m => m($"ReceiveResponse: Block message to send: {nextBlock}"));
                     base.SendRequest(nextLayer, exchange, nextBlock);
                     // do not deliver response
                 }
@@ -340,7 +339,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     base.ReceiveResponse(nextLayer, exchange, response);
                 }
                 else {
-                        log.Debug("Response has Block2 option and is therefore sent blockwise");
+                    log.Debug("Response has Block2 option and is therefore sent blockwise");
                 }
             }
 
@@ -360,12 +359,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                     exchange.Request.FireResponding(response);
 
                     if (status.IsRandomAccess) {
-                        // The client has requested this specifc block and we deliver it
+                        // The client has requested this specific block and we deliver it
                         exchange.Response = response;
                         base.ReceiveResponse(nextLayer, exchange, response);
                     }
                     else if (block2.M) {
-                            log.Debug("Request the next response block");
+                        log.Debug("Request the next response block");
 
                         Request request = exchange.Request;
                         int num = block2.NUM + 1;
@@ -376,7 +375,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         // NON could make sense over SMS or similar transports
                         block.Type = request.Type;
                         block.Destination = request.Destination;
-                        block.SetOptions(request.GetOptions());
+                        block.SetOptions(exchange.PreSecurityOptions /* request.GetOptions()*/);
                         block.SetOption(new BlockOption(OptionType.Block2, num, szx, m));
                         // we use the same token to ease traceability (GET without Observe no longer cancels relations)
                         block.Token = response.Token;
@@ -386,6 +385,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         status.CurrentNUM = num;
 
                         exchange.CurrentRequest = block;
+                        log.Debug(m1=>m1($"ReceiveResponse: Block request is {block}"));
                         base.SendRequest(nextLayer, exchange, block);
                     }
                     else {
@@ -505,12 +505,12 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             return status;
         }
 
-        private Request GetNextRequestBlock(Request request, BlockwiseStatus status)
+        private Request GetNextRequestBlock(Request request, List<Option> originalOptions, BlockwiseStatus status)
         {
             int num = status.CurrentNUM;
             int szx = status.CurrentSZX;
             Request block = new Request(request.Method);
-            block.SetOptions(request.GetOptions());
+            block.SetOptions(originalOptions);
             block.Destination = request.Destination;
             block.Token = request.Token;
             block.Type = MessageType.CON;
@@ -622,19 +622,6 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// </summary>
         protected void PrepareBlockCleanup(Exchange exchange)
         {
-#if NETSTANDARD1_3
-            Timer timer = new Timer((o) => BlockwiseTimeout(exchange), this, _blockTimeout, Timeout.Infinite);
-
-            Timer old = exchange.Set("BlockCleanupTimer", timer) as Timer;
-            if (old != null) {
-                try {
-                    old.Dispose();
-                }
-                catch (ObjectDisposedException) {
-                    // ignore
-                }
-            }
-#else
             Timer timer = new Timer();
             timer.AutoReset = false;
             timer.Interval = _blockTimeout;
@@ -652,7 +639,6 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             }
 
             timer.Start();
-#endif
         }
 
         /// <summary>
@@ -663,9 +649,6 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             Timer timer = exchange.Remove("BlockCleanupTimer") as Timer;
             if (timer != null) {
                 try {
-#if NETSTANDARD1_3 == false
-                    timer.Stop();
-#endif
                     timer.Dispose();
                 }
                 catch (ObjectDisposedException) {

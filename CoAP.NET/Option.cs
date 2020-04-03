@@ -180,7 +180,7 @@ namespace Com.AugustCellars.CoAP
                 case OptionType.Block1:
                 case OptionType.Block2:
                     return new BlockOption(type);
-                case OptionType.Oscoap:
+                case OptionType.Oscore:
                     return new OSCOAP.OscoapOption();
                 default:
                     return new Option(type);

@@ -14,7 +14,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 {
     public class OscoapOption : Option
     {
-        public OscoapOption() : base(OptionType.Oscoap)
+        public OscoapOption() : base(OptionType.Oscore)
         {
 
         }
