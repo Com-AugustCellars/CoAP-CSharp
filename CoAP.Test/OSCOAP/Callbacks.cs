@@ -10,6 +10,7 @@
 
 using System;
 using System.Text;
+using System.Threading;
 using Com.AugustCellars.CoAP;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Com.AugustCellars.CoAP.Server;
@@ -39,6 +40,8 @@ namespace CoAP.Test.Std10.OSCOAP
         private static OneKey _clientSign1;
         private static OneKey _clientSign2;
         private static OneKey _serverSign1;
+        private AutoResetEvent trigger = new AutoResetEvent(false);
+
 
         [ClassInitialize]
         public static void ClassInit(TestContext e)
@@ -81,6 +84,9 @@ namespace CoAP.Test.Std10.OSCOAP
                 Assert.Fail();
                 break;
             }
+
+            trigger.Set();
+
         }
 
 
@@ -103,6 +109,7 @@ namespace CoAP.Test.Std10.OSCOAP
 
             Response r = client.Get();
 
+            Assert.IsTrue(trigger.WaitOne(1000));
             Assert.AreEqual(OscoreEvent.EventCode.PivExhaustion, _clientCallbackCode);
 
             _clientEventChoice = 1;
