@@ -115,7 +115,7 @@ namespace Com.AugustCellars.CoAP.Channel
             };
             _listMultiCastEndpoints.Add(s);
             if (_running == 1) {
-
+                StartMulticastSocket(s);
             }
             return true;
         }
@@ -216,7 +216,7 @@ namespace Com.AugustCellars.CoAP.Channel
             if (info._localEP.Address.IsIPv6Multicast) {
                 try {
                     info._socket = SetupUDPSocket(AddressFamily.InterNetworkV6, ReceivePacketSize + 1);
-                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.IPv6Any, _port));
+                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.IPv6Any, info._localEP.Port));
 
                     NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
                     foreach (NetworkInterface adapter in nics) {
@@ -263,7 +263,9 @@ namespace Com.AugustCellars.CoAP.Channel
             else {
                 try {
                     info._socket = SetupUDPSocket(AddressFamily.InterNetwork, ReceivePacketSize + 1);
-                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.Any, _port));
+                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.Any, info._localEP.Port));
+
+                    info._socket.Socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.PacketInformation, true);
 
                     NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
 
