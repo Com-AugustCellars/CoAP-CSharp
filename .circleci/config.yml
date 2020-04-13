@@ -10,6 +10,17 @@ jobs:
        - checkout
 
        - run:
+           name: Enable IPv6
+           command: |
+              cat << 'EOF' | sudo tee /etc/docker/daemon.json
+              {
+                "ipv6": true,
+                "fixed-cidr-v6": "2001:db8:1::/64"
+              }
+              EOF
+              sudo service docker restart
+
+       - run:
            name: Get Examples
            command: git clone --depth 1 https://github.com/cose-wg/Examples Regressions
 
