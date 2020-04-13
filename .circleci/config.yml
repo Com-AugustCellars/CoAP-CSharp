@@ -1,23 +1,13 @@
 version: 2
 jobs:
   build:
-    machine:
-      image: microsoft/dotnet:2-sdk
+    docker:
+      - image: microsoft/dotnet:2-sdk
 
     working_directory: ~/repo
 
     steps:
        - checkout
-
-       - run:
-           name: Enable IPv6
-           command: |
-              cat << 'EOF' | sudo tee /etc/docker/daemon.json
-              {
-                "ipv6": true
-              }
-              EOF
-              systemctl reload docker
 
        - run:
            name: Get Examples
