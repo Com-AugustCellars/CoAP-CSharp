@@ -1,7 +1,7 @@
 version: 2
 jobs:
   build:
-    docker:
+    machine:
       - image: microsoft/dotnet:2-sdk
 
     working_directory: ~/repo
