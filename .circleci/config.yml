@@ -5,7 +5,6 @@ jobs:
       - image: microsoft/dotnet:2-sdk
 
     working_directory: ~/repo
-    machine: true
 
     steps:
        - checkout
@@ -15,11 +14,10 @@ jobs:
            command: |
               cat << 'EOF' | sudo tee /etc/docker/daemon.json
               {
-                "ipv6": true,
-                "fixed-cidr-v6": "2001:db8:1::/64"
+                "ipv6": true
               }
               EOF
-              sudo service docker restart
+              systemctl reload docker
 
        - run:
            name: Get Examples
