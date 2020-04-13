@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using Com.AugustCellars.CoAP;
+using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Server;
 using Com.AugustCellars.CoAP.Server.Resources;
@@ -30,78 +31,72 @@ namespace CoAP.Test.Std10.Channel
         private static readonly string UnicastResponse = "This is a unicast message";
         private static readonly string MulticastResponse = "This is a multicast message";
 
-        static readonly System.Net.IPAddress _multicastAddress = IPAddress.Parse("224.0.1.187");
-        static readonly System.Net.IPAddress _multicastAddress2 = IPAddress.Parse("[FF02:0:0:0:0:0:0:FD]");
+        static readonly IPAddress multicastAddress = IPAddress.Parse("224.0.1.187");
+        static readonly IPAddress multicastAddress2 = IPAddress.Parse("[FF02:0:0:0:0:0:0:FD]");
 
-        int[] _serverPort = new int[2];
-        CoapServer[] _server = new CoapServer[2];
+        private static readonly IPAddress multicastAddress3 = IPAddress.Parse("224.0.1.180");
+        private static readonly IPAddress multicastAddress4 = IPAddress.Parse("[FF02::DD]");
+
+        int _serverPort;
+        CoapServer _server;
         Resource _resource;
 
         [TestInitialize]
         public void SetupServer()
         {
-            CreateServer(0);
+            LogManager.Level = LogLevel.All;
+            CreateServer();
         }
 
 
         [TestCleanup]
         public void ShutdownServer()
         {
-            _server[0].Dispose();
+            _server.Dispose();
         }
 
         [TestMethod]
-        public void TestClient()
+        public void GetUnicast()
         {
             Uri uri;
             CoapClient client;
             Response response;
 
-            //  Check that we can unicast to both servers
+            uri = new Uri($"coap://localhost:{_serverPort}/{UnicastTarget}");
 
-            for (int i = 0; i < 1; i++) {
-                uri = new Uri($"coap://localhost:{_serverPort[i]}/{UnicastTarget}");
+            client = new CoapClient(uri);
+            response = client.Get();
+            Assert.IsNotNull(response);
+            Assert.AreEqual(UnicastResponse, response.ResponseText);
+        }
 
-                client = new CoapClient(uri);
-                response = client.Get();
-                Assert.IsNotNull(response);
-                Assert.AreEqual(UnicastResponse, response.ResponseText);
-            }
+        [TestMethod]
+        public void TestUnicastOfMulticastResource()
+        {
+            Uri uri;
+            CoapClient client;
+            Response response;
 
-            //  Check that the multicast resource returns an error on the unicast address
-            for (int i=0; i<1; i++) { 
-                uri = new Uri($"coap://localhost:{_serverPort[i]}/{MulticastTarget}");
-                client = new CoapClient(uri);
-                response = client.Get();
-                Assert.IsNotNull(response); 
-                Assert.AreEqual(StatusCode.Content, response.StatusCode);
+            uri = new Uri($"coap://localhost:{_serverPort}/{MulticastTarget}");
+            client = new CoapClient(uri);
+            response = client.Get();
+            Assert.IsNotNull(response);
+            Assert.AreEqual(StatusCode.MethodNotAllowed, response.StatusCode);
+        }
 
-            }
+        [TestMethod]
+        public void TestMulticastV4_Base()
+        {
+            LogManager.Level = LogLevel.All;
+
+            Uri uri;
+            CoapClient client;
 
             //  Check that multicast returns on multicast 
 
             List<Response> responseList = new List<Response>();
             AutoResetEvent trigger = new AutoResetEvent(false);
-            uri = new Uri($"coap://{_multicastAddress}:{_serverPort[0] + PortJump}/{MulticastTarget}");
-            client = new CoapClient(uri);
-            client.UseNONs();
-            client.GetAsync( r => {
-                responseList.Add(r);
-                    trigger.Set();
-            });
-
-            trigger.WaitOne(1000);
-
-            Assert.IsTrue(responseList.Count == 1);
-            foreach (Response r in responseList) {
-                Assert.AreEqual(StatusCode.Content, r.StatusCode);
-                Assert.AreEqual(MulticastResponse, r.ResponseText);
-            }
-
-            //  Check that unicast does not return on multicast
-
-            responseList.Clear();
-            uri = new Uri($"coap://{_multicastAddress}:{_serverPort[0] + PortJump}/{UnicastTarget}");
+            uri = new Uri($"coap://{multicastAddress3}:{_serverPort}/{MulticastTarget}");
             client = new CoapClient(uri);
             client.UseNONs();
             client.GetAsync(r => {
@@ -109,36 +104,165 @@ namespace CoAP.Test.Std10.Channel
                 trigger.Set();
             });
 
-            Assert.IsTrue(trigger.WaitOne(1000));
+            Assert.IsTrue(trigger.WaitOne(10*1000));
+
+            Assert.IsTrue(responseList.Count == 1);
+            foreach (Response r in responseList)
+            {
+                Assert.AreEqual(StatusCode.Content, r.StatusCode);
+                Assert.AreEqual(MulticastResponse, r.ResponseText);
+            }
+
+        }
+
+        [TestMethod]
+        public void TestMulticastV4_Offset()
+        {
+            Uri uri;
+            CoapClient client;
+
+            //  Check that multicast returns on multicast 
+
+            List<Response> responseList = new List<Response>();
+            AutoResetEvent trigger = new AutoResetEvent(false);
+            uri = new Uri($"coap://{multicastAddress}:{_serverPort + PortJump}/{MulticastTarget}");
+            client = new CoapClient(uri);
+            client.UseNONs();
+            client.GetAsync(r => {
+                responseList.Add(r);
+                trigger.Set();
+            });
+
+            trigger.WaitOne(1000);
+
+            Assert.IsTrue(responseList.Count == 1);
+            foreach (Response r in responseList)
+            {
+                Assert.AreEqual(StatusCode.Content, r.StatusCode);
+                Assert.AreEqual(MulticastResponse, r.ResponseText);
+            }
+
+        }
+
+        [TestMethod]
+        public void TestMulticastIPv6_Base()
+        {
+            Uri uri;
+            CoapClient client;
+            List<Response> responseList = new List<Response>();
+            AutoResetEvent trigger = new AutoResetEvent(false);
+
+            uri = new Uri($"coap://[{multicastAddress4}]:{_serverPort}/{MulticastTarget}");
+            client = new CoapClient(uri);
+            client.UseNONs();
+            client.GetAsync(r => {
+                responseList.Add(r);
+                trigger.Set();
+            });
+
+            Assert.IsTrue(trigger.WaitOne(2 * 1000));
+
+            Console.WriteLine($"response count = {responseList.Count}");
+            Assert.IsTrue(responseList.Count == 1);
+            foreach (Response r in responseList)
+            {
+                Assert.AreEqual(StatusCode.Content, r.StatusCode);
+                Assert.AreEqual(MulticastResponse, r.ResponseText);
+            }
         }
 
 
-        private void CreateServer(int i)
+        [TestMethod]
+        public void TestMulticastIPv6_Offset()
+        {
+            Uri uri;
+            CoapClient client;
+            List<Response> responseList = new List<Response>();
+            AutoResetEvent trigger = new AutoResetEvent(false);
+
+            uri = new Uri($"coap://[{multicastAddress2}]:{_serverPort + PortJump}/{MulticastTarget}");
+            client = new CoapClient(uri);
+            client.UseNONs();
+            client.GetAsync(r => {
+                responseList.Add(r);
+                trigger.Set();
+            });
+
+            Assert.IsTrue(trigger.WaitOne(2*1000));
+
+            Console.WriteLine($"response count = {responseList.Count}");
+            Assert.IsTrue(responseList.Count == 1);
+            foreach (Response r in responseList)
+            {
+                Assert.AreEqual(StatusCode.Content, r.StatusCode);
+                Assert.AreEqual(MulticastResponse, r.ResponseText);
+            }
+        }
+
+        [TestMethod]
+        public void TestMulticastV4OfUnicastResource()
+        {
+            Uri uri;
+            CoapClient client;
+            AutoResetEvent trigger = new AutoResetEvent(false);
+
+            uri = new Uri($"coap://{multicastAddress}:{_serverPort + PortJump}/{UnicastTarget}");
+            client = new CoapClient(uri);
+            client.UseNONs();
+            client.GetAsync(r => {
+                trigger.Set();
+            });
+
+            Assert.IsFalse(trigger.WaitOne(1000));
+        }
+
+        [TestMethod]
+        public void TestMulticastV6OfUnicastResource()
+        {
+            Uri uri;
+            CoapClient client;
+            AutoResetEvent trigger = new AutoResetEvent(false);
+
+            uri = new Uri($"coap://[{multicastAddress2}]:{_serverPort + PortJump}/{UnicastTarget}");
+            client = new CoapClient(uri);
+            client.UseNONs();
+            client.GetAsync(r => {
+                trigger.Set();
+            });
+
+            Assert.IsFalse(trigger.WaitOne(1000));
+        }
+
+
+
+        private void CreateServer()
         {
             CoapConfig config = new CoapConfig();
 
-            CoAPEndPoint endpoint = new CoAPEndPoint(5683+i*2, config);
+            CoAPEndPoint endpoint = new CoAPEndPoint(0, config);
 
             _resource = new MulticastResource(MulticastTarget, MulticastResponse);
-            _server[i] = new CoapServer();
-            _server[i].Add(_resource);
+            _server = new CoapServer();
+            _server.Add(_resource);
 
-            _server[i].AddEndPoint(endpoint);
-            _server[i].Start();
-            _serverPort[i] = ((System.Net.IPEndPoint)endpoint.LocalEndPoint).Port;
+            _server.AddEndPoint(endpoint);
+            _server.Start();
+            _serverPort = ((IPEndPoint)endpoint.LocalEndPoint).Port;
 
-            endpoint.AddMulticastAddress(new IPEndPoint(_multicastAddress, _serverPort[0] + PortJump));
-            endpoint.AddMulticastAddress(new IPEndPoint(_multicastAddress2, _serverPort[0] + PortJump));
+            endpoint.AddMulticastAddress(new IPEndPoint(multicastAddress3, _serverPort));
+            endpoint.AddMulticastAddress(new IPEndPoint(multicastAddress4, _serverPort));
+            endpoint.AddMulticastAddress(new IPEndPoint(multicastAddress, _serverPort + PortJump));
+            endpoint.AddMulticastAddress(new IPEndPoint(multicastAddress2, _serverPort + PortJump));
 
             Resource r2 = new UnicastResource(UnicastTarget, UnicastResponse);
-            _server[i].Add(r2);
+            _server.Add(r2);
         }
 
 
 
         class UnicastResource : Resource
         {
-            private string _content;
+            private readonly string _content;
 
             public UnicastResource(string name, string content)
                 : base(name)
@@ -154,13 +278,13 @@ namespace CoAP.Test.Std10.Channel
                     return;
                 }
 
-                exchange.Respond(StatusCode.Content, UnicastResponse);
+                exchange.Respond(StatusCode.Content, _content);
             }
         }
 
         class MulticastResource : Resource
         {
-            private string _content;
+            private readonly string _content;
 
             public MulticastResource(string name, string content)
                 : base(name)
@@ -172,13 +296,11 @@ namespace CoAP.Test.Std10.Channel
             {
                 Request request = exchange.Request;
 
-#if false
                 if (!request.IsMulticast) {
                     exchange.Respond(StatusCode.MethodNotAllowed);
                     return;
                 }
-#endif
-                exchange.Respond(StatusCode.Content, MulticastResponse);
+                exchange.Respond(StatusCode.Content, _content);
             }
         }
 

@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2012, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -8,8 +10,6 @@
  * This file is part of the CoAP.NET, a CoAP framework in C#.
  * Please see README for more information.
  */
-
-using System;
 
 namespace Com.AugustCellars.CoAP
 {
@@ -34,7 +34,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="num">Block number</param>
         /// <param name="szx">Block size</param>
         /// <param name="m">More flag</param>
-        public BlockOption(OptionType type, Int32 num, Int32 szx, Boolean m) : base(type)
+        public BlockOption(OptionType type, int num, int szx, bool m) : base(type)
         {
             this.IntValue = Encode(num, szx, m);
         }
@@ -45,7 +45,7 @@ namespace Com.AugustCellars.CoAP
         /// <param name="num">Block number</param>
         /// <param name="szx">Block size</param>
         /// <param name="m">More flag</param>
-        public void SetValue(Int32 num, Int32 szx, Boolean m)
+        public void SetValue(int num, int szx, bool m)
         {
             this.IntValue = Encode(num, szx, m);
         }
@@ -53,45 +53,43 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Gets or sets the block number.
         /// </summary>
-        public Int32 NUM
+        public int NUM
         {
-            get { return this.IntValue >> 4; }
-            set { SetValue(value, SZX, M); }
+            get => this.IntValue >> 4;
+            set => SetValue(value, SZX, M);
         }
 
         /// <summary>
         /// Gets or sets the block size.
         /// </summary>
-        public Int32 SZX
+        public int SZX
         {
-            get { return this.IntValue & 0x7; }
-            set { SetValue(NUM, value, M); }
+            get => this.IntValue & 0x7;
+            set => SetValue(NUM, value, M);
         }
 
         /// <summary>
         /// Gets or sets the more flag.
         /// </summary>
-        public Boolean M
+        public bool M
         {
-            get { return (this.IntValue >> 3 & 0x1) != 0; }
-            set { SetValue(NUM, SZX, value); }
+            get => (this.IntValue >> 3 & 0x1) != 0;
+            set => SetValue(NUM, SZX, value);
         }
 
         /// <summary>
         /// Gets the decoded block size in bytes (B).
         /// </summary>
-        public Int32 Size
-        {
-            get { return DecodeSZX(this.SZX); }
-        }
+        public int Size => DecodeSZX(this.SZX);
 
         /// <summary>
         /// 
         /// </summary>
         /// <returns></returns>
-        public override String ToString()
+        public override string ToString()
         {
-            return String.Format("{0}{1} ({2}B/block [{3}])", NUM, M ? "+" : String.Empty, Size, SZX);
+            string y = M ? "+" : string.Empty;
+            return $"{NUM}{M} ({y}B/block [{SZX}])";
         }
 
         /// <summary>
@@ -99,7 +97,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="szx"></param>
         /// <returns></returns>
-        public static Int32 DecodeSZX(Int32 szx)
+        public static int DecodeSZX(int szx)
         {
             return 1 << (szx + 4);
         }
@@ -109,13 +107,15 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="blockSize"></param>
         /// <returns></returns>
-        public static Int32 EncodeSZX(Int32 blockSize)
+        public static int EncodeSZX(int blockSize)
         {
-            if (blockSize < 16)
-                return 0;
-            if (blockSize > 1024)
-                return 6;
-            return (Int32)(Math.Log(blockSize) / Math.Log(2)) - 4;
+            if (blockSize <= 16) return 0;
+            if (blockSize <= 32) return 1;
+            if (blockSize <= 64) return 2;
+            if (blockSize <= 128) return 3;
+            if (blockSize <= 256) return 4;
+            if (blockSize <= 512) return 5;
+            return 6;
         }
 
         /// <summary>
@@ -123,14 +123,14 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="szx"></param>
         /// <returns></returns>
-        public static Boolean ValidSZX(Int32 szx)
+        public static bool ValidSZX(int szx)
         {
             return (szx >= 0 && szx <= 6);
         }
 
-        private static Int32 Encode(Int32 num, Int32 szx, Boolean m)
+        private static int Encode(int num, int szx, bool m)
         {
-            Int32 value = 0;
+            int value = 0;
             value |= (szx & 0x7);
             value |= (m ? 1 : 0) << 3;
             value |= num << 4;

@@ -72,5 +72,10 @@ namespace Com.AugustCellars.CoAP.Channel
             byte[] newAddress = new byte[16] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, bytes[0], bytes[1], bytes[2], bytes[3] };
             return new IPAddress(newAddress);
         }
+
+        public static bool IsMulticastAddress(IPAddress address)
+        {
+            return address.IsIPv6Multicast || (address.AddressFamily == AddressFamily.InterNetwork && ((address.GetAddressBytes()[0] & 0xf0) == 0xe0));
+        }
     }
 }
