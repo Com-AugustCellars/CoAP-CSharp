@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     machine:
-      - image: microsoft/dotnet:2-sdk
+      image: microsoft/dotnet:2-sdk
 
     working_directory: ~/repo
 
