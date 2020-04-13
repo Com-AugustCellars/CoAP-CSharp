@@ -11,6 +11,16 @@ using System.Net;
 
 namespace Com.AugustCellars.CoAP
 {
+#if false
+    //
+    //  I am not sure what this test thinks it is supposed to be checking.
+    //  It does not make sense to have two different servers on the same port
+    //  in some sense.  This is no longer allowed at the low level because
+    //  we want to make sure that we don't have two sockets open on the same
+    //  address that are active.  This is not an error in .net as it just 
+    //  duplicates a link to the same socket.
+
+
     [TestClass]
     public class StartStopTest
     {
@@ -95,4 +105,5 @@ namespace Com.AugustCellars.CoAP
             }
         }
     }
+#endif
 }

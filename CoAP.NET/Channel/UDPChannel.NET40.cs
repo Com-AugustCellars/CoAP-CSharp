@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -12,12 +14,13 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 
 namespace Com.AugustCellars.CoAP.Channel
 {
     public partial class UDPChannel
     {
-        private UDPSocket NewUDPSocket(AddressFamily addressFamily, Int32 bufferSize)
+        private UDPSocket NewUDPSocket(AddressFamily addressFamily, int bufferSize)
         {
             return new UDPSocket(addressFamily, bufferSize, SocketAsyncEventArgs_Completed);
         }
@@ -25,7 +28,7 @@ namespace Com.AugustCellars.CoAP.Channel
         private void BeginReceive(UDPSocket socket)
         {
 #if LOG_UDP_CHANNEL
-            _Log.Debug(m => m("BeginReceive: socket={0}  _running={1}", socket.ToString(), _running));
+            _Log.Debug(m => m("BeginReceive: socket={0}  _running={1}", socket.Socket.LocalEndPoint, _running));
 #endif
             if (_running == 0) {
                 return;
@@ -41,12 +44,12 @@ namespace Com.AugustCellars.CoAP.Channel
 #endif
             }
             
-            Boolean willRaiseEvent;
+            bool willRaiseEvent;
             try {
 #if LOG_UDP_CHANNEL
                 _Log.Debug("BeginReceive:  Start async read");
 #endif
-                willRaiseEvent = socket.Socket.ReceiveFromAsync(socket.ReadBuffer);
+                willRaiseEvent = socket.Socket.ReceiveMessageFromAsync(socket.ReadBuffer);
             }
             catch (ObjectDisposedException) {
 #if LOG_UDP_CHANNEL
@@ -71,12 +74,15 @@ namespace Com.AugustCellars.CoAP.Channel
             }
         }
 
-        private void BeginSend(UDPSocket socket, Byte[] data, System.Net.EndPoint destination)
+        private void BeginSend(UDPSocket socket, byte[] data, System.Net.EndPoint destination)
         {
+#if LOG_UDP_CHANNEL
+            _Log.Debug(m => m($"BeginSend: {socket.Socket.LocalEndPoint} ==> {destination}  #bytes={data.Length}"));
+#endif
             socket.SetWriteBuffer(data, 0, data.Length);
             socket.WriteBuffer.RemoteEndPoint = destination;
 
-            Boolean willRaiseEvent;
+            bool willRaiseEvent;
             try {
                 willRaiseEvent = socket.Socket.SendToAsync(socket.WriteBuffer);
             }
@@ -112,7 +118,29 @@ namespace Com.AugustCellars.CoAP.Channel
 #if LOG_UDP_CHANNEL
                 _Log.Debug(m => m("ProcessRecieve: ==> exception handler {0}", e.SocketError.ToString()));
 #endif
-                EndReceive(socket, new SocketException((Int32)e.SocketError));
+                EndReceive(socket, new SocketException((int)e.SocketError));
+            }
+        }
+
+        private void ProcessReceiveMessageFrom(SocketAsyncEventArgs e)
+        {
+#if LOG_UDP_CHANNEL
+            _Log.Debug($"ProcessReceiveMessageFrom {e.SocketError} {e.RemoteEndPoint} ==> {e.ReceiveMessageFromPacketInfo.Address}");
+#endif
+            UDPSocket socket = (UDPSocket) e.UserToken;
+
+            if (e.SocketError == SocketError.Success) {
+#if LOG_UDP_CHANNEL
+                _Log.Debug("ProcessReceive: ==> EndReceive");
+#endif
+                EndReceiveMessage(socket, e.Buffer, e.Offset, e.BytesTransferred, e.RemoteEndPoint, e.ReceiveMessageFromPacketInfo.Address);
+            }
+            else if (e.SocketError != SocketError.OperationAborted
+                     && e.SocketError != SocketError.Interrupted) {
+#if LOG_UDP_CHANNEL
+                _Log.Debug(m => m("ProcessReceive: ==> exception handler {0}", e.SocketError.ToString()));
+#endif
+                EndReceive(socket, new SocketException((int) e.SocketError));
             }
         }
 
@@ -124,22 +152,31 @@ namespace Com.AugustCellars.CoAP.Channel
                 EndSend(socket, e.BytesTransferred);
             }
             else {
-                EndSend(socket, new SocketException((Int32)e.SocketError));
+                EndSend(socket, new SocketException((int)e.SocketError));
             }
         }
 
-        void SocketAsyncEventArgs_Completed(Object sender, SocketAsyncEventArgs e)
+        void SocketAsyncEventArgs_Completed(object sender, SocketAsyncEventArgs e)
         {
-#if LOG_UDP_CHANNEL
-            _Log.Debug( m=> m("SocketAsyncEventArgs: operation = {0}", e.LastOperation.ToString()));
-#endif
             switch (e.LastOperation) {
+                case SocketAsyncOperation.ReceiveMessageFrom:
+                    ProcessReceiveMessageFrom(e);
+                    break;
+
                 case SocketAsyncOperation.ReceiveFrom:
                     ProcessReceive(e);
                     break;
+
                 case SocketAsyncOperation.SendTo:
                     ProcessSend(e);
                     break;
+
+#if LOG_UDP_CHANNEL
+                default:
+                    _Log.Debug(m => m("SocketAsyncEventArgs: operation = {0}", e.LastOperation.ToString()));
+                    break;
+#endif
+
             }
         }
 
@@ -147,26 +184,26 @@ namespace Com.AugustCellars.CoAP.Channel
         {
             public readonly SocketAsyncEventArgs ReadBuffer;
             public readonly SocketAsyncEventArgs WriteBuffer;
-            readonly Byte[] _writeBuffer;
-            private Boolean _isOuterBuffer;
+            readonly byte[] _writeBuffer;
+            private bool _isOuterBuffer;
 
-            public UDPSocket(AddressFamily addressFamily, Int32 bufferSize,
+            public UDPSocket(AddressFamily addressFamily, int bufferSize,
                 EventHandler<SocketAsyncEventArgs> completed)
             {
                 Socket = new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp);
                 ReadBuffer = new SocketAsyncEventArgs();
-                ReadBuffer.SetBuffer(new Byte[bufferSize], 0, bufferSize);
+                ReadBuffer.SetBuffer(new byte[bufferSize], 0, bufferSize);
                 ReadBuffer.Completed += completed;
                 ReadBuffer.UserToken = this;
 
-                _writeBuffer = new Byte[bufferSize];
+                _writeBuffer = new byte[bufferSize];
                 WriteBuffer = new SocketAsyncEventArgs();
                 WriteBuffer.SetBuffer(_writeBuffer, 0, bufferSize);
                 WriteBuffer.Completed += completed;
                 WriteBuffer.UserToken = this;
             }
 
-            public void SetWriteBuffer(Byte[] data, Int32 offset, Int32 count)
+            public void SetWriteBuffer(byte[] data, int offset, int count)
             {
                 if (count > _writeBuffer.Length) {
                     WriteBuffer.SetBuffer(data, offset, count);
@@ -184,12 +221,9 @@ namespace Com.AugustCellars.CoAP.Channel
 
             public void Dispose()
             {
-#if NETSTANDARD1_3
-                Socket.Dispose();
-#else
                 Socket.Close();
                 Socket.Dispose();
-#endif
+
                 ReadBuffer.Dispose();
                 WriteBuffer.Dispose();
             }
