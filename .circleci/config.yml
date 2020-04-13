@@ -5,6 +5,7 @@ jobs:
       - image: microsoft/dotnet:2-sdk
 
     working_directory: ~/repo
+    machine: true
 
     steps:
        - checkout
