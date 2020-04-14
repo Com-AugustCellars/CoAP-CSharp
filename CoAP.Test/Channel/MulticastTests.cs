@@ -45,7 +45,6 @@ namespace CoAP.Test.Std10.Channel
         [TestInitialize]
         public void SetupServer()
         {
-            LogManager.Level = LogLevel.All;
             CreateServer();
         }
 
