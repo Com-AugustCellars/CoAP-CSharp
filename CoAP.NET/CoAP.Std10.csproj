@@ -123,7 +123,7 @@ It is intented primarily for research and verification work.
   </PropertyGroup>
   
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;LOG_UDP_CHANNEL</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <IntermediateOutputPath>obj\std10\Debug</IntermediateOutputPath>
     <OutputPath>bin\std10\Debug\</OutputPath>
   </PropertyGroup>

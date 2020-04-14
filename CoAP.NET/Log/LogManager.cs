@@ -23,7 +23,7 @@ namespace Com.AugustCellars.CoAP.Log
 
         private static readonly string[] _LoggingIncludeDefault = null;
         private static readonly string[] _LoggingExcludeDefault = new string[] {
-            // "UDPChannel"
+            "UDPChannel"
         };
 
         static LogManager()
