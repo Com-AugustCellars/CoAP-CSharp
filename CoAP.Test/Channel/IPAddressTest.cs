@@ -12,6 +12,7 @@
  */
 
 using System.Net;
+using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Com.AugustCellars.CoAP.Channel
@@ -37,6 +38,19 @@ namespace Com.AugustCellars.CoAP.Channel
         {
             IPAddress ipv6 = IPAddress.Parse("[2001:0db8:ac10:fe01::]");
             Assert.IsFalse((IPAddressExtensions.IsIPv4MappedToIPv6(ipv6)));
+        }
+
+        [TestMethod]
+        public void TestNoMapping()
+        {
+            IPAddress ipv4 = new IPAddress(new byte[] { 10, 0, 0, 5 });
+            IPAddress ipv4X = IPAddressExtensions.MapToIPv4(ipv4);
+            Assert.AreEqual(ipv4, ipv4X);
+
+            IPAddress ipv6 = IPAddress.Parse("[2001:0db8:ac10:fe01::]");
+            IPAddress ipv6X = IPAddressExtensions.MapToIPv6(ipv6);
+            Assert.AreEqual(ipv6, ipv6X);
+
         }
     }
 }

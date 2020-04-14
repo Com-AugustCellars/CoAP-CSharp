@@ -56,13 +56,49 @@ namespace CoAP.Test.Std10.Channel
         }
 
         [TestMethod]
-        public void GetUnicast()
+        public void GetUnicastV4()
         {
             Uri uri;
             CoapClient client;
             Response response;
 
-            uri = new Uri($"coap://localhost:{_serverPort}/{UnicastTarget}");
+            IPAddress[] addresses = Dns.GetHostAddresses("localhost");
+            IPAddress addr = null;
+
+            foreach (IPAddress a in addresses) {
+                if (a.AddressFamily == AddressFamily.InterNetwork) {
+                    addr = a;
+                    break;
+                }
+            }
+
+
+            uri = new Uri($"coap://{addr}:{_serverPort}/{UnicastTarget}");
+
+            client = new CoapClient(uri);
+            response = client.Get();
+            Assert.IsNotNull(response);
+            Assert.AreEqual(UnicastResponse, response.ResponseText);
+        }
+
+        [TestMethod]
+        public void GetUnicastV6()
+        {
+            Uri uri;
+            CoapClient client;
+            Response response;
+
+            IPAddress[] addresses = Dns.GetHostAddresses("localhost");
+            IPAddress addr = null;
+
+            foreach (IPAddress a in addresses) {
+                if (a.AddressFamily == AddressFamily.InterNetworkV6) {
+                    addr = a;
+                    break;
+                }
+            }
+
+            uri = new Uri($"coap://[{addr}]:{_serverPort}/{UnicastTarget}");
 
             client = new CoapClient(uri);
             response = client.Get();
