@@ -12,7 +12,6 @@
  */
 
 using System.Net;
-using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Com.AugustCellars.CoAP.Channel

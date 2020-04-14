@@ -123,8 +123,6 @@ namespace CoAP.Test.Std10.Channel
         [TestMethod]
         public void TestMulticastV4_Base()
         {
-            LogManager.Level = LogLevel.All;
-
             Uri uri;
             CoapClient client;
 
