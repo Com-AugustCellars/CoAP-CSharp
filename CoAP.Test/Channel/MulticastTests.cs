@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using Com.AugustCellars.CoAP;
 using Com.AugustCellars.CoAP.Log;
@@ -104,11 +105,10 @@ namespace CoAP.Test.Std10.Channel
                 trigger.Set();
             });
 
-            Assert.IsTrue(trigger.WaitOne(10*1000));
+            Assert.IsTrue(trigger.WaitOne(10 * 1000));
 
             Assert.IsTrue(responseList.Count == 1);
-            foreach (Response r in responseList)
-            {
+            foreach (Response r in responseList) {
                 Assert.AreEqual(StatusCode.Content, r.StatusCode);
                 Assert.AreEqual(MulticastResponse, r.ResponseText);
             }
@@ -136,8 +136,7 @@ namespace CoAP.Test.Std10.Channel
             trigger.WaitOne(1000);
 
             Assert.IsTrue(responseList.Count == 1);
-            foreach (Response r in responseList)
-            {
+            foreach (Response r in responseList) {
                 Assert.AreEqual(StatusCode.Content, r.StatusCode);
                 Assert.AreEqual(MulticastResponse, r.ResponseText);
             }
@@ -152,6 +151,10 @@ namespace CoAP.Test.Std10.Channel
             List<Response> responseList = new List<Response>();
             AutoResetEvent trigger = new AutoResetEvent(false);
 
+            if (!SupportsIPV6()) {
+                Assert.Inconclusive("System does not support IP v6");
+            }
+
             uri = new Uri($"coap://[{multicastAddress4}]:{_serverPort}/{MulticastTarget}");
             client = new CoapClient(uri);
             client.UseNONs();
@@ -164,8 +167,7 @@ namespace CoAP.Test.Std10.Channel
 
             Console.WriteLine($"response count = {responseList.Count}");
             Assert.IsTrue(responseList.Count == 1);
-            foreach (Response r in responseList)
-            {
+            foreach (Response r in responseList) {
                 Assert.AreEqual(StatusCode.Content, r.StatusCode);
                 Assert.AreEqual(MulticastResponse, r.ResponseText);
             }
@@ -180,6 +182,11 @@ namespace CoAP.Test.Std10.Channel
             List<Response> responseList = new List<Response>();
             AutoResetEvent trigger = new AutoResetEvent(false);
 
+            if (!SupportsIPV6()) {
+                Assert.Inconclusive("System does not support IP v6");
+            }
+
+
             uri = new Uri($"coap://[{multicastAddress2}]:{_serverPort + PortJump}/{MulticastTarget}");
             client = new CoapClient(uri);
             client.UseNONs();
@@ -188,12 +195,11 @@ namespace CoAP.Test.Std10.Channel
                 trigger.Set();
             });
 
-            Assert.IsTrue(trigger.WaitOne(2*1000));
+            Assert.IsTrue(trigger.WaitOne(2 * 1000));
 
             Console.WriteLine($"response count = {responseList.Count}");
             Assert.IsTrue(responseList.Count == 1);
-            foreach (Response r in responseList)
-            {
+            foreach (Response r in responseList) {
                 Assert.AreEqual(StatusCode.Content, r.StatusCode);
                 Assert.AreEqual(MulticastResponse, r.ResponseText);
             }
@@ -209,9 +215,7 @@ namespace CoAP.Test.Std10.Channel
             uri = new Uri($"coap://{multicastAddress}:{_serverPort + PortJump}/{UnicastTarget}");
             client = new CoapClient(uri);
             client.UseNONs();
-            client.GetAsync(r => {
-                trigger.Set();
-            });
+            client.GetAsync(r => { trigger.Set(); });
 
             Assert.IsFalse(trigger.WaitOne(1000));
         }
@@ -226,9 +230,7 @@ namespace CoAP.Test.Std10.Channel
             uri = new Uri($"coap://[{multicastAddress2}]:{_serverPort + PortJump}/{UnicastTarget}");
             client = new CoapClient(uri);
             client.UseNONs();
-            client.GetAsync(r => {
-                trigger.Set();
-            });
+            client.GetAsync(r => { trigger.Set(); });
 
             Assert.IsFalse(trigger.WaitOne(1000));
         }
@@ -247,7 +249,7 @@ namespace CoAP.Test.Std10.Channel
 
             _server.AddEndPoint(endpoint);
             _server.Start();
-            _serverPort = ((IPEndPoint)endpoint.LocalEndPoint).Port;
+            _serverPort = ((IPEndPoint) endpoint.LocalEndPoint).Port;
 
             endpoint.AddMulticastAddress(new IPEndPoint(multicastAddress3, _serverPort));
             endpoint.AddMulticastAddress(new IPEndPoint(multicastAddress4, _serverPort));
@@ -300,9 +302,27 @@ namespace CoAP.Test.Std10.Channel
                     exchange.Respond(StatusCode.MethodNotAllowed);
                     return;
                 }
+
                 exchange.Respond(StatusCode.Content, _content);
             }
         }
 
+        private bool SupportsIPV6()
+        {
+            bool returns = true;
+            Socket s = null;
+            try {
+                s = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.IPv6);
+                s.Bind(new IPEndPoint(IPAddress.IPv6Any, 9999));
+            }
+            catch (SocketException) {
+                returns = false;
+            }
+            finally {
+                s?.Dispose();
+            }
+
+            return returns;
+        }
     }
 }
