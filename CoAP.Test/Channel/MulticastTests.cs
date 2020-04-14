@@ -311,10 +311,10 @@ namespace CoAP.Test.Std10.Channel
             bool returns = true;
             Socket s = null;
             try {
-                s = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.IPv6);
-                s.Bind(new IPEndPoint(IPAddress.IPv6Any, 9999));
+                s = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
+                s.Bind(new IPEndPoint(IPAddress.IPv6Any, 0));
             }
-            catch (SocketException) {
+            catch (SocketException e) {
                 returns = false;
             }
             finally {
