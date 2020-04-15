@@ -363,6 +363,35 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         #region  Key Derivation Functions
         /// <summary>
+        /// Given the input security context information, derive a new security context
+        /// and return it
+        /// </summary>
+        /// <param name="rawData"></param>
+        public static SecurityContext DeriveContext(CBORObject rawData, bool isServer)
+        {
+            byte[] groupId = null;
+            byte[] senderId = rawData[isServer ? 3 : 2].GetByteString();
+            byte[] receiverId = rawData[isServer ? 2 : 3].GetByteString();
+            byte[] salt = null;
+            CBORObject algAEAD = null;
+            CBORObject algKDF = null;
+
+            if (rawData.ContainsKey(7)) {
+                groupId = rawData[7].GetByteString();
+            }
+
+            if (rawData.ContainsKey(4)) {
+                algKDF = rawData[4];
+            }
+
+            if (rawData.ContainsKey(5)) {
+                algAEAD = rawData[5];
+            }
+
+            return DeriveContext(rawData[1].GetByteString(), groupId, senderId, receiverId,  salt, algAEAD, algKDF);
+        }
+
+        /// <summary>
         /// Given the set of inputs, perform the cryptographic operations that are needed
         /// to build a security context for a single sender and recipient.
         /// </summary>
