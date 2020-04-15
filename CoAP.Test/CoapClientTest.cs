@@ -1,4 +1,17 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2011-2015, Longxiang He <helongxiang@smeshlink.com>,
+ * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -12,19 +25,19 @@ namespace Com.AugustCellars.CoAP
     [TestClass]
     public class CoapClientTest
     {
-        static readonly String TARGET = "storage";
-        static readonly String CONTENT_1 = "one";
-        static readonly String CONTENT_2 = "two";
-        static readonly String CONTENT_3 = "three";
-        static readonly String CONTENT_4 = "four";
-        static readonly String QUERY_UPPER_CASE = "uppercase";
+        static readonly string TARGET = "storage";
+        static readonly string CONTENT_1 = "one";
+        static readonly string CONTENT_2 = "two";
+        static readonly string CONTENT_3 = "three";
+        static readonly string CONTENT_4 = "four";
+        static readonly string QUERY_UPPER_CASE = "uppercase";
 
-        Int32 _serverPort;
+        int _serverPort;
         CoapServer _server;
         Resource _resource;
-        String _expected;
-        Int32 _notifications;
-        Boolean _failed;
+        string _expected;
+        int _notifications;
+        bool _failed;
 
         [TestInitialize]
         public void SetupServer()
@@ -42,82 +55,94 @@ namespace Com.AugustCellars.CoAP
         [TestMethod]
         public void TestSynchronousCall()
         {
-            _notifications = 0;
+            int notifications = 0;
+            AutoResetEvent syncEvent = new AutoResetEvent(false);
 
             Uri uri = new Uri("coap://localhost:" + _serverPort + "/" + TARGET);
             CoapClient client = new CoapClient(uri);
 
             // Check that we get the right content when calling get()
-            String resp1 = client.Get().ResponseText;
+            string resp1 = client.Get().ResponseText;
             Assert.AreEqual(CONTENT_1, resp1);
 
-            String resp2 = client.Get().ResponseText;
+            string resp2 = client.Get().ResponseText;
             Assert.AreEqual(CONTENT_1, resp2);
 
             // Change the content to "two" and check
-            String resp3 = client.Post(CONTENT_2).ResponseText;
+            string resp3 = client.Post(CONTENT_2).ResponseText;
             Assert.AreEqual(CONTENT_1, resp3);
 
-            String resp4 = client.Get().ResponseText;
+            string resp4 = client.Get().ResponseText;
             Assert.AreEqual(CONTENT_2, resp4);
+            Thread.Sleep(100);
 
             // Observe the resource
             _expected = CONTENT_2;
-            CoapObserveRelation obs1 = client.Observe(response =>
-                {
-                    Interlocked.Increment(ref _notifications);
-                    String payload = response.ResponseText;
-                    Assert.AreEqual(_expected, payload);
-                    Assert.IsTrue(response.HasOption(OptionType.Observe));
+
+            object blockLock = new object();
+            AutoResetEvent trigger = new AutoResetEvent(false);
+            Response lastResponse = null;
+
+            CoapObserveRelation obs1 = client.Observe(response => {
+                lastResponse = response;
+                trigger.Set();
                 }, Fail);
             Assert.IsFalse(obs1.Canceled);
 
-            Thread.Sleep(100);
-            _resource.Changed();
-            Thread.Sleep(100);
-            _resource.Changed();
-            Thread.Sleep(100);
-            _resource.Changed();
+            Assert.IsTrue(trigger.WaitOne(100));
+            Assert.AreEqual(_expected, lastResponse.ResponseText);
+            Assert.IsTrue(lastResponse.HasOption(OptionType.Observe));
 
-            Thread.Sleep(100);
+            for (int i = 0; i < 5; i++) {
+                _resource.Changed();
+                Assert.IsTrue(trigger.WaitOne(100));
+                Assert.AreEqual(_expected, lastResponse.ResponseText);
+                Assert.IsTrue(lastResponse.HasOption(OptionType.Observe));
+            }
+
             _expected = CONTENT_3;
-            String resp5 = client.Post(CONTENT_3).ResponseText;
+            string resp5 = client.Post(CONTENT_3).ResponseText;
             Assert.AreEqual(CONTENT_2, resp5);
+
+            Assert.IsTrue(trigger.WaitOne(100));
+            Assert.AreEqual(_expected, lastResponse.ResponseText);
+            Assert.IsTrue(lastResponse.HasOption(OptionType.Observe));
 
             // Try a put and receive a METHOD_NOT_ALLOWED
             StatusCode code6 = client.Put(CONTENT_4).StatusCode;
             Assert.AreEqual(StatusCode.MethodNotAllowed, code6);
+            Assert.IsFalse(trigger.WaitOne(100));
 
             // Cancel observe relation of obs1 and check that it does no longer receive notifications
-            Thread.Sleep(100);
-            _expected = null; // The next notification would now cause a failure
+
             obs1.ReactiveCancel();
             Thread.Sleep(100);
+
             _resource.Changed();
+            Assert.IsFalse(trigger.WaitOne(100));
 
             // Make another post
             Thread.Sleep(100);
-            String resp7 = client.Post(CONTENT_4).ResponseText;
+            string resp7 = client.Post(CONTENT_4).ResponseText;
             Assert.AreEqual(CONTENT_3, resp7);
 
             // Try to use the builder and add a query
             UriBuilder ub = new UriBuilder("coap", "localhost", _serverPort, TARGET);
             ub.Query = QUERY_UPPER_CASE;
 
-            String resp8 = new CoapClient(ub.Uri).Get().ResponseText;
+            string resp8 = new CoapClient(ub.Uri).Get().ResponseText;
             Assert.AreEqual(CONTENT_4.ToUpper(), resp8);
 
             // Check that we indeed received 5 notifications
             // 1 from origin GET request, 3 x from changed(), 1 from post()
             Thread.Sleep(100);
-            Assert.AreEqual(5, _notifications);
             Assert.IsFalse(_failed);
         }
 
         [TestMethod]
         public void TestAsynchronousCall()
         {
-            _notifications = 0;
+            int notifications = 0;
 
             Uri uri = new Uri("coap://localhost:" + _serverPort + "/" + TARGET);
             CoapClient client = new CoapClient(uri);
@@ -138,11 +163,13 @@ namespace Com.AugustCellars.CoAP
             Thread.Sleep(100);
 
             // Observe the resource
-            _expected = CONTENT_2;
+            string expected = CONTENT_2;
+            int actualTest = 0;
+            int notifyTest = 0;
             CoapObserveRelation obs1 = client.ObserveAsync(response =>
                 {
                     Interlocked.Increment(ref _notifications);
-                    String payload = response.ResponseText;
+                    string payload = response.ResponseText;
                     Assert.AreEqual(_expected, payload);
                     Assert.IsTrue(response.HasOption(OptionType.Observe));
                 }
@@ -156,7 +183,7 @@ namespace Com.AugustCellars.CoAP
             _resource.Changed();
 
             Thread.Sleep(100);
-            _expected = CONTENT_3;
+            expected = CONTENT_3;
             client.PostAsync(CONTENT_3, response => Assert.AreEqual(CONTENT_2, response.ResponseText));
             Thread.Sleep(100);
 
@@ -165,7 +192,7 @@ namespace Com.AugustCellars.CoAP
 
             // Cancel observe relation of obs1 and check that it does no longer receive notifications
             Thread.Sleep(100);
-            _expected = null; // The next notification would now cause a failure
+            expected = null; // The next notification would now cause a failure
             obs1.ReactiveCancel();
             Thread.Sleep(100);
             _resource.Changed();
@@ -175,8 +202,9 @@ namespace Com.AugustCellars.CoAP
             client.PostAsync(CONTENT_4, response => Assert.AreEqual(CONTENT_3, response.ResponseText));
             Thread.Sleep(100);
 
-            UriBuilder ub = new UriBuilder("coap", "localhost", _serverPort, TARGET);
-            ub.Query = QUERY_UPPER_CASE;
+            UriBuilder ub = new UriBuilder("coap", "localhost", _serverPort, TARGET) {
+                Query = QUERY_UPPER_CASE
+            };
 
             // Try to use the builder and add a query
             new CoapClient(ub.Uri).GetAsync(response => Assert.AreEqual(CONTENT_4.ToUpper(), response.ResponseText));
@@ -184,7 +212,8 @@ namespace Com.AugustCellars.CoAP
             // Check that we indeed received 5 notifications
             // 1 from origin GET request, 3 x from changed(), 1 from post()
             Thread.Sleep(100);
-            Assert.AreEqual(5, _notifications);
+            Assert.AreEqual(0, actualTest);
+            Assert.AreEqual(0, notifyTest);
             Assert.IsFalse(_failed);
         }
 
@@ -248,7 +277,10 @@ namespace Com.AugustCellars.CoAP
 
         private void CreateServer()
         {
-            CoAPEndPoint endpoint = new CoAPEndPoint(0);
+            CoapConfig config = new CoapConfig();
+            config.NonTimeout = 10;
+
+            CoAPEndPoint endpoint = new CoAPEndPoint(0, config);
             _resource = new StorageResource(TARGET, CONTENT_1);
             _server = new CoapServer();
             _server.Add(_resource);
@@ -265,9 +297,9 @@ namespace Com.AugustCellars.CoAP
 
         class StorageResource : Resource
         {
-            private String _content;
+            private string _content;
 
-            public StorageResource(String name, String content)
+            public StorageResource(string name, string content)
                 : base(name)
             {
                 _content = content;
@@ -276,18 +308,20 @@ namespace Com.AugustCellars.CoAP
 
             protected override void DoGet(CoapExchange exchange)
             {
-                IEnumerable<String> queries = exchange.Request.UriQueries;
-                String c = _content;
-                foreach (String q in queries)
-                    if (QUERY_UPPER_CASE.Equals(q))
+                IEnumerable<string> queries = exchange.Request.UriQueries;
+                string c = _content;
+                foreach (string q in queries) {
+                    if (QUERY_UPPER_CASE.Equals(q)) {
                         c = _content.ToUpper();
+                    }
+                }
 
                 exchange.Respond(c);
             }
 
             protected override void DoPost(CoapExchange exchange)
             {
-                String old = _content;
+                string old = _content;
                 _content = exchange.Request.PayloadString;
                 exchange.Respond(StatusCode.Changed, old);
                 Changed();
@@ -297,7 +331,7 @@ namespace Com.AugustCellars.CoAP
         class EchoLocation : Resource
         {
 
-            public EchoLocation(String name)
+            public EchoLocation(string name)
                 : base(name)
             {
                 Observable = true;
@@ -305,8 +339,8 @@ namespace Com.AugustCellars.CoAP
 
             protected override void DoGet(CoapExchange exchange)
             {
-                String c = this.Uri;
-                String querys = exchange.Request.UriQuery;
+                string c = this.Uri;
+                string querys = exchange.Request.UriQuery;
                 if (querys != "") {
                     c += "?" + querys;
                 }
@@ -314,7 +348,6 @@ namespace Com.AugustCellars.CoAP
                 exchange.Respond(c);
             }
         }
-
 
     }
 }

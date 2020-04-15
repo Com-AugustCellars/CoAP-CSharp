@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Text;
@@ -44,7 +54,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
 
         /// <summary>
-        /// Constructs a new OSCAP layer.
+        /// Constructs a new OSCORE layer.
         /// </summary>
         public OscoapLayer(ICoapConfig config)
         {
@@ -145,7 +155,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 _Log.Info(m => m("SendRequest: AAD = {0}\nSendRequest: IV = {1}\nSendRequest: Key = {2}",
                                  BitConverter.ToString(aad.EncodeToBytes()),
-                                                       ctx.Sender.GetIV(ctx.Sender.PartialIV).GetByteString(),
+                                                       BitConverter.ToString(ctx.Sender.GetIV(ctx.Sender.PartialIV).GetByteString()),
                                                        BitConverter.ToString(ctx.Sender.Key)));
 
                 byte[] optionValue = BuildOscoreOption(enc);
@@ -185,15 +195,15 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <inheritdoc />
         public override void ReceiveRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
-            if (!request.HasOption(OptionType.Oscoap)) {
+            if (!request.HasOption(OptionType.Oscore)) {
                 base.ReceiveRequest(nextLayer, exchange, request);
                 return;
             }
 
             Response response;
             try {
-                Option op = request.GetFirstOption(OptionType.Oscoap);
-                request.RemoveOptions(OptionType.Oscoap);
+                Option op = request.GetFirstOption(OptionType.Oscore);
+                request.RemoveOptions(OptionType.Oscore);
 
                 _Log.Info(m => m("Incoming Request: {0}", Utils.ToString(request)));
 
@@ -281,7 +291,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
                 string responseString = "General decrypt failure";
 
-                for (int pass = 0; pass < 2; pass++) {
+                for (int pass = 0; pass < 2 && ctx == null; pass++) {
                     //  Don't try and get things fixed the first time around if more than one context exists.'
                     responseString = "General decrypt failure";
                     if (contexts.Count == 1) {
@@ -324,7 +334,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                             continue;
                         }
                         else {
-                            _Log.Info(m => m("Hit test disabled"));
+                            if (!_replayWindow) _Log.Info(m => m("Hit test disabled"));
                         }
 
                         aad[1] = CBORObject.NewArray();
@@ -439,7 +449,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 //  We may want a new exchange at this point if it relates to a new message for blockwise.
 
                 if (request.HasOption(OptionType.Block2)) {
-                    Exchange.KeyUri keyUri = new Exchange.KeyUri(request, request.Source);
+                    Exchange.KeyUri keyUri = new Exchange.KeyUri(request.GetOptions(),  request.Source);
                     BlockHolder block;
                     _ongoingExchanges.TryGetValue(keyUri, out block);
 
@@ -495,7 +505,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 }
 
                 Codec.IMessageEncoder me = Spec.NewMessageEncoder();
-                Response encryptedResponse = new Response((StatusCode) response.Code);
+                Response encryptedResponse = new Response((StatusCode) response.Code) {
+                    Type = MessageType.CON // It does not matter what this is as it will get ignored later.
+                };
 
                 if (response.Payload != null) {
                     encryptedResponse.Payload = response.Payload;
@@ -588,7 +600,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 enc.AddAttribute(HeaderKeys.Algorithm, ctx.Sender.Algorithm, Attributes.DO_NOT_SEND);
                 enc.Encrypt(ctx.Sender.Key);
 
-                OscoapOption o = new OscoapOption(OptionType.Oscoap);
+                OscoapOption o = new OscoapOption(OptionType.Oscore);
                 o.Set(optionValue);
                 response.AddOption(o);
                 response.Code = (int) StatusCode.Changed;
@@ -634,8 +646,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
 
         public override void ReceiveResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
-            if (response.HasOption(OptionType.Oscoap)) {
-                Option op = response.GetFirstOption(OptionType.Oscoap);
+            if (response.HasOption(OptionType.Oscore)) {
+                Option op = response.GetFirstOption(OptionType.Oscore);
+                response.RemoveOptions(OptionType.Oscore);
 
                 if (exchange.OscoreContext == null) {
                     return;
@@ -943,7 +956,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 switch (op.Type) {
                     case OptionType.Block1:
                     case OptionType.Block2:
-                    case OptionType.Oscoap:
+                    case OptionType.Oscore:
                     case OptionType.MaxAge:
                     case OptionType.NoResponse:
                     case OptionType.Observe:
@@ -970,6 +983,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                 switch (op.Type) {
                     default:
                         response.AddOption(op);
+                        break;
+
+                    case OptionType.Oscore:
                         break;
                 }
             }

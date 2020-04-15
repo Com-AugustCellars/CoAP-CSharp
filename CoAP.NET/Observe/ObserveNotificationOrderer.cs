@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2015, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -21,7 +23,8 @@ namespace Com.AugustCellars.CoAP.Observe
     public class ObserveNotificationOrderer
     {
         private readonly ICoapConfig _config;
-        private Int32 _number;
+        private static int _number;
+        private int _lastSeen;
 
         public ObserveNotificationOrderer()
             : this(null)
@@ -36,9 +39,9 @@ namespace Com.AugustCellars.CoAP.Observe
         /// Gets a new observe option number.
         /// </summary>
         /// <returns>a new observe option number</returns>
-        public Int32 GetNextObserveNumber()
+        public int GetNextObserveNumber()
         {
-            Int32 next = Interlocked.Increment(ref _number);
+            int next = Interlocked.Increment(ref _number);
             while (next >= 1 << 24) {
                 Interlocked.CompareExchange(ref _number, 0, next);
                 next = Interlocked.Increment(ref _number);
@@ -49,10 +52,7 @@ namespace Com.AugustCellars.CoAP.Observe
         /// <summary>
         /// Gets the current notification number.
         /// </summary>
-        public Int32 Current
-        {
-            get => _number;
-        }
+        public int Current => _number;
 
         public DateTime Timestamp { get; set; }
 
@@ -61,9 +61,9 @@ namespace Com.AugustCellars.CoAP.Observe
         /// </summary>
         /// <param name="response"></param>
         /// <returns></returns>
-        public Boolean IsNew(Response response)
+        public bool IsNew(Response response)
         {
-            Int32? obs = response.Observe;
+            int? obs = response.Observe;
             if (!obs.HasValue) {
                 // this is a final response, e.g., error or proactive cancellation
                 return true;
@@ -75,14 +75,14 @@ namespace Com.AugustCellars.CoAP.Observe
             // We use the notation from the observe draft-08.
             DateTime t1 = Timestamp;
             DateTime t2 = DateTime.Now;
-            Int32 v1 = Current;
-            Int32 v2 = obs.Value;
-            Int64 notifMaxAge = (_config ?? CoapConfig.Default).NotificationMaxAge;
+            int v1 = _lastSeen;
+            int v2 = obs.Value;
+            long notifyMaxAge = (_config ?? CoapConfig.Default).NotificationMaxAge;
             if ((v1 < v2) && (v2 - v1 < 1 << 23)
                     || (v1 > v2) && (v1 - v2 > 1 << 23)
-                    || (t2 > t1.AddMilliseconds(notifMaxAge))) {
+                    || (t2 > t1.AddMilliseconds(notifyMaxAge))) {
                 Timestamp = t2;
-                _number = v2;
+                _lastSeen = v2;
                 return true;
             }
             else {

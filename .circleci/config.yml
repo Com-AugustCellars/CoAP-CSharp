@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: microsoft/dotnet:2-sdk
+      - image: mcr.microsoft.com/dotnet/core/sdk:2.1
 
     working_directory: ~/repo
 
@@ -16,7 +16,4 @@ jobs:
        - run:
            name: Unit Tests
            command: |
-              ls
-              dotnet build --framework=netcoreapp2.0 CoAP.Std10.sln
               dotnet test --framework=netcoreapp2.0 CoAP.Std10.sln
-           

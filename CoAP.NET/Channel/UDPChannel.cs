@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -12,12 +14,13 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
+#if LOG_UDP_CHANNEL
 using Com.AugustCellars.CoAP.Log;
+#endif
+using Com.AugustCellars.CoAP.Net;
 
 namespace Com.AugustCellars.CoAP.Channel
 {
@@ -29,15 +32,11 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <summary>
         /// Default size of buffer for receiving packet.
         /// </summary>
-        public const Int32 DefaultReceivePacketSize = 4096;
+        public const int DefaultReceivePacketSize = 4096;
 
-        private readonly Int32 _port;
-//        private readonly System.Net.EndPoint _localEP;
-        private SocketSet _unicast = new SocketSet();
-//        private UDPSocket _socket;
-//        private UDPSocket _socketBackup;
-        private Int32 _running;
-        private Int32 _writing;
+        private readonly SocketSet _unicast;
+        private int _running;
+        private int _writing;
         private readonly ConcurrentQueue<RawData> _sendingQueue = new ConcurrentQueue<RawData>();
 
 #if LOG_UDP_CHANNEL
@@ -58,45 +57,48 @@ namespace Com.AugustCellars.CoAP.Channel
         /// <summary>
         /// Initializes a UDP channel with the given port, both on IPv4 and IPv6.
         /// </summary>
-        public UDPChannel(Int32 port)
+        public UDPChannel(int port)
         {
-            _port = port;
+            _unicast = SocketSet.Find(port);
+            if (_unicast != null) {
+                throw new CoAPException("Cannot open the same port twice");
+            }
+
+            _unicast = new SocketSet(port);
         }
 
         /// <summary>
         /// Initializes a UDP channel with the specific endpoint.
+        /// We only support IP endpoints - so throw if it isn't one
         /// </summary>
         public UDPChannel(System.Net.EndPoint localEP)
         {
-            _unicast._localEP = (IPEndPoint) localEP;
+            _unicast = SocketSet.Find( (IPEndPoint) localEP);
+            if (_unicast != null) {
+                throw new CoAPException("Cannot open the same address twice");
+            }
+            _unicast = new SocketSet((IPEndPoint) localEP);
         }
 
         /// <inheritdoc/>
-        public System.Net.EndPoint LocalEndPoint
-        {
-            get
-            {
-                return _unicast._socket == null
-                    ? (_unicast._localEP ?? new IPEndPoint(IPAddress.IPv6Any, _port))
-                    : _unicast._socket.Socket.LocalEndPoint;
-            }
-        }
+        public System.Net.EndPoint LocalEndPoint =>
+            _unicast._socket == null ? _unicast.LocalEP : _unicast._socket.Socket.LocalEndPoint;
 
         /// <summary>
         /// Gets or sets the <see cref="Socket.ReceiveBufferSize"/>.
         /// </summary>
-        public Int32 ReceiveBufferSize { get; set; }
+        public int ReceiveBufferSize { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="Socket.SendBufferSize"/>.
         /// </summary>
-        public Int32 SendBufferSize { get; set; }
+        public int SendBufferSize { get; set; }
 
         /// <summary>
         /// Gets or sets the size of buffer for receiving packet.
         /// The default value is <see cref="DefaultReceivePacketSize"/>.
         /// </summary>
-        public Int32 ReceivePacketSize { get; set; } = DefaultReceivePacketSize;
+        public int ReceivePacketSize { get; set; } = DefaultReceivePacketSize;
 
         /// <summary>
         /// True means that it is supported, False means that it may be supported.
@@ -108,22 +110,45 @@ namespace Com.AugustCellars.CoAP.Channel
         /// </summary>
         public int MaxSendSize { get; set; }
 
-#if !NETSTANDARD1_3
         private readonly List<SocketSet> _listMultiCastEndpoints = new List<SocketSet>();
 
         /// <inheritdoc/>
         public bool AddMulticastAddress(IPEndPoint ep) //   IPAddress ep, int port)
         {
-            SocketSet s = new SocketSet() {
-                _localEP = ep
-            };
-            _listMultiCastEndpoints.Add(s);
-            if (_running == 1) {
+            IPEndPoint baseEndPoint = new IPEndPoint(ep.AddressFamily == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any, ep.Port);
+            SocketSet s = SocketSet.Find(baseEndPoint);
 
+            if (s == null) {
+                s = new SocketSet(baseEndPoint) {
+                    MulticastOnly = true
+                };
+                _listMultiCastEndpoints.Add(s);
+
+                if (_running == 1) {
+                    s.StartSocket(DefaultReceivePacketSize, SocketAsyncEventArgs_Completed);
+
+                    if (ReceiveBufferSize > 0) {
+                        s._socket.Socket.ReceiveBufferSize = ReceiveBufferSize;
+                        if (s._socketBackup != null) {
+                            s._socketBackup.Socket.ReceiveBufferSize = ReceiveBufferSize;
+                        }
+                    }
+
+                    if (SendBufferSize > 0) {
+                        s._socket.Socket.SendBufferSize = SendBufferSize;
+                        if (s._socketBackup != null) {
+                            s._socketBackup.Socket.SendBufferSize = SendBufferSize;
+                        }
+                    }
+
+                    BeginReceive(s);
+                }
             }
+
+            s.AddMulticastAddress(ep);
+
             return true;
         }
-#endif
 
         /// <inheritdoc/>
         public void Start()
@@ -136,14 +161,23 @@ namespace Com.AugustCellars.CoAP.Channel
             _Log.Debug("Start");
 #endif
             try {
+                _unicast.StartSocket(ReceivePacketSize, SocketAsyncEventArgs_Completed);
 
-                StartSocket(_unicast);
-
-#if !NETSTANDARD1_3
-                foreach (SocketSet s in _listMultiCastEndpoints) {
-                    StartMulticastSocket(s);
+                if (ReceiveBufferSize > 0) {
+                    _unicast._socket.Socket.ReceiveBufferSize = ReceiveBufferSize;
+                    if (_unicast._socketBackup != null) {
+                        _unicast._socketBackup.Socket.ReceiveBufferSize = ReceiveBufferSize;
+                    }
                 }
-#endif
+
+                if (SendBufferSize > 0) {
+                    _unicast._socket.Socket.SendBufferSize = SendBufferSize;
+                    if (_unicast._socketBackup != null) {
+                        _unicast._socketBackup.Socket.SendBufferSize = SendBufferSize;
+                    }
+                }
+
+                BeginReceive(_unicast);
             }
             catch (Exception) {
                 _running = 0;
@@ -151,9 +185,10 @@ namespace Com.AugustCellars.CoAP.Channel
             }
         }
 
+#if false
         private void StartSocket(SocketSet info)
         { 
-            if (info._localEP == null) {
+            if (info.LocalEP == null) {
                 try {
                     info._socket = SetupUDPSocket(AddressFamily.InterNetworkV6, ReceivePacketSize + 1); // +1 to check for > ReceivePacketSize
                 }
@@ -169,14 +204,10 @@ namespace Com.AugustCellars.CoAP.Channel
                 if (info._socket == null) {
                     // IPv6 is not supported, use IPv4 instead
                     info._socket = SetupUDPSocket(AddressFamily.InterNetwork, ReceivePacketSize + 1);
-                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.Any, _port));
+                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.Any, info.Port));
                 }
                 else {
-                    try {
-                        // Enable IPv4-mapped IPv6 addresses to accept both IPv6 and IPv4 connections in a same socket.
-                        info._socket.Socket.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)27, 0);
-                    }
-                    catch {
+                    if (!info._socket.Socket.DualMode) {
 #if LOG_UDP_CHANNEL
                         _Log.Debug("Create backup socket");
 #endif
@@ -184,16 +215,16 @@ namespace Com.AugustCellars.CoAP.Channel
                         info._socketBackup = SetupUDPSocket(AddressFamily.InterNetwork, ReceivePacketSize + 1);
                     }
 
-                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.IPv6Any, _port));
+                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.IPv6Any, info.Port));
                     if (info._socketBackup != null) {
-                        info._socketBackup.Socket.Bind(new IPEndPoint(IPAddress.Any, _port));
+                        info._socketBackup.Socket.Bind(new IPEndPoint(IPAddress.Any, info.Port));
                     }
                 }
             }
             else {
-                info._socket = SetupUDPSocket(info._localEP.AddressFamily, ReceivePacketSize + 1);
+                info._socket = SetupUDPSocket(info.LocalEP.AddressFamily, ReceivePacketSize + 1);
 
-                    info._socket.Socket.Bind(info._localEP);
+                info._socket.Socket.Bind(info.LocalEP);
             }
 
 
@@ -214,13 +245,12 @@ namespace Com.AugustCellars.CoAP.Channel
             BeginReceive(info);
         }
 
-#if !NETSTANDARD1_3
         private void StartMulticastSocket(SocketSet info)
         {
-            if (info._localEP.Address.IsIPv6Multicast) {
+            if (info.LocalEP.Address.IsIPv6Multicast) {
                 try {
                     info._socket = SetupUDPSocket(AddressFamily.InterNetworkV6, ReceivePacketSize + 1);
-                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.IPv6Any, _port));
+                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.IPv6Any, info.LocalEP.Port));
 
                     NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
                     foreach (NetworkInterface adapter in nics) {
@@ -229,10 +259,10 @@ namespace Com.AugustCellars.CoAP.Channel
                         if (adapter.Supports(NetworkInterfaceComponent.IPv6)) {
                             IPInterfaceProperties properties = adapter.GetIPProperties();
 
-                            foreach (UnicastIPAddressInformation ip in adapter.GetIPProperties().UnicastAddresses) {
+                            foreach (UnicastIPAddressInformation ip in properties.UnicastAddresses) {
                                 if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) {
-                                    IPv6InterfaceProperties v6ip = adapter.GetIPProperties().GetIPv6Properties();
-                                    IPv6MulticastOption mc = new IPv6MulticastOption(info._localEP.Address, v6ip.Index);
+                                    IPv6InterfaceProperties v6Ip = adapter.GetIPProperties().GetIPv6Properties();
+                                    IPv6MulticastOption mc = new IPv6MulticastOption(info.LocalEP.Address, v6Ip.Index);
                                     try {
                                         info._socket.Socket.SetSocketOption(SocketOptionLevel.IPv6,
                                                                             SocketOptionName.AddMembership,
@@ -267,7 +297,9 @@ namespace Com.AugustCellars.CoAP.Channel
             else {
                 try {
                     info._socket = SetupUDPSocket(AddressFamily.InterNetwork, ReceivePacketSize + 1);
-                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.Any, _port));
+                    info._socket.Socket.Bind(new IPEndPoint(IPAddress.Any, info.LocalEP.Port));
+
+                    info._socket.Socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.PacketInformation, true);
 
                     NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
 
@@ -278,9 +310,9 @@ namespace Com.AugustCellars.CoAP.Channel
                         if (adapter.Supports(NetworkInterfaceComponent.IPv4)) {
                             IPInterfaceProperties properties = adapter.GetIPProperties();
 
-                            foreach (UnicastIPAddressInformation ip in adapter.GetIPProperties().UnicastAddresses) {
+                            foreach (UnicastIPAddressInformation ip in properties.UnicastAddresses) {
                                 if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
-                                    MulticastOption mc = new MulticastOption(info._localEP.Address, ip.Address);
+                                    MulticastOption mc = new MulticastOption(info.LocalEP.Address, ip.Address);
                                     info._socket.Socket.SetSocketOption(SocketOptionLevel.IP,
                                                                         SocketOptionName.AddMembership,
                                                                         mc);
@@ -318,8 +350,8 @@ namespace Com.AugustCellars.CoAP.Channel
         }
 #endif
 
-                    /// <inheritdoc/>
-                    public void Stop()
+        /// <inheritdoc/>
+        public void Stop()
         {
 #if LOG_UDP_CHANNEL
             _Log.Debug("Stop");
@@ -328,14 +360,9 @@ namespace Com.AugustCellars.CoAP.Channel
                 return;
             }
 
-            if (_unicast._socket != null) {
-                _unicast._socket.Dispose();
-                _unicast._socket = null;
-            }
-
-            if (_unicast._socketBackup != null) {
-                _unicast._socketBackup.Dispose();
-                _unicast._socketBackup = null;
+            _unicast.Dispose();
+            foreach (SocketSet s in _listMultiCastEndpoints) {
+                s.Dispose();
             }
         }
 
@@ -358,7 +385,7 @@ namespace Com.AugustCellars.CoAP.Channel
         }
 
         /// <inheritdoc/>
-        public void Send(Byte[] data, ISession sessionReceive, System.Net.EndPoint ep)
+        public void Send(byte[] data, ISession sessionReceive, System.Net.EndPoint ep)
         {
             RawData raw = new RawData() {
                 Data = data,
@@ -400,14 +427,14 @@ namespace Com.AugustCellars.CoAP.Channel
             }
         }
 
-        private void EndReceive(UDPSocket socket, Byte[] buffer, Int32 offset, Int32 count, System.Net.EndPoint ep)
+        private void EndReceive(UDPSocket socket, byte[] buffer, int offset, int count, System.Net.EndPoint ep)
         {
 #if LOG_UDP_CHANNEL
             _Log.Debug(m => m("EndReceive: length={0}", count));
 #endif
 
             if (count > 0) {
-                Byte[] bytes = new Byte[count];
+                byte[] bytes = new byte[count];
                 Buffer.BlockCopy(buffer, offset, bytes, 0, count);
 
                 if (ep.AddressFamily == AddressFamily.InterNetworkV6) {
@@ -434,6 +461,46 @@ namespace Com.AugustCellars.CoAP.Channel
             BeginReceive(socket);
         }
 
+        private void EndReceiveMessage(UDPSocket socket, byte[] buffer, int offset, int count, System.Net.EndPoint ep, IPAddress ipLocal)
+        {
+#if LOG_UDP_CHANNEL
+            _Log.Debug(m => m("EndReceive: length={0}", count));
+#endif
+
+            if (count > 0) {
+                byte[] bytes = new byte[count];
+                Buffer.BlockCopy(buffer, offset, bytes, 0, count);
+
+                if (ep.AddressFamily == AddressFamily.InterNetworkV6) {
+                    IPEndPoint ipep = (IPEndPoint) ep;
+                    if (IPAddressExtensions.IsIPv4MappedToIPv6(ipep.Address)) {
+                        ep = new IPEndPoint(IPAddressExtensions.MapToIPv4(ipep.Address), ipep.Port);
+                    }
+                }
+
+                IPEndPoint epLocal;
+                epLocal = (IPEndPoint) socket.Socket.LocalEndPoint;
+                if (ipLocal != null) {
+                    epLocal = new IPEndPoint(ipLocal, epLocal.Port);
+                }
+
+                if (epLocal.AddressFamily == AddressFamily.InterNetworkV6) {
+                    if (IPAddressExtensions.IsIPv4MappedToIPv6(epLocal.Address)) {
+                        epLocal = new IPEndPoint(IPAddressExtensions.MapToIPv4(epLocal.Address), epLocal.Port);
+                    }
+                }
+
+                if (!socket.MulticastOnly || IPAddressExtensions.IsMulticastAddress(epLocal.Address)) {
+                    FireDataReceived(bytes, ep, epLocal);
+                }
+            }
+
+#if LOG_UDP_CHANNEL
+            _Log.Debug("EndReceive: restart the read");
+#endif
+            BeginReceive(socket);
+        }
+
         private void EndReceive(UDPSocket socket, Exception ex)
         {
 #if LOG_UDP_CHANNEL
@@ -442,7 +509,7 @@ namespace Com.AugustCellars.CoAP.Channel
             BeginReceive(socket);
         }
 
-        private void FireDataReceived(Byte[] data, System.Net.EndPoint ep, System.Net.EndPoint epLocal)
+        private void FireDataReceived(byte[] data, System.Net.EndPoint ep, System.Net.EndPoint epLocal)
         {
 #if LOG_UDP_CHANNEL
             _Log.Debug(m => m("FireDataReceived: data length={0}", data.Length));
@@ -481,7 +548,7 @@ namespace Com.AugustCellars.CoAP.Channel
             BeginSend(socket, raw.Data, remoteEP);
         }
 
-        private void EndSend(UDPSocket socket, Int32 bytesTransferred)
+        private void EndSend(UDPSocket socket, int bytesTransferred)
         {
             BeginSend();
         }
@@ -495,18 +562,15 @@ namespace Com.AugustCellars.CoAP.Channel
             BeginSend();
         }
 
-        private UDPSocket SetupUDPSocket(AddressFamily addressFamily, Int32 bufferSize)
+#if false
+        private UDPSocket SetupUDPSocket(AddressFamily addressFamily, int bufferSize)
         {
             UDPSocket socket = NewUDPSocket(addressFamily, bufferSize);
 
-#if NETSTANDARD1_3
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-#else
             if (Environment.OSVersion.Platform == PlatformID.Win32NT ||
                 Environment.OSVersion.Platform == PlatformID.WinCE) {
-#endif
                 // do not throw SocketError.ConnectionReset by ignoring ICMP Port Unreachable
-                const Int32 SIO_UDP_CONNRESET = -1744830452;
+                const int SIO_UDP_CONNRESET = -1744830452;
                 try {
                     // Set the SIO_UDP_CONNRESET ioctl to true for this UDP socket. If this UDP socket
                     //    ever sends a UDP packet to a remote destination that exists but there is
@@ -517,39 +581,306 @@ namespace Com.AugustCellars.CoAP.Channel
                     //    to wrap each UDP socket operation in a try/except, we'll disable this error
                     //    for the socket with this ioctl call.
 
-                    socket.Socket.IOControl(SIO_UDP_CONNRESET, new Byte[] {0}, null);
+                    socket.Socket.IOControl(SIO_UDP_CONNRESET, new byte[] {0}, null);
                 }
                 catch (Exception) {
                 }
             }
+            socket.Socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.PacketInformation, true);
             return socket;
         }
+#endif
 
         partial class UDPSocket : IDisposable
         {
             public readonly Socket Socket;
+            public bool MulticastOnly { get; set; }
         }
 
         class RawData
         {
-            public Byte[] Data;
+            public byte[] Data;
             public System.Net.EndPoint EndPoint;
         }
 
         class SocketSet
         {
-            public IPEndPoint _localEP;
+            public IPEndPoint LocalEP { get; private set; }
+            public int Port { get; private set; }
+            public bool MulticastOnly { get; set; }
             public UDPSocket _socket;
             public UDPSocket _socketBackup;
+
+            private readonly List<IPEndPoint> _multicastAddressList = new List<IPEndPoint>();
+
+            private static readonly List<SocketSet> allSockets = new List<SocketSet>();
+
+            public static SocketSet Find(IPEndPoint endPoint)
+            {
+                if (endPoint.Port != 0) {
+                    foreach (SocketSet s in allSockets) {
+                        if (((endPoint.Port == s.Port) && (s.LocalEP == null)) ||
+                            (s.LocalEP != null &&
+                             ((endPoint.AddressFamily == s.LocalEP.AddressFamily) &&
+                              (endPoint.Address.Equals(s.LocalEP.Address))))) {
+                            return s;
+                        }
+                    }
+                }
+
+                return null;
+            }
+
+            /// <summary>
+            /// Locate a SocketSet based on the port number
+            /// </summary>
+            /// <param name="port"></param>
+            /// <returns></returns>
+            public static SocketSet Find(int port)
+            {
+                //  Port # of zero always creates a new one on a system assigned port number.
+                if (port == 0) {
+                    return null;
+                }
+
+                foreach (SocketSet s in allSockets) {
+                    if (port == s.Port) {
+                        //  This is the Any or AnyV6 and same port case.
+                        return s;
+                    }
+                    else if (s.LocalEP != null) {
+                        if (port == s.LocalEP.Port &&
+                            (s.LocalEP.AddressFamily == AddressFamily.InterNetwork || s.LocalEP.AddressFamily == AddressFamily.InterNetworkV6)) {
+                            return s;
+                        }
+                    }
+                }
+
+                return null;
+            }
+
+            public SocketSet(IPEndPoint endPoint)
+            {
+                LocalEP = endPoint;
+                allSockets.Add(this);
+            }
+
+            public SocketSet(int port)
+            {
+                Port = port;
+                allSockets.Add(this);
+            }
+
+            public void Dispose()
+            {
+                _socket?.Dispose();
+                _socketBackup?.Dispose();
+                _socket = null;
+                _socketBackup = null;
+                allSockets.Remove(this);
+            }
+
+            public void AddMulticastAddress(IPEndPoint multicastAddr)
+            {
+                if ((multicastAddr.Port != Port) && (LocalEP != null && multicastAddr.Port != LocalEP.Port)) {
+                    throw new ArgumentException("Must be the same port as the socket");
+                }
+
+                _multicastAddressList.Add(multicastAddr);
+                if (_socket != null) {
+                    DoJoin(multicastAddr);
+                }
+            }
+
+            public void StartSocket(int receivePacketSize, EventHandler<SocketAsyncEventArgs> completed)
+            {
+                if (LocalEP == null) {
+                    try {
+                        _socket = SetupUDPSocket(AddressFamily.InterNetworkV6, receivePacketSize + 1, completed); // +1 to check for > ReceivePacketSize
+                        _socket.MulticastOnly = MulticastOnly;
+                    }
+                    catch (SocketException e) {
+                        if (e.SocketErrorCode == SocketError.AddressFamilyNotSupported) {
+                            _socket = null;
+                        }
+                        else {
+                            throw;
+                        }
+                    }
+
+                    if (_socket == null) {
+                        // IPv6 is not supported, use IPv4 instead
+                        _socket = SetupUDPSocket(AddressFamily.InterNetwork, receivePacketSize + 1, completed);
+                        _socket.MulticastOnly = MulticastOnly;
+                        _socket.Socket.Bind(new IPEndPoint(IPAddress.Any, Port));
+                    }
+                    else {
+                        // _socket.Socket.DualMode = true;
+
+                        if (!_socket.Socket.DualMode) {
+#if LOG_UDP_CHANNEL
+                        _Log.Debug("Create backup socket");
+#endif
+                            // IPv4-mapped address seems not to be supported, set up a separated socket of IPv4.
+                            _socketBackup = SetupUDPSocket(AddressFamily.InterNetwork, receivePacketSize + 1, completed);
+                            _socketBackup.MulticastOnly = MulticastOnly;
+                        }
+
+                        _socket.Socket.Bind(new IPEndPoint(IPAddress.IPv6Any, Port));
+                        if (_socketBackup != null) {
+                            if (Port == 0) {
+                                Port = ((IPEndPoint) _socket.Socket.LocalEndPoint).Port;
+                            }
+                            _socketBackup.Socket.Bind(new IPEndPoint(IPAddress.Any, Port));
+                        }
+                    }
+
+                    Port = ((IPEndPoint) _socket.Socket.LocalEndPoint).Port;
+                }
+                else {
+                    _socket = SetupUDPSocket(LocalEP.AddressFamily, receivePacketSize + 1, completed);
+                    _socket.MulticastOnly = MulticastOnly;
+
+                    _socket.Socket.Bind(LocalEP);
+                }
+
+                foreach (IPEndPoint ep in _multicastAddressList) {
+                    DoJoin(ep);
+                }
+            }
+
+
+            private void DoJoin(IPEndPoint multicastAddr)
+            {
+                if (multicastAddr.Address.IsIPv6Multicast) {
+                    try {
+
+                        NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+                        foreach (NetworkInterface adapter in nics) {
+                            if (!adapter.SupportsMulticast) continue;
+                            if (adapter.OperationalStatus != OperationalStatus.Up) continue;
+                            if (adapter.Supports(NetworkInterfaceComponent.IPv6)) {
+                                IPInterfaceProperties properties = adapter.GetIPProperties();
+
+                                foreach (UnicastIPAddressInformation ip in properties.UnicastAddresses) {
+                                    if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) {
+                                        IPv6InterfaceProperties v6Ip = adapter.GetIPProperties().GetIPv6Properties();
+                                        IPv6MulticastOption mc = new IPv6MulticastOption(multicastAddr.Address, v6Ip.Index);
+                                        try {
+#if LOG_UDP_CHANNEL
+                                            _Log.Debug(m => m($"Join: {multicastAddr.Address} to {v6Ip.Index}"));
+#endif
+                                            _socket.Socket.SetSocketOption(SocketOptionLevel.IPv6,
+                                                SocketOptionName.AddMembership,
+                                                mc);
+                                        }
+#pragma warning disable 168
+                                        catch (SocketException e) {
+#pragma warning restore 168
+#if LOG_UDP_CHANNEL
+                                        _Log.Info(
+                                            m => m(
+                                                $"Start Multicast:  Address {LocalEP.Address} had an exception ${e.ToString()}"));
+#endif
+                                        }
+
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+#pragma warning disable 168
+                    catch (SocketException e) {
+#pragma warning restore 168
+#if LOG_UDP_CHANNEL
+                    _Log.Info(
+                        m => m($"Start Multicast:  Address {LocalEP.Address} had an exception ${e.ToString()}"));
+                    throw;
+#endif
+                    }
+                }
+                else {
+                    try {
+                        NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+
+                        foreach (NetworkInterface adapter in nics) {
+                            if (!adapter.SupportsMulticast) continue;
+                            if (adapter.OperationalStatus != OperationalStatus.Up) continue;
+                            if (adapter.Supports(NetworkInterfaceComponent.IPv4)) {
+                                IPInterfaceProperties properties = adapter.GetIPProperties();
+
+                                foreach (UnicastIPAddressInformation ip in properties.UnicastAddresses) {
+                                    if (ip.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) {
+                                        MulticastOption mc = new MulticastOption(multicastAddr.Address, ip.Address);
+                                        if (_socketBackup != null) {
+#if LOG_UDP_CHANNEL
+                                            _Log.Debug(m => m($"Join: (backup) {multicastAddr.Address} to {ip.Address}"));
+#endif
+                                            _socketBackup.Socket.SetSocketOption(SocketOptionLevel.IP,
+                                                SocketOptionName.AddMembership,
+                                                mc);
+                                        }
+                                        else {
+#if LOG_UDP_CHANNEL
+                                            _Log.Debug(m => m($"Join:  {multicastAddr.Address} to {ip.Address}"));
+#endif
+                                            _socket.Socket.SetSocketOption(SocketOptionLevel.IP,
+                                                SocketOptionName.AddMembership,
+                                                mc);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+#pragma warning disable 168
+                    catch (SocketException e) {
+#pragma warning restore 168
+#if LOG_UDP_CHANNEL
+                    _Log.Info(m => m($"Start Multicast:  Address {LocalEP.Address} had an exception ${e.ToString()}"));
+#endif
+                        throw;
+                    }
+                }
+            }
+
+            private UDPSocket SetupUDPSocket(AddressFamily addressFamily, int bufferSize, EventHandler<SocketAsyncEventArgs> completed)
+            {
+                UDPSocket socket = new UDPSocket(addressFamily, bufferSize, completed);
+
+                if (Environment.OSVersion.Platform == PlatformID.Win32NT ||
+                    Environment.OSVersion.Platform == PlatformID.WinCE) {
+                    // do not throw SocketError.ConnectionReset by ignoring ICMP Port Unreachable
+                    const int SIO_UDP_CONNRESET = -1744830452;
+                    try {
+                        // Set the SIO_UDP_CONNRESET ioctl to true for this UDP socket. If this UDP socket
+                        //    ever sends a UDP packet to a remote destination that exists but there is
+                        //    no socket to receive the packet, an ICMP port unreachable message is returned
+                        //    to the sender. By default, when this is received the next operation on the
+                        //    UDP socket that send the packet will receive a SocketException. The native
+                        //    (Winsock) error that is received is WSAECONNRESET (10054). Since we don't want
+                        //    to wrap each UDP socket operation in a try/except, we'll disable this error
+                        //    for the socket with this ioctl call.
+
+                        socket.Socket.IOControl(SIO_UDP_CONNRESET, new byte[] {0}, null);
+                    }
+                    // ReSharper disable once EmptyGeneralCatchClause
+                    catch (Exception) {
+                    }
+                }
+
+                socket.Socket.SetSocketOption(addressFamily == AddressFamily.InterNetworkV6 ? SocketOptionLevel.IPv6 : SocketOptionLevel.IP, SocketOptionName.PacketInformation, true);
+                return socket;
+            }
         }
 
+#pragma warning disable CS0067
         /// <inheritdoc/>
         public event EventHandler<SessionEventArgs> SessionEvent;
+#pragma warning restore CS0067
 
         /// <inheritdoc/>
-        public bool IsReliable
-        {
-            get => false;
-        }
+        public bool IsReliable => false;
     }
 }

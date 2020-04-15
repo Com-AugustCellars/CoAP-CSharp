@@ -1,17 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿/*
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+using System;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Utilities;
-using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto;
 #pragma warning disable 1591
 
 namespace Com.AugustCellars.CoAP.OSCOAP
 {
-#if INCLUDE_OSCOAP
     /// <summary>
     /// HMAC-based Extract-and-Expand Key Derivation Function(HKDF) implemented
     /// according to IETF RFC 5869, May 2010 as specified by H.Krawczyk, IBM
@@ -43,8 +47,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <inheritdoc/>
         public virtual void Init(IDerivationParameters parameters)
         {
-            if (!(parameters is HkdfParameters))
-                throw new ArgumentException("HKDF parameters required for HkdfBytesGenerator", "parameters");
+            if (!(parameters is HkdfParameters)) {
+                throw new ArgumentException("HKDF parameters required for HkdfBytesGenerator", nameof(parameters));
+            }
 
             HkdfParameters hkdfParameters = (HkdfParameters)parameters;
             if (hkdfParameters.SkipExtract) {
@@ -112,9 +117,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         /// <summary>
         /// Get the digest function
         /// </summary>
-        public virtual IDigest Digest {
-            get { return _hMacHash.GetUnderlyingDigest(); }
-        }
+        public virtual IDigest Digest => _hMacHash.GetUnderlyingDigest();
 
         /// <summary>
         /// Generate bytes
@@ -164,17 +167,17 @@ namespace Com.AugustCellars.CoAP.OSCOAP
         : IDerivationParameters
     {
         private readonly byte[] _ikm;
-        private readonly bool _skipExpand;
         private readonly byte[] _salt;
         private readonly byte[] _info;
 
         private HkdfParameters(byte[] ikm, bool skip, byte[] salt, byte[] info)
         {
-            if (ikm == null)
-                throw new ArgumentNullException("ikm");
+            if (ikm == null) {
+                throw new ArgumentNullException(nameof(ikm));
+            }
 
             this._ikm = Arrays.Clone(ikm);
-            this._skipExpand = skip;
+            this.SkipExtract = skip;
 
             if (salt == null || salt.Length == 0) {
                 this._salt = null;
@@ -238,9 +241,7 @@ namespace Com.AugustCellars.CoAP.OSCOAP
          *
          * @return true for skipping, false for no skipping of step 1
          */
-        public virtual bool SkipExtract {
-            get { return _skipExpand; }
-        }
+        public virtual bool SkipExtract { get; }
 
         /**
          * Returns the salt, or null if the salt should be generated as a byte array
@@ -263,5 +264,4 @@ namespace Com.AugustCellars.CoAP.OSCOAP
             return Arrays.Clone(_info);
         }
     }
-#endif
 }

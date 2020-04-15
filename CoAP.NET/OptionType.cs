@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2013, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -143,14 +145,10 @@ namespace Com.AugustCellars.CoAP
         /// <remarks>RFC 7252</remarks>
         /// </summary>
         Reserved4 = 140,
-
-#if INCLUDE_OSCOAP
         /// <summary>
-        /// <remarks>draft-ietf-core-oscoap</remarks>
+        /// <remarks>RFC 8613</remarks>
         /// </summary>
-        Oscoap = 9,
-#endif
-
+        Oscore = 9,
         /// <summary>
         /// <remarks>RFC 7967</remarks>
         /// </summary>
@@ -235,7 +233,7 @@ namespace Com.AugustCellars.CoAP
             {CoAP.OptionType.MaxAge, new OptionData(CoAP.OptionType.MaxAge, "Max-Age", OptionFormat.Integer, null) },
             {CoAP.OptionType.NoResponse, new OptionData(CoAP.OptionType.NoResponse, "No-Response", OptionFormat.Unknown, null)  },
             {CoAP.OptionType.Observe, new OptionData(CoAP.OptionType.Observe, "Observe", OptionFormat.Integer, null)},
-            {CoAP.OptionType.Oscoap, new OptionData(CoAP.OptionType.Oscoap, "OSCORE", OptionFormat.Opaque, typeof(OscoapOption))},
+            {CoAP.OptionType.Oscore, new OptionData(CoAP.OptionType.Oscore, "OSCORE", OptionFormat.Opaque, typeof(OscoapOption))},
             {CoAP.OptionType.ProxyScheme, new OptionData(CoAP.OptionType.ProxyScheme, "ProxyScheme", OptionFormat.String, null) },
             {CoAP.OptionType.ProxyUri, new OptionData(CoAP.OptionType.ProxyUri, "Proxy-Uri", OptionFormat.String, null) },
             {CoAP.OptionType.Size1, new OptionData(CoAP.OptionType.Size1, "Size1", OptionFormat.Integer, null) },

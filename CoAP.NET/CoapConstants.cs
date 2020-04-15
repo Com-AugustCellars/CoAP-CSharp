@@ -144,7 +144,9 @@ namespace Com.AugustCellars.CoAP
                 {"coap+udp", new UriInformation("coap+udp", 5683, TransportType.IP)},
                 {"coaps+udp", new UriInformation("coaps+udp", 5684, TransportType.IP)},
                 {"coap+tcp", new UriInformation("coap+tcp", 5683, TransportType.IP)},
-                {"coaps+tcp", new UriInformation("coaps+tcp", 5684, TransportType.IP)}
+                {"coaps+tcp", new UriInformation("coaps+tcp", 5684, TransportType.IP)},
+                {"http", new UriInformation("http", 80, TransportType.IP)  },
+                {"https", new UriInformation("https", 443, TransportType.IP) },
             }
         );
     }

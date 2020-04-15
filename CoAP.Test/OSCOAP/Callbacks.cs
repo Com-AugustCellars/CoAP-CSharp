@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+
+using System;
 using System.Text;
 using System.Threading;
 using Com.AugustCellars.CoAP;
@@ -30,6 +40,8 @@ namespace CoAP.Test.Std10.OSCOAP
         private static OneKey _clientSign1;
         private static OneKey _clientSign2;
         private static OneKey _serverSign1;
+        private AutoResetEvent trigger = new AutoResetEvent(false);
+
 
         [ClassInitialize]
         public static void ClassInit(TestContext e)
@@ -72,6 +84,9 @@ namespace CoAP.Test.Std10.OSCOAP
                 Assert.Fail();
                 break;
             }
+
+            trigger.Set();
+
         }
 
 
@@ -94,6 +109,7 @@ namespace CoAP.Test.Std10.OSCOAP
 
             Response r = client.Get();
 
+            Assert.IsTrue(trigger.WaitOne(1000));
             Assert.AreEqual(OscoreEvent.EventCode.PivExhaustion, _clientCallbackCode);
 
             _clientEventChoice = 1;
@@ -133,6 +149,7 @@ namespace CoAP.Test.Std10.OSCOAP
 
             _serverEventChoice = 1;
             Response r = client.Get();
+            Assert.IsNotNull(r);
             Assert.AreEqual("/abc", r.PayloadString);
         }
 
@@ -175,7 +192,7 @@ namespace CoAP.Test.Std10.OSCOAP
 
             _serverEventChoice = 2;
             Response r = client.Get();
-
+            Assert.IsNotNull(r);
             Assert.AreEqual("/abc", r.PayloadString);
 
         }

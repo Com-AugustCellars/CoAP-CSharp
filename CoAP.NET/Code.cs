@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2015, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2018-20, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -9,8 +11,11 @@
  * Please see README for more information.
  */
 
-using System;
+
 // ReSharper disable InconsistentNaming
+
+using System.Net;
+using Org.BouncyCastle.Crypto.Prng;
 
 namespace Com.AugustCellars.CoAP
 {
@@ -23,7 +28,7 @@ namespace Com.AugustCellars.CoAP
         /// <summary>
         /// Undefined
         /// </summary>
-        public const Int32 Empty = 0;
+        public const int Empty = 0;
 
         /// <summary>
         /// Indicate client request was successfully processed.
@@ -224,7 +229,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="code">The code to be checked</param>
         /// <returns>True iff the code indicates a request</returns>
-        public static Boolean IsRequest(int code)
+        public static bool IsRequest(int code)
         {
             return (code >= 1) && (code <= 31);
         }
@@ -234,15 +239,20 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="code">The code to be checked</param>
         /// <returns>True iff the code indicates a response</returns>
-        public static Boolean IsResponse(int code)
+        public static bool IsResponse(int code)
         {
             return (code >= 64) && (code <= 191);
+        }
+
+        public static bool IsSignal(int code)
+        {
+            return (code >= 225 && code <= 255);
         }
 
         /// <summary>
         /// Checks whether a code represents a success code.
         /// </summary>
-        public static Boolean IsSuccess(int code)
+        public static bool IsSuccess(int code)
         {
             return code >= 64 && code < 96;
         }
@@ -252,7 +262,7 @@ namespace Com.AugustCellars.CoAP
         /// </summary>
         /// <param name="code">The code to be checked</param>
         /// <returns>True iff the code is valid</returns>
-        public static Boolean IsValid(int code)
+        public static bool IsValid(int code)
         {
             // allow unknown custom codes
             return (code >= 0) && (code <= 255);
@@ -327,8 +337,6 @@ namespace Com.AugustCellars.CoAP
                     return "5.04 Gateway Timeout";
                 case ProxyingNotSupported:
                     return "5.05 Proxying Not Supported";
-                default:
-                    break;
             }
 
             if (IsValid(code)) {
@@ -345,6 +353,24 @@ namespace Com.AugustCellars.CoAP
             else {
                 return $"Invalid Message [code {code/32}.{code%32}]";
             }
+        }
+
+        public static HttpStatusCode MapCoapToHttpStatusCode(int coapCode)
+        {
+            switch (coapCode) {
+                case Created:
+                    return HttpStatusCode.Created;
+                case Deleted:
+                    return HttpStatusCode.NoContent;
+                case Valid:
+                    return HttpStatusCode.NotModified;
+                case Changed:
+                    return HttpStatusCode.NoContent;
+                case BadRequest:
+                    return HttpStatusCode.BadRequest;
+            }
+
+            throw new CoAPException($"Unable to map {coapCode} to an HTTP Status Code.");
         }
     }
 

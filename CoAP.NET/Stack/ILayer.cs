@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -43,7 +45,8 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <param name="nextLayer">the next layer</param>
         /// <param name="exchange">the exchange associated</param>
         /// <param name="message">the empty message to send</param>
-        void SendEmptyMessage(INextLayer nextLayer, Exchange exchange, EmptyMessage message);
+        /// <returns>true to continue</returns>
+        bool SendEmptyMessage(INextLayer nextLayer, Exchange exchange, EmptyMessage message);
         /// <summary>
         /// Filters a request receiving event.
         /// </summary>
@@ -83,7 +86,8 @@ namespace Com.AugustCellars.CoAP.Stack
         /// <summary>
         /// Sends an empty message to next layer.
         /// </summary>
-        void SendEmptyMessage(Exchange exchange, EmptyMessage message);
+        bool SendEmptyMessage(Exchange exchange, EmptyMessage message);
+
         /// <summary>
         /// Receives a request to next layer.
         /// </summary>

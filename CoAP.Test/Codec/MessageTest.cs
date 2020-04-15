@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+ * Copyright (c) 2018-20, Jim Schaad <ietf@augustcellars.com>
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+ 
+using System;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -15,7 +25,7 @@ namespace Com.AugustCellars.CoAP.Codec
             msg.ID = 12345;
             msg.Payload = System.Text.Encoding.UTF8.GetBytes("payload");
 
-            Byte[] data = Spec.Encode(msg);
+            byte[] data = Spec.Encode(msg);
             Message convMsg = Spec.Decode(data);
 
             Assert.AreEqual(msg.Code, convMsg.Code);
@@ -35,7 +45,7 @@ namespace Com.AugustCellars.CoAP.Codec
             msg.AddOption(Option.Create(OptionType.ContentType, "text/plain"));
             msg.AddOption(Option.Create(OptionType.MaxAge, 30));
 
-            Byte[] data = Spec.Encode(msg);
+            byte[] data = Spec.Encode(msg);
             Message convMsg = Spec.Decode(data);
 
             Assert.AreEqual(msg.Code, convMsg.Code);
@@ -56,7 +66,7 @@ namespace Com.AugustCellars.CoAP.Codec
             msg.AddOption(Option.Create((OptionType)197, "extend option"));
             msg.Payload = System.Text.Encoding.UTF8.GetBytes("payload");
 
-            Byte[] data = Spec.Encode(msg);
+            byte[] data = Spec.Encode(msg);
             Message convMsg = Spec.Decode(data);
 
             Assert.AreEqual(msg.Code, convMsg.Code);
@@ -74,15 +84,15 @@ namespace Com.AugustCellars.CoAP.Codec
         [TestMethod]
         public void TestRequestParsing()
         {
-            Request request = new Request(Method.POST, false);
+            Message request = new Request(Method.POST, false);
             request.ID = 7;
-            request.Token = new Byte[] { 11, 82, 165, 77, 3 };
-            request.AddIfMatch(new Byte[] { 34, 239 })
-                .AddIfMatch(new Byte[] { 88, 12, 254, 157, 5 });
+            request.Token = new byte[] { 11, 82, 165, 77, 3 };
+            request.AddIfMatch(new byte[] { 34, 239 })
+                .AddIfMatch(new byte[] { 88, 12, 254, 157, 5 });
             request.ContentType = 40;
             request.Accept = 40;
 
-            Byte[] bytes = Spec.NewMessageEncoder().Encode(request);
+            byte[] bytes = Spec.NewMessageEncoder().Encode(request);
             IMessageDecoder decoder = Spec.NewMessageDecoder(bytes);
             Assert.IsTrue(decoder.IsRequest);
 
@@ -95,26 +105,67 @@ namespace Com.AugustCellars.CoAP.Codec
         [TestMethod]
         public void TestResponseParsing()
         {
-            Response response = new Response(StatusCode.Content);
+            Message response = new Response(StatusCode.Content);
             response.Type = MessageType.NON;
             response.ID = 9;
-            response.Token = new Byte[] { 22, 255, 0, 78, 100, 22 };
-            response.AddETag(new Byte[] { 1, 0, 0, 0, 0, 1 })
+            response.Token = new byte[] { 22, 255, 0, 78, 100, 22 };
+            response.AddETag(new byte[] { 1, 0, 0, 0, 0, 1 })
                                 .AddLocationPath("/one/two/three/four/five/six/seven/eight/nine/ten")
                                 .AddOption(Option.Create((OptionType)57453, "Arbitrary".GetHashCode()))
                                 .AddOption(Option.Create((OptionType)19205, "Arbitrary1"))
                                 .AddOption(Option.Create((OptionType)19205, "Arbitrary2"))
                                 .AddOption(Option.Create((OptionType)19205, "Arbitrary3"));
 
-            Byte[] bytes = Spec.NewMessageEncoder().Encode(response);
+            byte[] bytes = Spec.NewMessageEncoder().Encode(response);
 
             IMessageDecoder decoder = Spec.NewMessageDecoder(bytes);
             Assert.IsTrue(decoder.IsResponse);
 
-            Response result = decoder.DecodeResponse();
+            Message result = decoder.Decode();
             Assert.AreEqual(response.ID, result.ID);
             Assert.IsTrue(response.Token.SequenceEqual(result.Token));
             Assert.IsTrue(response.GetOptions().SequenceEqual(result.GetOptions()));
         }
+
+        [TestMethod]
+        public void TestSignalParsing()
+        {
+            Message signal = new SignalMessage(SignalCode.CSM);
+            signal.Type = MessageType.NON;
+            signal.ID = 15;
+            signal.Token = new byte[] {33, 3, 5, 0, 39, 40};
+
+            byte[] bytes = Spec.NewMessageEncoder().Encode(signal);
+
+            IMessageDecoder decoder = Spec.NewMessageDecoder(bytes);
+            Assert.IsTrue(decoder.IsSignal);
+
+            Message result = decoder.Decode();
+            Assert.AreEqual(signal.ID, result.ID);
+            Assert.IsTrue(signal.Token.SequenceEqual(result.Token));
+            Assert.IsTrue(signal.GetOptions().SequenceEqual(result.GetOptions()));
+
+        }
+
+        [TestMethod]
+        public void TestEmptyParsing()
+        {
+            Message signal = new EmptyMessage(MessageType.RST);
+            signal.Type = MessageType.NON;
+            signal.ID = 15;
+            signal.Token = new byte[] { 33, 3, 5, 0, 39, 40 };
+
+            byte[] bytes = Spec.NewMessageEncoder().Encode(signal);
+
+            IMessageDecoder decoder = Spec.NewMessageDecoder(bytes);
+            Assert.IsTrue(decoder.IsEmpty);
+
+            Message result = decoder.Decode();
+            Assert.AreEqual(signal.ID, result.ID);
+            Assert.IsTrue(signal.Token.SequenceEqual(result.Token));
+            Assert.IsTrue(signal.GetOptions().SequenceEqual(result.GetOptions()));
+
+        }
+
     }
 }

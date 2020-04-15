@@ -77,6 +77,8 @@ namespace Com.AugustCellars.CoAP.Net
 
         public Request CurrentRequest { get; set; }
 
+        public List<Option> PreSecurityOptions { get; set; }
+
         /// <summary>
         /// Gets or sets the status of the blockwise transfer of the request,
         /// or null in case of a normal transfer,
@@ -335,12 +337,15 @@ namespace Com.AugustCellars.CoAP.Net
             private readonly int _hash;
             private readonly List<Option> _listOptions = new List<Option>();
 
-            public KeyUri(Message message, System.Net.EndPoint endpoint)
+            public KeyUri(Message message, System.Net.EndPoint endpoint) : this(message.GetOptions(), endpoint) { }
+
+
+            public KeyUri(IEnumerable<Option> optionList, System.Net.EndPoint endpoint)
             {
                 _hash = endpoint.GetHashCode();
                 _endpoint = endpoint;
 
-                foreach (Option option in message.GetOptions()) {
+                foreach (Option option in optionList) {
                     if (Option.IsNotCacheKey(option.Type) || option.Type == OptionType.Block1 || option.Type == OptionType.Block2) {
                         continue;
                     }

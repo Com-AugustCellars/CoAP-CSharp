@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2014, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-2020, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -35,9 +37,9 @@ namespace Com.AugustCellars.CoAP.Stack
         }
 
         /// <inheritdoc/>
-        public virtual void SendEmptyMessage(INextLayer nextLayer, Exchange exchange, EmptyMessage message)
+        public virtual bool SendEmptyMessage(INextLayer nextLayer, Exchange exchange, EmptyMessage message)
         {
-            nextLayer.SendEmptyMessage(exchange, message);
+            return nextLayer.SendEmptyMessage(exchange, message);
         }
 
         /// <inheritdoc/>
