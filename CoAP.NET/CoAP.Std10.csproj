@@ -28,6 +28,7 @@ It is intented primarily for research and verification work.
   - Rename OSCOAP option to OSCORE - this should not affect anybody as it should only be used internally
   - Correct secure blockwise code to have the original request options as part of the key and the next block message
   - Add testing and do some correction to the multicast code
+  - Add ability remove Options in CoapClient
 1.8
   - Internal cleanup work.
   - Add congestion control for observe notifications

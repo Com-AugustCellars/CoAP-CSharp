@@ -25,6 +25,7 @@ namespace Com.AugustCellars.CoAP
         private static readonly IEnumerable<WebLink> _EmptyLinks = new WebLink[0];
         private readonly ICoapConfig _config;
         private MessageType _type = MessageType.CON;
+        private readonly List<OptionType> _removedOptions = new List<OptionType>();
 
         /// <summary>
         /// Occurs when a response has arrived.
@@ -639,6 +640,15 @@ namespace Com.AugustCellars.CoAP
             Prepare(request).Send();
         }
 
+        public void RemoveOptions(OptionType optionType)
+        {
+            if(_removedOptions.Contains(optionType))
+            {
+                return;
+            }
+            _removedOptions.Add(optionType);
+        }
+
         /// <summary>
         /// Set properties on the request that are based on properties on this object
         /// </summary>
@@ -675,6 +685,10 @@ namespace Com.AugustCellars.CoAP
 
             if (endpoint != null) {
                 request.EndPoint = endpoint;
+            }
+
+            foreach(var option in _removedOptions) {
+                request.RemoveOptions(option);
             }
 
             return request;
