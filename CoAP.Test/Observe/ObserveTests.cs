@@ -279,7 +279,7 @@ namespace CoAP.Test.Std10.Observe
             Assert.IsTrue(oNumber > lastObserve);
             lastObserve = oNumber;
 
-            _config.NotificationCheckIntervalTime = 1000;
+            _config.NotificationCheckIntervalTime = 500;
             int count = 0;
 
             for (int i = 0; i < 20; i++) {

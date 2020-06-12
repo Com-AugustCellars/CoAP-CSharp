@@ -1,7 +1,6 @@
 # CoAP.NET - A CoAP framework in C#
 
 [![NuGet Status](https://img.shields.io/nuget/v/Com.AugustCellars.CoAP.png)](https://www.nuget.org/packages/Com.AugustCellars.CoAP)
-[![Travis Build Status](https://api.travis-ci.org/Com.AugustCellars/CoAP-CSharp/CoAP-CSharp.png)](https://travis-ci.org/Com.AugustCellars/CoAP-CSharp)
 [![Appveyor Build](https://ci.appveyor.com/api/projects/status/github/Com-AugustCellars/CoAP-CSharp?svg=true)](https://ci.appveyor.com/project/jimsch/coap-csharp)
 [![CircleCI](https://circleci.com/gh/Com-AugustCellars/CoAP-CSharp.svg?style=svg)](https://circleci.com/gh/Com-AugustCellars/CoAP-CSharp)
 
@@ -13,7 +12,7 @@ Reviews and suggestions would be appreciated.
 
 ## Copyright
 
-Copyright (c) 2016-9 , Jim Schaad <ietf@augustcellars.com>
+Copyright (c) 2016-20 , Jim Schaad <ietf@augustcellars.com>
 
 
 ## Content
@@ -155,10 +154,6 @@ As this project does not seem to be maintained anymore, and I am doing active up
 
 ## Current projects are:
 
-- [OSCoAP](https://datatracker.ietf.org/doc/draft-ietf-core-object-security/) - Add an implemenation of message based security
-- [EDHOC](https://datatracker.ietf.org/doc/draft-selander-ace-cose-ecdhe/) - Ephemeral Diffie-Hellman over COSE - a key establishment protocol
-- DTLS - Support DTLS for transport
-- [TLS/TCP](https://datatracker.ietf.org/doc/draft-ietf-core-coap-tcp-tls/) - Support TCP and TLS over TCP for transport
 - [Resource Directory](https://datatracker.ietf.org/doc/draft-ietf-core-resource-directory/) - Resource directory resources
 - [PubSub](https://datatracker.ietf.org/doc/draft-ietf-core-coap-pubsub/) - Publish-Subscribe Broker
 - [AAA](https://datatracker.ietf.org/doc/draft-ietf-ace-oauth-authz/) - Authentication and authoriztion protocol work
