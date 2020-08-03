@@ -20,6 +20,8 @@ namespace Com.AugustCellars.CoAP.Channel
 {
     public partial class UDPChannel
     {
+        private bool UseReceiveMessageFrom = true;
+
         private UDPSocket NewUDPSocket(AddressFamily addressFamily, int bufferSize)
         {
             return new UDPSocket(addressFamily, bufferSize, SocketAsyncEventArgs_Completed);
@@ -49,7 +51,16 @@ namespace Com.AugustCellars.CoAP.Channel
 #if LOG_UDP_CHANNEL
                 _Log.Debug("BeginReceive:  Start async read");
 #endif
-                willRaiseEvent = socket.Socket.ReceiveMessageFromAsync(socket.ReadBuffer);
+                if (UseReceiveMessageFrom) {
+                    willRaiseEvent = socket.Socket.ReceiveMessageFromAsync(socket.ReadBuffer);
+                }
+                else {
+                    willRaiseEvent = socket.Socket.ReceiveFromAsync(socket.ReadBuffer);
+                }
+            }
+            catch (NotImplementedException) {
+                UseReceiveMessageFrom = false;
+                willRaiseEvent = socket.Socket.ReceiveFromAsync(socket.ReadBuffer);
             }
             catch (ObjectDisposedException) {
 #if LOG_UDP_CHANNEL
