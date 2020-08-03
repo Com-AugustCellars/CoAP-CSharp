@@ -5,6 +5,7 @@ lib
 .svn
 Apps
 cov-int
+_ReSharper.Caches
 
 # DNX project file with a complete list of resolved dependencies
 project.lock.json
