@@ -132,6 +132,7 @@ It is intented primarily for research and verification work.
   
   <ItemGroup>
     <Compile Include="BlockOption.cs" />
+    <Compile Include="CacheKey.cs" />
     <Compile Include="Channel\DataReceivedEventArgs.cs" />
     <Compile Include="Channel\IChannel.cs" />
     <Compile Include="Channel\IPAddressExtensions.cs" />
