@@ -89,7 +89,7 @@ namespace Com.AugustCellars.CoAP
         public override string ToString()
         {
             string y = M ? "+" : string.Empty;
-            return $"{NUM}{M} ({y}B/block [{SZX}])";
+            return $"{NUM} {M} ({y}B/block [{SZX}])";
         }
 
         /// <summary>
