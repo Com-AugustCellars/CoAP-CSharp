@@ -27,7 +27,7 @@ using Org.BouncyCastle.Security;
 
 namespace Com.AugustCellars.CoAP.Net
 {
-    class Matcher : IMatcher, IDisposable
+    public class Matcher : IMatcher, IDisposable
     {
         static readonly ILogger _Log = LogManager.GetLogger(typeof(Matcher));
 
