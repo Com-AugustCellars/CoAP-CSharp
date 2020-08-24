@@ -124,7 +124,8 @@ namespace Com.AugustCellars.CoAP.Stack
         public override void ReceiveResponse(INextLayer nextLayer, Exchange exchange, Response response)
         {
             if (response.HasOption(OptionType.Observe)) {
-                if (exchange.Request.IsCancelled) {
+                CoapObserveRelation relation = exchange.Request.ObserveRelation;
+                if (relation == null || relation.Canceled) {
                     // The request was canceled and we no longer want notifications
                     log.Debug("ObserveLayer rejecting notification for canceled Exchange");
 
@@ -135,7 +136,7 @@ namespace Com.AugustCellars.CoAP.Stack
                     return;
                 }
 
-                if (exchange.Request.ObserveReconnect) {
+                if (relation.Reconnect) {
                     PrepareReregistration(exchange, response, msg => SendRequest(nextLayer, exchange, msg));
                 }
             }
@@ -307,7 +308,8 @@ namespace Com.AugustCellars.CoAP.Stack
             void timer_Elapsed(object sender, ElapsedEventArgs e)
             {
                 Request request = _exchange.Request;
-                if (!request.IsCancelled) {
+                //  Make sure that we really want to do the re-registration
+                if (request.ObserveRelation != null && !request.ObserveRelation.Canceled && request.ObserveRelation.Reconnect) {
                     Request refresh = new Request(request.Method);
 
                     refresh.SetOptions(request.GetOptions());
@@ -317,11 +319,13 @@ namespace Com.AugustCellars.CoAP.Stack
                     // use same Token
                     refresh.Token = request.Token;
                     refresh.Destination = request.Destination;
-                    refresh.CopyEventHandler(request); 
+                    refresh.CopyEventHandler(request);
+                    refresh.ObserveRelation = request.ObserveRelation;
                     log.Debug(m => m( "Re-registering for " + request));
                     request.FireReregister(refresh);
-                    _reregister(refresh);
-
+                    if (!refresh.IsCancelled) {
+                        _reregister(refresh);
+                    }
                 }
                 else { 
                     log.Debug(m => m("Dropping re-registration for canceled " + request));

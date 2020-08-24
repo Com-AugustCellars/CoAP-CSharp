@@ -1,8 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿/*
+ * Copyright (c) 2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+
 using System.Net;
-using System.Security.Cryptography;
-using System.Text;
 using Com.AugustCellars.CoAP;
 using Com.AugustCellars.CoAP.Net;
 
@@ -20,13 +26,21 @@ namespace CoAP.Test.Std10.MockItems
             ServerSendResponse = 5,
             ServerSendResponseNetwork,
             ClientSendResponseNetwork,
-            ClientSendResponse
+            ClientSendResponse,
+
+            ClientSendEmptyMessage = 10,
+            ClientSendEmptyMessageNetwork,
+            ServerSendEmptyMessageNetwork,
+            ServerSendEmptyMessage,
+
+            NetworkSend = 20
         }
 
         public QueueType ItemType { get; }
         public byte[] ItemData { get; }
-        public Request Request { get; }
-        public Response Response { get; }
+        public Request Request { get; set; }
+        public Response Response { get; set; }
+        public EmptyMessage EmptyMessage { get; set; }
         public Exchange Exchange { get; }
 
         public EndPoint Source { get; set; }
@@ -50,6 +64,13 @@ namespace CoAP.Test.Std10.MockItems
             ItemType = itemType;
             Response = response;
             Exchange = exchange;
+        }
+
+        public MockQueueItem(QueueType itemType, EmptyMessage request, Exchange exhange = null)
+        {
+            ItemType = itemType;
+            EmptyMessage = request;
+            Exchange = exhange;
         }
 
         /// <inheritdoc />

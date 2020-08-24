@@ -1,6 +1,8 @@
 ﻿/*
  * Copyright (c) 2011-2015, Longxiang He <helongxiang@smeshlink.com>,
  * SmeshLink Technology Co.
+ *
+ * Copyright (c) 2019-20, Jim Schaad <ietf@augustcellars.com>
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY.
@@ -10,8 +12,10 @@
  */
 
 using System;
+using System.Diagnostics.Tracing;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Observe;
+using Org.BouncyCastle.Ocsp;
 
 namespace Com.AugustCellars.CoAP
 {
@@ -25,12 +29,15 @@ namespace Com.AugustCellars.CoAP
         readonly ICoapConfig _config;
         readonly IEndPoint _endpoint;
 
+        public bool Reconnect { get; set; } = true;
+
         public CoapObserveRelation(Request request, IEndPoint endpoint, ICoapConfig config)
         {
             _config = config;
             Request = request;
             _endpoint = endpoint;
             Orderer = new ObserveNotificationOrderer(config);
+            Request.ObserveRelation = this;
 
             request.Reregistering += OnReregister;
         }
@@ -80,20 +87,45 @@ namespace Com.AugustCellars.CoAP
 
             // dispatch final response to the same message observers
             cancel.CopyEventHandler(Request);
+            Reconnect = false;
+            cancel.ObserveRelation = this;
+            cancel.Reregistering += OnReregister;
 
             cancel.Send(_endpoint);
             // cancel old ongoing request
             Request.IsCancelled = true;
-            Canceled = true;
+        }
+
+        public void UpdateETags(byte[][] eTags)
+        {
+            Request newRequest = Request.NewGet();
+            //  Copy over the options
+            newRequest.SetOptions(Request.GetOptions());
+            newRequest.ClearETags();
+            foreach (byte[] tag in eTags) {
+                newRequest.AddETag(tag);
+            }
+
+            newRequest.Token = Request.Token;
+            newRequest.Destination = Request.Destination;
+            newRequest.CopyEventHandler(Request);
+            newRequest.Reregistering += OnReregister;
+            newRequest.ObserveRelation = this;
+
+            newRequest.Send(_endpoint);
+            Request = newRequest;
         }
 
         private void OnReregister(Object sender, ReregisterEventArgs e)
         {
             // TODO: update request in observe handle for correct cancellation?
-            //_request = e.RefreshRequest;
+            if (Canceled) {
+                e.RefreshRequest.IsCancelled = true;
+                return;
+            }
 
-            // reset orderer to accept any sequence number since server might have rebooted
-            Orderer = new ObserveNotificationOrderer(_config);
+            Orderer.ForceRelease = true;
+            //_request = e.RefreshRequest;
         }
     }
 }

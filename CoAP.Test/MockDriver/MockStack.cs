@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CoAP.Test.Std10.OSCOAP;
 using Com.AugustCellars.CoAP;
 using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Stack;
 
-namespace CoAP.Test.Std10.MockItems
+namespace CoAP.Test.Std10.MockDriver
 {
     public class MockStack : LayerStack
     {

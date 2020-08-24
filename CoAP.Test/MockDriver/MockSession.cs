@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Com.AugustCellars.CoAP;
 
-namespace CoAP.Test.Std10.MockItems
+namespace CoAP.Test.Std10.MockDriver
 {
     public class MockSession : ISession
     {
