@@ -243,9 +243,10 @@ namespace CoAP.Test.Std10.MockDriver
                     s.MyEndPoint.ReceiveData(item);
                 }
 
-                //                    ClientEndpoint.ReceiveData(item);
-
                 break;
+
+                case MockQueueItem.QueueType.ClientSendResponse:
+                    break;
 
             // state #8 - client application to process response
             case MockQueueItem.QueueType.ClientSendEmptyMessageNetwork:

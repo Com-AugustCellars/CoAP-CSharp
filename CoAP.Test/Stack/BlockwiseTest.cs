@@ -172,7 +172,6 @@ namespace CoAP.Test.Std10.Stack
                     else {
                         Assert.Fail();
                     }
-
                     break;
                 }
             }
