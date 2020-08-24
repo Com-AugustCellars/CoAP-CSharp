@@ -173,6 +173,11 @@ namespace Com.AugustCellars.CoAP
         }
 
         /// <summary>
+        /// The observe relationship if one exists.
+        /// </summary>
+        public CoapObserveRelation ObserveRelation { get; set; }
+
+        /// <summary>
         /// Gets or sets the response to this request.
         /// </summary>
         public Response Response
@@ -204,7 +209,12 @@ namespace Com.AugustCellars.CoAP
         /// Should we attempt to reconnect to keep an observe relationship fresh
         /// in the event the MAX-AGE expires on the current value?
         /// </summary>
-        public bool ObserveReconnect { get; set; } = true;
+        [Obsolete("Use ObserveRelation.Reconnect instead")]
+        public bool ObserveReconnect
+        {
+            get => ObserveRelation.Reconnect;
+            set => ObserveRelation.Reconnect = value;
+        }
 
         /// <summary>
         /// Sets CoAP's observe option. If the target resource of this request

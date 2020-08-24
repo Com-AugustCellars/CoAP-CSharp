@@ -78,16 +78,20 @@ namespace Com.AugustCellars.CoAP.Net
         /// <inheritdoc/>
         public void Start()
         {
-            if (System.Threading.Interlocked.CompareExchange(ref _running, 1, 0) > 0)
+            if (System.Threading.Interlocked.CompareExchange(ref _running, 1, 0) > 0) {
                 return;
+            }
+
             _deduplicator.Start();
         }
 
         /// <inheritdoc/>
         public void Stop()
         {
-            if (System.Threading.Interlocked.Exchange(ref _running, 0) == 0)
+            if (System.Threading.Interlocked.Exchange(ref _running, 0) == 0) {
                 return;
+            }
+
             _deduplicator.Stop();
             Clear();
         }
@@ -147,7 +151,6 @@ namespace Com.AugustCellars.CoAP.Net
             }
 
             exchange.Completed += OnExchangeCompleted;
-
 
             _Log.Debug(m => m("Stored open request by {0}, {1}", keyID, keyToken));
 
@@ -447,6 +450,9 @@ namespace Com.AugustCellars.CoAP.Net
                 // this endpoint created the Exchange to respond a request
 
                 Response response = exchange.CurrentResponse;
+                if (response == null) {
+                    response = exchange.Response;
+                }
                 if (response != null && response.Type != MessageType.ACK) {
                     // only response MIDs are stored for ACK and RST, no reponse Tokens
                     Exchange.KeyID midKey = new Exchange.KeyID(response.ID, null, response.Session);

@@ -21,9 +21,6 @@ namespace Com.AugustCellars.CoAP.Stack
     /// </summary>
     public class TokenLayer : AbstractLayer
     {
-#if false
-        private Int32 _counter;
-#endif
         private static ILogger _Log = LogManager.GetLogger("TokenLayer");
 
         /// <summary>
@@ -31,13 +28,9 @@ namespace Com.AugustCellars.CoAP.Stack
         /// </summary>
         public TokenLayer(ICoapConfig config)
         {
-#if false
-            if (config.UseRandomTokenStart) {
-                _counter = new Random().Next();
-            }
-#endif
         }
 
+#if false
         /// <inheritdoc/>
         public override void SendRequest(INextLayer nextLayer, Exchange exchange, Request request)
         {
@@ -49,6 +42,7 @@ namespace Com.AugustCellars.CoAP.Stack
 #endif
             base.SendRequest(nextLayer, exchange, request);
         }
+#endif
 
         /// <inheritdoc/>
         public override void SendResponse(INextLayer nextLayer, Exchange exchange, Response response)
@@ -80,17 +74,5 @@ namespace Com.AugustCellars.CoAP.Stack
             }
             base.ReceiveResponse(nextLayer, exchange, response);
         }
-
-#if false
-        private Byte[] NewToken()
-        {
-            UInt32 token = (UInt32)System.Threading.Interlocked.Increment(ref _counter);
-            return new Byte[]
-            { 
-                (Byte)(token >> 24), (Byte)(token >> 16),
-                (Byte)(token >> 8), (Byte)token
-            };
-        }
-#endif
     }
 }

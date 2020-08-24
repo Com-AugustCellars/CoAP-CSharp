@@ -23,11 +23,11 @@ namespace Com.AugustCellars.CoAP.Observe
     public class ObserveNotificationOrderer
     {
         private readonly ICoapConfig _config;
-        private static int _number;
+        private int _number;
         private int _lastSeen;
 
         public ObserveNotificationOrderer()
-            : this(null)
+            : this(CoapConfig.Default)
         { }
 
         public ObserveNotificationOrderer(ICoapConfig config)
@@ -57,6 +57,11 @@ namespace Com.AugustCellars.CoAP.Observe
         public DateTime Timestamp { get; set; }
 
         /// <summary>
+        /// Ignore the rules and release the next notification
+        /// </summary>
+        public bool ForceRelease { get; set; }
+
+        /// <summary>
         /// Is this the most recent response that we have seen for this observe relation?
         /// </summary>
         /// <param name="response"></param>
@@ -77,17 +82,23 @@ namespace Com.AugustCellars.CoAP.Observe
             DateTime t2 = DateTime.Now;
             int v1 = _lastSeen;
             int v2 = obs.Value;
-            long notifyMaxAge = (_config ?? CoapConfig.Default).NotificationMaxAge;
-            if ((v1 < v2) && (v2 - v1 < 1 << 23)
-                    || (v1 > v2) && (v1 - v2 > 1 << 23)
-                    || (t2 > t1.AddMilliseconds(notifyMaxAge))) {
+            long notifyMaxAge = _config.NotificationMaxAge;
+            if ((v1 < v2) && (v2 - v1 < 1 << 23) ||
+                (v1 > v2) && (v1 - v2 > 1 << 23) ||
+                (t2 > t1.AddMilliseconds(notifyMaxAge))) {
                 Timestamp = t2;
                 _lastSeen = v2;
+                ForceRelease = false;
                 return true;
             }
-            else {
-                return false;
+
+            //  Force the message out because we just did a reregistration
+            if (ForceRelease) {
+                ForceRelease = false;
+                return true;
             }
+
+            return false;
         }
     }
 }

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using CoAP.Test.Std10.MockItems;
 using Com.AugustCellars.CoAP;
 using Com.AugustCellars.CoAP.Net;
 
-namespace CoAP.Test.Std10.MockItems
+namespace CoAP.Test.Std10.MockDriver
 {
     public class MockDeliverer : IMessageDeliverer
     {

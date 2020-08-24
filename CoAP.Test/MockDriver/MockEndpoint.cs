@@ -1,17 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
+﻿/*
+ * Copyright (c) 2020, Jim Schaad <ietf@augustcellars.com>
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY.
+ * 
+ * This file is part of the CoAP.NET, a CoAP framework in C#.
+ * Please see README for more information.
+ */
+
+using System;
 using System.Net;
-using System.Security.Cryptography;
-using System.Text;
-using CoAP.Test.Std10.OSCOAP;
+using CoAP.Test.Std10.MockItems;
 using Com.AugustCellars.CoAP;
 using Com.AugustCellars.CoAP.Codec;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.OSCOAP;
-using Com.AugustCellars.CoAP.Stack;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace CoAP.Test.Std10.MockItems
+namespace CoAP.Test.Std10.MockDriver
 {
+#pragma warning disable CS0067 // Event is never used
+
     public class MockEndpoint : IEndPoint, IOutbox
     {
         private MockMessagePump Pump { get; }
@@ -34,7 +43,7 @@ namespace CoAP.Test.Std10.MockItems
 
         public EndPoint LocalEndPoint => throw new NotImplementedException();
 
-        public bool Running => throw new NotImplementedException();
+        public bool Running => true;
 
         public IMessageDeliverer MessageDeliverer { get; set; }
         public SecurityContextSet SecurityContexts { get; set; }
@@ -71,15 +80,11 @@ namespace CoAP.Test.Std10.MockItems
 
         public void SendRequest(Request request)
         {
-            throw new NotImplementedException();
+            Stack.SendRequest(request);
         }
 
         public void SendResponse(Exchange exchange, Response response)
         {
-            if (response.Type == MessageType.Unknown) {
-                response.Type = MessageType.ACK;
-            }
-
             response.Session = exchange.Request.Session;
             response.Destination = exchange.Request.Source;
             response.Source = MyAddress;
@@ -90,12 +95,12 @@ namespace CoAP.Test.Std10.MockItems
 
         public void Start()
         {
-            throw new NotImplementedException();
+            return;
         }
 
         public void Stop()
         {
-            throw new NotImplementedException();
+            return;
         }
 
         public void ReceiveData(MockQueueItem item)
@@ -125,6 +130,51 @@ namespace CoAP.Test.Std10.MockItems
                     exchange.EndPoint = this;
                     Stack.ReceiveResponse(exchange, response);
                 }
+                else if (response.Type != MessageType.ACK) {
+                    Reject(response);
+                }
+
+            }
+            else if (decoder.IsEmpty) {
+                EmptyMessage message;
+
+                try {
+                    message = decoder.DecodeEmptyMessage();
+                }
+                catch (Exception ex) {
+                    return;
+                }
+
+                message.Source = item.Source;
+
+                if (!message.IsCancelled) {
+                    // CoAP Ping
+                    if (message.Type == MessageType.CON || message.Type == MessageType.NON) {
+                        Reject(message);
+                    }
+                    else {
+                        Exchange exchange = Matcher.ReceiveEmptyMessage(message);
+                        if (exchange != null) {
+                            exchange.EndPoint = this;
+                            Stack.ReceiveEmptyMessage(exchange, message);
+                        }
+                    }
+                }
+            }
+            else {
+                Assert.Fail();
+            }
+        }
+
+        private void Reject(Message message)
+        {
+            EmptyMessage rst = EmptyMessage.NewRST(message);
+
+            if (!rst.IsCancelled) {
+                MockQueueItem item = new MockQueueItem(MockQueueItem.QueueType.ClientSendEmptyMessageNetwork, rst);
+                item.Destination = message.Destination;
+                item.Source = MyAddress;
+                Pump.Queue.Enqueue(item);
             }
         }
 
@@ -163,6 +213,13 @@ namespace CoAP.Test.Std10.MockItems
         void IOutbox.SendEmptyMessage(Exchange exchange, EmptyMessage message)
         {
             Matcher.SendEmptyMessage(exchange, message);
+
+            if (!message.IsCancelled) {
+                MockQueueItem item = new MockQueueItem(MockQueueItem.QueueType.ClientSendEmptyMessageNetwork, message);
+                item.Destination = message.Destination;
+                item.Source = MyAddress;
+                Pump.Queue.Enqueue(item);
+            }
 
         }
 
