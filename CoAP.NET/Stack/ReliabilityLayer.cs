@@ -237,7 +237,7 @@ namespace Com.AugustCellars.CoAP.Stack
                         exchange.CurrentRequest.IsRejected = true;
                     }
                     else {
-                        exchange.CurrentResponse.IsRejected = true;
+                        exchange.Response.IsRejected = true;
                     }
 
                     break;

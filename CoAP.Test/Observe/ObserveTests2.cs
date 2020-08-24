@@ -16,6 +16,7 @@ using System.Threading;
 using CoAP.Test.Std10.MockDriver;
 using CoAP.Test.Std10.MockItems;
 using Com.AugustCellars.CoAP;
+using Com.AugustCellars.CoAP.Log;
 using Com.AugustCellars.CoAP.Net;
 using Com.AugustCellars.CoAP.Server;
 using Com.AugustCellars.CoAP.Server.Resources;
@@ -253,14 +254,18 @@ namespace CoAP.Test.Std10.Observe
         [TestMethod]
         public void ObserveTest3()
         {
-            CoapConfig clientConfig = new CoapConfig();
+            CoapConfig clientConfig = new CoapConfig() {
+                MaxRetransmit = 0
+            };
+            LogManager.Level = LogLevel.Debug;
 
             Pump = new MockMessagePump();
 
-            IEndPoint clientEndpoint = Pump.AddEndPoint("Client1", MockMessagePump.ClientAddress, clientConfig, new Type[] { typeof(ObserveLayer) });
+            IEndPoint clientEndpoint = Pump.AddEndPoint("Client1", MockMessagePump.ClientAddress, clientConfig, new Type[] { typeof(ObserveLayer), typeof(TokenLayer), typeof(ReliabilityLayer) });
             clientEndpoint.Start();
 
             CreateServer();
+            _config.NonTimeout = 100;  // Change this value up - at 10 it cleans up the NON before the RST has a chance to get back.
 
             CoapClient coapClient = new CoapClient {
                 EndPoint = clientEndpoint,
@@ -290,6 +295,7 @@ namespace CoAP.Test.Std10.Observe
                     switch (item.ItemType) {
                         case MockQueueItem.QueueType.NetworkSend:
                             if (item.Request != null) {
+                                Debug.WriteLine($"Request: {item.Request}");
                                 if (tokenBytes == null) {
                                     tokenBytes = relation.Request.Token;
                                 }
@@ -299,13 +305,16 @@ namespace CoAP.Test.Std10.Observe
                                 CollectionAssert.AreEqual(tokenBytes, item.Request.Token);
                             }
                             else if (item.Response != null) {
+                                Debug.WriteLine($"Response: {item.Response}");
                                 Assert.IsTrue(item.Response.HasOption(OptionType.Observe));
                                 Assert.AreEqual(count, item.Response.Observe);
                                 CollectionAssert.AreEqual(tokenBytes, item.Response.Token);
                                 dataSent = true;
                             }
                             else {
+                                Debug.WriteLine($"RST: {item.EmptyMessage}");
                                 emptyCount += 1;
+                                dataSent = true;
                             }
 
                             break;
@@ -314,11 +323,12 @@ namespace CoAP.Test.Std10.Observe
                     Pump.Pump();
                 }
                 else if (dataSent) {
+                    dataSent = false;
                     if (count >= 3) {
                         Assert.IsNull(lastResponse);
                     }
                     else {
-                        Assert.IsTrue(trigger.WaitOne(1000));
+                        Assert.IsTrue(trigger.WaitOne(10*1000));
                         Assert.IsNotNull(lastResponse);
                         Assert.IsTrue(lastResponse.HasOption(OptionType.Observe));
                         Assert.AreEqual(count, lastResponse.Observe);
@@ -339,9 +349,13 @@ namespace CoAP.Test.Std10.Observe
                 else if (count == 5) {
                     break;
                 }
+                else if (emptyCount != 0) {
+                    _resource.UpdateContent($"New string {count}");
+                    count += 1;
+                }
             }
 
-            Assert.AreEqual(3, emptyCount);
+            Assert.AreEqual(1, emptyCount);
             Assert.AreEqual(5, count);
         }
 
