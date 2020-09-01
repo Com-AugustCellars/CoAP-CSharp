@@ -25,6 +25,8 @@ It is intented primarily for research and verification work.
 
 1.10
   - Add fallback code if UDP read function is not supported.  These platforms will no longer have full multicast support.
+  - Enable the ability to change ETags on an observe relation
+  - Fix error where an observe would attempt to re-connect after active cancel
 1.9
   - Fix some errors in OSCORE processing with a large number of messages
   - Rename OSCOAP option to OSCORE - this should not affect anybody as it should only be used internally
