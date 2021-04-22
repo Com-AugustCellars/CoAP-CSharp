@@ -41,6 +41,11 @@ namespace Com.AugustCellars.CoAP.DTLS
         public OneKey AuthenticationKey => mPskIdentityManager.AuthenticationKey;
         public Certificate AuthenticationCertificate { get; private set; }
 
+        public override int GetHandshakeTimeoutMillis()
+        {
+            return 60000; // 60 seconds
+        }
+
         // Chain all of our events to the next level up.
 
         private void OnTlsEvent(Object o, TlsEvent e)
