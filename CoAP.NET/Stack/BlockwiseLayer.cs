@@ -307,7 +307,10 @@ namespace Com.AugustCellars.CoAP.Stack
                     }
 
                     nextBlock.RemoveOptions(OptionType.Observe);
-                    
+
+                    // notify blocking progress
+                    exchange.Request.FireResponding(response);
+
                     exchange.CurrentRequest = nextBlock;
                     base.SendRequest(nextLayer, exchange, nextBlock);
                     // do not deliver response
