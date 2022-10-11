@@ -328,6 +328,9 @@ namespace Com.AugustCellars.CoAP.OSCOAP
                         nextBlock.Token = response.Token; // reuse same token
                     }
 
+                    // notify blocking progress
+                    exchange.Request.FireResponding(response);
+
                     exchange.CurrentRequest = nextBlock;
                     log.Debug(m => m($"ReceiveResponse: Block message to send: {nextBlock}"));
                     base.SendRequest(nextLayer, exchange, nextBlock);

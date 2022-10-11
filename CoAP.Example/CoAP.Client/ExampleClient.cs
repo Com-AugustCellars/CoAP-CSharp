@@ -145,6 +145,18 @@ namespace Com.AugustCellars.CoAP.Examples
             {
                 if (byEvent)
                 {
+                    request.Responding += (Object sender, ResponseEventArgs e) =>
+                    {
+                        Response response = e.Response;
+                        if (response != null)
+                        {
+                            //Console.WriteLine(Utils.ToString(response));
+                            if (response.Block1 != null)
+                                Console.WriteLine($"Responding Time (ms): {response.RTT},BLOCK1--> NUM:{response.Block1.NUM}, MORE:{response.Block1.M}, SZX:{response.Block1.SZX}");
+                            if (response.Block2 != null)
+                                Console.WriteLine($"Responding Time (ms): {response.RTT},BLOCK2--> NUM:{response.Block2.NUM}, MORE:{response.Block2.M}, SZX:{response.Block2.SZX}");
+                        }
+                    };
                     request.Respond += delegate(Object sender, ResponseEventArgs e)
                     {
                         Response response = e.Response;

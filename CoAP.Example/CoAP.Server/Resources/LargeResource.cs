@@ -10,7 +10,12 @@ namespace Com.AugustCellars.CoAP.Examples.Resources
 
         static LargeResource()
         {
-            payload = new StringBuilder()
+            payload = getDefaultPayload();
+        }
+
+        protected static string getDefaultPayload()
+        { 
+            return new StringBuilder()
                 .Append("/-------------------------------------------------------------\\\r\n")
                 .Append("|                 RESOURCE BLOCK NO. 1 OF 8                   |\r\n")
                 .Append("|               [each line contains 64 bytes]                 |\r\n")
@@ -60,12 +65,21 @@ namespace Com.AugustCellars.CoAP.Examples.Resources
 
         protected override void DoPost(CoAP.Server.Resources.CoapExchange exchange)
         {
-            exchange.Respond(payload);
+            //exchange.Respond(payload);
+            payload = exchange.Request.PayloadString;
+            exchange.Respond(StatusCode.Changed);
         }
 
         protected override void DoPut(CoAP.Server.Resources.CoapExchange exchange)
         {
-            exchange.Respond(payload);
+            //exchange.Respond(payload);
+            payload = exchange.Request.PayloadString;
+            exchange.Respond(StatusCode.Created);
+        }
+        protected override void DoDelete(CoapExchange exchange)
+        {
+            payload = getDefaultPayload();
+            exchange.Respond(StatusCode.Deleted);
         }
     }
 }
